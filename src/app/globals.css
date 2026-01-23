@@ -1,26 +1,92 @@
+@import url("https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@300;400;500;600;700&display=swap");
+
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Harcourts Branding Colors */
+  --harcourts-primary: #00adef;
+  --harcourts-accent: #001f49;
+  --harcourts-background: #ffffff;
+  --harcourts-text: #001f49;
+
+  /* Semantic Colors */
+  --background: var(--harcourts-background);
+  --foreground: var(--harcourts-text);
+  --primary: var(--harcourts-primary);
+  --primary-foreground: #ffffff;
+  --accent: var(--harcourts-accent);
+  --accent-foreground: #ffffff;
+  --muted: #f4f7fb;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --ring: var(--harcourts-primary);
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: "Source Sans 3", sans-serif;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Utility Classes */
+.btn-primary {
+  @apply bg-[#00ADEF] text-white px-6 py-3 rounded-lg font-semibold
+         hover:bg-[#0099D4] transition-colors duration-200
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply bg-[#001F49] text-white px-6 py-3 rounded-lg font-semibold
+         hover:bg-[#00152E] transition-colors duration-200;
+}
+
+.btn-outline {
+  @apply border-2 border-[#00ADEF] text-[#00ADEF] px-6 py-3 rounded-lg font-semibold
+         hover:bg-[#00ADEF] hover:text-white transition-colors duration-200;
+}
+
+.card {
+  @apply bg-white rounded-xl shadow-lg border border-gray-100 p-6;
+}
+
+.input {
+  @apply w-full px-4 py-3 border border-gray-200 rounded-lg
+         focus:outline-none focus:ring-2 focus:ring-[#00ADEF] focus:border-transparent
+         transition-all duration-200;
+}
+
+.label {
+  @apply block text-sm font-medium text-[#001F49] mb-1;
+}
+
+/* Dropzone Styles */
+.dropzone {
+  @apply border-2 border-dashed border-gray-300 rounded-xl p-12
+         text-center cursor-pointer transition-all duration-200
+         hover:border-[#00ADEF] hover:bg-blue-50;
+}
+
+.dropzone-active {
+  @apply border-[#00ADEF] bg-blue-50;
+}
+
+/* Loading Spinner */
+.spinner {
+  @apply animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-[#00ADEF];
+}
+
+@layer utilities {
+  @keyframes shimmer {
+    0% { transform: translateX(-100%) }
+    100% { transform: translateX(100%) }
+  }
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+  }
 }

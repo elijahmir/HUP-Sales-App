@@ -1,0 +1,199 @@
+{
+  "data": {
+    "branding": {
+      "colorScheme": "light",
+      "fonts": [
+        {
+          "family": "Source Sans Pro",
+          "count": 137
+        },
+        {
+          "family": "sans-serif",
+          "count": 137
+        }
+      ],
+      "colors": {
+        "primary": "#00ADEF",
+        "accent": "#001F49",
+        "background": "#FFFFFF",
+        "textPrimary": "#001F49",
+        "link": "#001F49"
+      },
+      "typography": {
+        "fontFamilies": {
+          "primary": "Source Sans Pro",
+          "heading": "Source Sans Pro"
+        },
+        "fontStacks": {
+          "body": [
+            "Source Sans Pro",
+            "sans-serif"
+          ],
+          "heading": [
+            "Source Sans Pro",
+            "sans-serif"
+          ],
+          "paragraph": [
+            "Source Sans Pro",
+            "sans-serif"
+          ]
+        },
+        "fontSizes": {
+          "h1": "60px",
+          "h2": "40px",
+          "body": "18px"
+        }
+      },
+      "spacing": {
+        "baseUnit": 4,
+        "borderRadius": "4px"
+      },
+      "components": {
+        "input": {
+          "background": "transparent",
+          "textColor": "#001F49",
+          "borderColor": null,
+          "borderRadius": "4px",
+          "borderRadiusCorners": {
+            "topLeft": "4px",
+            "topRight": "4px",
+            "bottomRight": "4px",
+            "bottomLeft": "4px"
+          },
+          "shadow": "none"
+        }
+      },
+      "images": {
+        "logo": "https://resources.cloudhi.io/images/logo/harcourts-international-logo.svg",
+        "favicon": "https://resources.cloudhi.io/favicon/apple-touch-icon.png",
+        "ogImage": null
+      },
+      "__framework_hints": [
+        "bootstrap"
+      ],
+      "__llm_logo_reasoning": {
+        "selectedIndex": 0,
+        "reasoning": "Heuristic fallback: Moderate indicators: in header, header location, visible, top-left position, src contains logo, class contains logo, reasonable size. Score: 85. May benefit from LLM validation.",
+        "confidence": 0.5
+      },
+      "__llm_button_reasoning": {
+        "primary": {
+          "index": -1,
+          "text": "N/A",
+          "reasoning": "LLM failed"
+        },
+        "secondary": {
+          "index": -1,
+          "text": "N/A",
+          "reasoning": "LLM failed"
+        },
+        "confidence": 0
+      },
+      "confidence": {
+        "buttons": 0,
+        "colors": 0,
+        "overall": 0
+      }
+    },
+    "metadata": {
+      "viewport": [
+        "width=device-width, initial-scale=1",
+        "width=device-width,initial-scale=1,user-scalable=yes"
+      ],
+      "language": "en",
+      "title": "Harcourts Ulverstone & Penguin | Real Estate For Sale | Homes for Rent",
+      "description": "Find real estate for sale, homes for rent, property managers & real estate agents in Ulverstone, Penguin & surrounds",
+      "googlebot": "noindex,indexifembedded",
+      "favicon": "https://resources.cloudhi.io/favicon/favicon-32x32.png",
+      "scrapeId": "019bdadc-cf44-70d5-8105-f4f4fc0f440c",
+      "sourceURL": "https://harcourts.net/au/office/ulverstone-and-penguin",
+      "url": "https://harcourts.net/au/office/ulverstone-and-penguin",
+      "statusCode": 200,
+      "contentType": "text/html; charset=UTF-8",
+      "timezone": "America/New_York",
+      "proxyUsed": "basic",
+      "indexId": "db11f381-6cd8-4446-a424-e1b7661ed6c1",
+      "creditsUsed": 1,
+      "concurrencyLimited": false
+    }
+  },
+  "scrape_id": "019bdadc-cf44-70d5-8105-f4f4fc0f440c",
+  "id": "AoIZVCpYPEuF7dqLoFD1g",
+  "startedAt": "2026-01-20T10:04:22.030Z",
+  "endedAt": "2026-01-20T10:04:29.926Z",
+  "endpoint": "scrape",
+  "formState": {
+    "extractSetupCompleted": false,
+    "urls": [],
+    "extractSchema": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "company_mission": {
+          "type": "string"
+        },
+        "supports_sso": {
+          "type": "boolean"
+        },
+        "is_open_source": {
+          "type": "boolean"
+        },
+        "is_in_yc": {
+          "type": "boolean"
+        }
+      }
+    },
+    "extractPrompt": "Extract the company details, following the schema.",
+    "enableWebSearch": false,
+    "constrainUrls": false,
+    "options": {
+      "onlyMainContent": false,
+      "parsePDF": true,
+      "stealthMode": false,
+      "excludeTags": [],
+      "includeTags": [],
+      "waitFor": "",
+      "timeout": "",
+      "maxAge": "2 days",
+      "ignoreSitemap": false,
+      "crawlEntireDomain": false,
+      "sitemap": "include",
+      "limit": "10",
+      "maxDepth": "",
+      "excludePaths": [],
+      "includePaths": [],
+      "includeSubdomains": false,
+      "search": "",
+      "scrapeContentFromSearchResults": true,
+      "timeBasedSearch": "",
+      "location": "",
+      "prompt": ""
+    },
+    "formats": [
+      "branding"
+    ],
+    "sources": [
+      "web"
+    ],
+    "categories": [],
+    "jsonSchema": {
+      "type": "object",
+      "required": [],
+      "properties": {
+        "company_name": {
+          "type": "string"
+        },
+        "company_description": {
+          "type": "string"
+        }
+      }
+    },
+    "jsonPrompt": "",
+    "agent": {},
+    "url": "harcourts.net/au/office/ulverstone-and-penguin",
+    "endpoint": "scrape"
+  },
+  "status": "success",
+  "version": "sWZnQa7MGj3_aLSAnLywC",
+  "isPreview": false
+}
