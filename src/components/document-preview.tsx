@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface DocumentPreviewProps {
   files: { file: File; preview: string }[];
@@ -40,14 +40,14 @@ export default function DocumentPreview({
               <button
                 onClick={prevFile}
                 disabled={currentIndex === 0}
-                className="p-1 hover:bg-slate-700 rounded disabled:opacity-30"
+                className="p-1 hover:bg-slate-700 rounded disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <button
                 onClick={nextFile}
                 disabled={currentIndex === files.length - 1}
-                className="p-1 hover:bg-slate-700 rounded disabled:opacity-30"
+                className="p-1 hover:bg-slate-700 rounded disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -56,7 +56,7 @@ export default function DocumentPreview({
         </div>
         <button
           onClick={onClose}
-          className="text-slate-400 hover:text-white text-xs uppercase font-bold tracking-wider"
+          className="text-slate-400 hover:text-white text-xs uppercase font-bold tracking-wider cursor-pointer transition-colors"
         >
           Close Preview
         </button>

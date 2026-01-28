@@ -3,15 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
-import { LogOut, Home } from "lucide-react";
-import {
-  motion,
-  useScroll,
-  useMotionValue,
-  useTransform,
-  useMotionTemplate,
-} from "framer-motion";
+import { useRouter, usePathname } from "next/navigation";
+import { LogOut, Home, ChevronRight } from "lucide-react";
+import { motion, useScroll, useMotionValue, useTransform } from "framer-motion";
 import { useEffect } from "react";
 
 function useBoundedScroll(threshold: number) {
@@ -35,6 +29,13 @@ function useBoundedScroll(threshold: number) {
   return { scrollYBoundedProgress };
 }
 
+function getBreadcrumb(pathname: string): string | null {
+  if (pathname === "/dashboard") return null;
+  if (pathname.includes("/appraisal")) return "Appraisal AI";
+  if (pathname.includes("/settings")) return "Settings";
+  return null;
+}
+
 export default function DashboardLayout({
   children,
 }: {
@@ -42,12 +43,13 @@ export default function DashboardLayout({
 }) {
   const supabase = createClient();
   const router = useRouter();
-  const { scrollYBoundedProgress } = useBoundedScroll(150);
+  const pathname = usePathname();
+  const { scrollYBoundedProgress } = useBoundedScroll(100);
 
-  // Header slide up/down logic
-  // 0 = visible, 1 = hidden
-  const headerY = useTransform(scrollYBoundedProgress, [0, 1], [0, -100]);
-  const headerOpacity = useTransform(scrollYBoundedProgress, [0, 1], [1, 0.5]);
+  const headerY = useTransform(scrollYBoundedProgress, [0, 1], [0, -80]);
+  const headerOpacity = useTransform(scrollYBoundedProgress, [0, 1], [1, 0]);
+
+  const breadcrumb = getBreadcrumb(pathname);
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -55,70 +57,92 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      {/* Animated Header */}
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans">
+      {/* Floating Navigation Bar */}
       <motion.header
         style={{
           y: headerY,
           opacity: headerOpacity,
         }}
-        className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-200/50"
+        className="fixed top-4 left-4 right-4 z-50"
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            {/* Logo Area */}
-            <Link
-              href="/dashboard"
-              className="group flex items-center gap-4 hover:opacity-100 transition-opacity"
-            >
-              <div className="relative w-32 sm:w-40 h-10 transition-transform duration-300 group-hover:scale-105">
-                <Image
-                  src="https://resources.cloudhi.io/images/logo/harcourts-international-logo.svg"
-                  alt="Harcourts"
-                  fill
-                  className="object-contain"
-                  priority
-                />
+        <div className="max-w-7xl mx-auto">
+          <nav className="bg-white rounded-2xl shadow-lg shadow-slate-900/5 border border-slate-100 px-4 sm:px-6 py-3">
+            <div className="flex justify-between items-center">
+              {/* Left: Logo + Breadcrumb */}
+              <div className="flex items-center gap-3 sm:gap-4">
+                <Link
+                  href="/dashboard"
+                  className="group flex items-center gap-3 hover:opacity-90 transition-opacity"
+                >
+                  <div className="relative w-28 sm:w-32 h-8">
+                    <Image
+                      src="https://resources.cloudhi.io/images/logo/harcourts-international-logo.svg"
+                      alt="Harcourts"
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  </div>
+                  <div className="hidden sm:flex items-center">
+                    <div className="w-px h-6 bg-slate-200 mx-3" />
+                    <span className="text-[#00ADEF] font-semibold text-sm tracking-tight">
+                      Sales App
+                    </span>
+                  </div>
+                </Link>
+
+                {/* Breadcrumb */}
+                {breadcrumb && (
+                  <div className="hidden md:flex items-center gap-2 text-sm text-slate-400 ml-2">
+                    <ChevronRight className="w-4 h-4" />
+                    <span className="font-medium text-slate-600">
+                      {breadcrumb}
+                    </span>
+                  </div>
+                )}
               </div>
-              <span className="text-[#00ADEF] font-semibold text-lg hidden sm:block border-l-2 pl-4 border-gray-200 tracking-tight">
-                Sales App
-              </span>
-            </Link>
 
-            {/* Action Area */}
-            <div className="flex items-center gap-2 sm:gap-4">
-              <Link
-                href="/dashboard"
-                className="p-3 text-gray-500 hover:text-[#00ADEF] hover:bg-blue-50 rounded-full transition-all duration-200 active:scale-95"
-                title="Dashboard Home"
-              >
-                <Home className="w-5 h-5" />
-              </Link>
+              {/* Right: Actions */}
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Link
+                  href="/dashboard"
+                  className={`p-2.5 rounded-xl transition-all duration-200 ${
+                    pathname === "/dashboard"
+                      ? "bg-sky-50 text-[#00ADEF]"
+                      : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                  }`}
+                  title="Dashboard Home"
+                  aria-label="Go to Dashboard Home"
+                >
+                  <Home className="w-5 h-5" />
+                </Link>
 
-              <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
+                <div className="hidden sm:block w-px h-6 bg-slate-200 mx-1" />
 
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-3 text-gray-600 hover:text-[#001F49] hover:bg-gray-100 px-4 py-2.5 rounded-full transition-all duration-200 active:scale-95 font-medium text-sm group"
-              >
-                <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                <span className="hidden sm:inline">Sign Out</span>
-              </button>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center gap-2 text-slate-500 hover:text-slate-700 hover:bg-slate-50 px-3 py-2 rounded-xl transition-all duration-200 text-sm font-medium group"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </button>
+              </div>
             </div>
-          </div>
+          </nav>
         </div>
       </motion.header>
 
-      {/* Main Content Area - Added padding-top to account for fixed header */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-40 transition-all duration-300 ease-in-out slide-in-from-bottom-4 duration-700">
+      {/* Main Content */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12">
         {children}
       </main>
 
-      {/* Simplified Footer */}
-      <footer className="py-6 text-center text-gray-400 text-sm">
-        <p>
-          &copy; {new Date().getFullYear()} Harcourts Ulverstone & Penguin.
-          Powered by AI.
+      {/* Minimal Footer */}
+      <footer className="py-6 text-center">
+        <p className="text-sm text-slate-400">
+          © {new Date().getFullYear()} Harcourts Ulverstone & Penguin
         </p>
       </footer>
     </div>

@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { Upload, FileImage, X } from "lucide-react";
-import Image from "next/image";
+import { Upload } from "lucide-react";
 
 interface FileUploadProps {
   onFileSelect: (files: File[]) => void;
@@ -14,8 +13,6 @@ export default function FileUpload({
   onFileSelect,
   variant = "default",
 }: FileUploadProps) {
-  const [dragActive, setDragActive] = useState(false);
-
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
@@ -41,19 +38,19 @@ export default function FileUpload({
       <div
         {...getRootProps()}
         className={`
-          relative border-2 border-dashed rounded-2xl h-full w-full min-h-[160px] flex flex-col items-center justify-center gap-2 cursor-pointer transition-all duration-300
+          relative border-2 border-dashed rounded-xl h-full w-full min-h-[140px] flex flex-col items-center justify-center gap-2 cursor-pointer transition-all duration-200
           ${
             isDragActive
-              ? "border-[#00ADEF] bg-blue-50/50"
-              : "border-blue-200/50 hover:border-[#00ADEF] hover:bg-blue-50/30"
+              ? "border-[#00ADEF] bg-sky-50"
+              : "border-slate-200 hover:border-[#00ADEF] hover:bg-sky-50/50"
           }
         `}
       >
-        <input {...getInputProps()} />
-        <div className="w-10 h-10 bg-white rounded-full shadow-sm border border-blue-50 flex items-center justify-center group-hover:scale-110 transition-transform">
-          <Upload className="w-5 h-5 text-[#00ADEF]" />
+        <input {...getInputProps()} aria-label="Upload additional files" />
+        <div className="w-9 h-9 bg-white rounded-lg shadow-sm border border-slate-100 flex items-center justify-center">
+          <Upload className="w-4 h-4 text-[#00ADEF]" />
         </div>
-        <span className="text-xs font-semibold text-[#001F49]">Add Pages</span>
+        <span className="text-xs font-semibold text-slate-600">Add Pages</span>
       </div>
     );
   }
@@ -62,35 +59,35 @@ export default function FileUpload({
     <div
       {...getRootProps()}
       className={`
-        relative border-2 border-dashed rounded-2xl p-8 transition-all duration-300 text-center cursor-pointer min-h-[300px] flex flex-col items-center justify-center gap-4
+        relative border-2 border-dashed rounded-xl p-8 transition-all duration-200 text-center cursor-pointer min-h-[240px] flex flex-col items-center justify-center gap-4
         ${
           isDragActive
-            ? "border-[#00ADEF] bg-blue-50/50 scale-[1.02]"
-            : "border-gray-200 hover:border-[#00ADEF]/50 hover:bg-gray-50/50"
+            ? "border-[#00ADEF] bg-sky-50"
+            : "border-slate-200 hover:border-[#00ADEF]/60 hover:bg-slate-50/50"
         }
       `}
     >
-      <input {...getInputProps()} />
+      <input {...getInputProps()} aria-label="Upload listing documents" />
 
-      <div className="w-20 h-20 bg-blue-50/80 rounded-full flex items-center justify-center mb-2 group-hover:scale-110 transition-transform duration-300">
-        <Upload className="w-10 h-10 text-[#00ADEF]" />
+      <div className="w-16 h-16 bg-sky-50 rounded-2xl flex items-center justify-center transition-transform duration-300">
+        <Upload className="w-7 h-7 text-[#00ADEF]" />
       </div>
 
       <div>
-        <p className="text-xl font-semibold text-[#001F49] mb-2">
+        <p className="font-display text-lg font-bold text-[#001F49] mb-1.5">
           {isDragActive ? "Drop files here" : "Upload Listing Authority"}
         </p>
-        <p className="text-gray-500 text-sm max-w-xs mx-auto">
-          Drag & drop your scanned documents here (PDF, JPG, PNG)
+        <p className="text-slate-500 text-sm max-w-xs mx-auto">
+          Drag & drop scanned documents (PDF, JPG, PNG)
         </p>
       </div>
 
-      <div className="mt-4 flex gap-3 text-xs text-gray-400">
-        <span className="uppercase tracking-wider">JPG</span>
-        <span className="w-px h-4 bg-gray-200"></span>
-        <span className="uppercase tracking-wider">PNG</span>
-        <span className="w-px h-4 bg-gray-200"></span>
-        <span className="uppercase tracking-wider">PDF</span>
+      <div className="mt-2 flex gap-3 text-xs text-slate-400 font-medium uppercase tracking-wider">
+        <span>JPG</span>
+        <span className="w-px h-4 bg-slate-200" />
+        <span>PNG</span>
+        <span className="w-px h-4 bg-slate-200" />
+        <span>PDF</span>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, CheckCircle, X } from "lucide-react";
+import { AlertTriangle, X, Loader2 } from "lucide-react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -27,27 +27,38 @@ export default function ConfirmationModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="modal-title"
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
             onClick={!isProcessing ? onClose : undefined}
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100"
+            exit={{ opacity: 0, scale: 0.95, y: 8 }}
+            transition={{ duration: 0.2, ease: [0.33, 1, 0.68, 1] }}
+            className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden"
           >
             <div className="p-6">
               <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
-                  <AlertTriangle className="w-6 h-6 text-blue-600" />
+                <div className="flex-shrink-0 w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-amber-600" />
                 </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+                <div className="flex-1 min-w-0">
+                  <h3
+                    id="modal-title"
+                    className="font-display text-lg font-bold text-slate-900"
+                  >
+                    {title}
+                  </h3>
                   <p className="mt-2 text-sm text-slate-500 leading-relaxed">
                     {description}
                   </p>
@@ -58,32 +69,33 @@ export default function ConfirmationModal({
                 <button
                   onClick={onClose}
                   disabled={isProcessing}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-50 rounded-lg transition-colors disabled:opacity-50"
+                  className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors disabled:opacity-50"
                 >
                   {cancelLabel}
                 </button>
                 <button
                   onClick={onConfirm}
                   disabled={isProcessing}
-                  className="px-6 py-2 text-sm font-bold text-white bg-[#001F49] hover:bg-[#002a60] rounded-lg shadow-lg shadow-blue-900/10 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-[#001F49] hover:bg-[#002a60] rounded-xl shadow-lg shadow-slate-900/10 flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
                 >
                   {isProcessing ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <Loader2 className="w-4 h-4 animate-spin" />
                       Processing...
                     </>
                   ) : (
-                    <>{confirmLabel}</>
+                    confirmLabel
                   )}
                 </button>
               </div>
             </div>
 
-            {/* Close X */}
+            {/* Close Button */}
             {!isProcessing && (
               <button
                 onClick={onClose}
-                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+                className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                aria-label="Close modal"
               >
                 <X className="w-5 h-5" />
               </button>

@@ -1,36 +1,55 @@
 {
 "handwritten_notes_top": {
-"hash_number": "string",
-"amount_year": "string",
-"shed_note": "string"
+"financial_note": "string",
+"property_note": "string",
+"other_notes": "string"
 },
+
 "listing_agent": "string",
 "agency_type": {
 "type": "select",
 "options": ["Sole", "Open", "Joint"]
 },
 "date_listed": "date",
+
 "address": "string",
-"price": "string",
+"title_ref": "string",
+"pid": "string",
+
+"price": {
+"display_text": "string",
+"method": {
+"type": "select",
+"options": ["OTO", "Offers To", "Tender", "Auction", "By Negotiation", "Fixed", ""]
+},
+"amount": "string",
+"range_from": "string",
+"range_to": "string"
+},
+
 "bedrooms_icon_count": "number",
 "bathrooms_icon_count": "number",
 "parking_icon_count": "number",
-"title_ref": "string",
-"pid": "string",
+
 "year_built": "string",
 "construction": {
+"type": {
 "type": "select",
 "options": ["B", "BV", "WB", "R"]
 },
+"description": "string"
+},
 "zoning": "string",
 "rates": "currency",
+
 "land_size": "string",
 "windows": {
 "type": "multiselect",
 "options": ["Timber", "Alum", "DBL", "Single"]
 },
 "council": "string",
-"council_water_rates": "currency",
+"water_rates": "currency",
+
 "building_size": "string",
 "roof": {
 "type": "select",
@@ -38,6 +57,7 @@
 },
 "capital_value": "currency",
 "land_value": "currency",
+
 "vendors": "string",
 "phone_numbers": "string",
 "postal_address": "string",
@@ -47,90 +67,109 @@
 "handwritten_notes_section": "text",
 
 "bed_1": {
+"exists": "boolean",
 "wardrobe_type": {
 "type": "select",
-"options": ["BI", "WI", "BI/WI", "None"]
+"options": ["BI", "WI", "None"]
 },
-"has_checkbox": "boolean",
-"measurements": "string"
-},
+"measurements": "string",
 "ensuite": {
 "measurements": "string",
 "type": {
 "type": "select",
 "options": ["SOB", "Sep Shower", "Bath"]
 }
+}
 },
+
 "bed_2": {
+"exists": "boolean",
 "wardrobe_type": {
 "type": "select",
-"options": ["BI", "WI", "BI/WI", "None"]
+"options": ["BI", "WI", "None"]
 },
-"has_checkbox": "boolean",
 "measurements": "string"
 },
+
 "bed_3": {
+"exists": "boolean",
 "wardrobe_type": {
 "type": "select",
-"options": ["BI", "WI", "BI/WI", "None"]
+"options": ["BI", "WI", "None"]
 },
-"has_checkbox": "boolean",
 "measurements": "string"
 },
+
 "bed_4": {
+"exists": "boolean",
 "wardrobe_type": {
 "type": "select",
-"options": ["BI", "WI", "BI/WI", "None"]
+"options": ["BI", "WI", "None"]
 },
-"has_checkbox": "boolean",
 "measurements": "string"
 },
+
 "bed_5": {
+"exists": "boolean",
 "wardrobe_type": {
 "type": "select",
-"options": ["BI", "WI", "BI/WI", "None"]
+"options": ["BI", "WI", "None"]
 },
-"has_checkbox": "boolean",
 "measurements": "string"
 },
+
 "bathroom": {
-"has_checkbox": "boolean",
+"exists": "boolean",
 "measurements": "string",
 "type": {
 "type": "select",
 "options": ["SOB", "Sep Shower", "Bath"]
 }
 },
+
 "toilets": {
 "type": "select",
 "options": [1, 2, 3, 4]
 },
+
 "kitchen": {
-"has_checkbox": "boolean",
-"measurements": "string"
+"exists": "boolean",
+"measurements": "string",
+"connected_to": "string"
 },
+
 "dining": {
-"has_checkbox": "boolean",
-"measurements": "string"
+"exists": "boolean",
+"measurements": "string",
+"connected_to": "string"
 },
+
 "lounge": {
-"has_checkbox": "boolean",
-"measurements": "string"
+"exists": "boolean",
+"measurements": "string",
+"connected_to": "string"
 },
+
 "family": {
-"has_checkbox": "boolean",
-"measurements": "string"
+"exists": "boolean",
+"measurements": "string",
+"connected_to": "string"
 },
+
 "rumpus": {
-"has_checkbox": "boolean",
-"measurements": "string"
+"exists": "boolean",
+"measurements": "string",
+"connected_to": "string"
 },
+
 "office": {
-"has_checkbox": "boolean",
-"measurements": "string"
+"exists": "boolean",
+"measurements": "string",
+"connected_to": "string"
 },
+
 "laundry": {
-"has_checkbox": "boolean",
+"exists": "boolean",
 "measurements": "string"
 },
 
@@ -159,6 +198,7 @@
 "walls": "boolean",
 "floor": "boolean"
 },
+
 "garage": "string",
 "car_port": "string",
 "electric_r_door": {
@@ -170,13 +210,14 @@
 "type": "select",
 "options": ["Yes", "No"]
 },
-"water_tank": "string",
+"water_tank_capacity_liters": "string",
 "rewired": "string",
 "replumbed": "string",
-"strata_fees": "string",
+"strata_fees": "currency",
+
 "commission": "string",
-"marketing_fee": "string",
-"price_financial": "string",
+"marketing_fee": "currency",
+"price_financial": "currency",
 
 "floor_coverings": "boolean",
 "window_furnishings": "boolean",
@@ -184,6 +225,7 @@
 "insect_screens": "boolean",
 "clothesline": "boolean",
 "tv_antenna": "boolean",
+
 "exhaust_fan": "string",
 "rangehood": "string",
 "stove": "string",
@@ -200,6 +242,8 @@
 "smoke_detectors": "string",
 "solar_panels": "string",
 
-"notes_page_content": "text",
-"bottom_handwritten_note": "string"
+"unit_number": "string",
+"bottom_handwritten_note": "string",
+
+"notes_page_content": "text"
 }

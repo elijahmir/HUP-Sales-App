@@ -1,0 +1,145 @@
+import type { ListingData } from "@/lib/gemini-ocr";
+
+/**
+ * Factory function for creating mock ListingData
+ * Provides sensible defaults that can be overridden
+ */
+export function getMockListingData(
+  overrides?: Partial<ListingData>,
+): ListingData {
+  return {
+    handwritten_notes_top: {
+      hash_number: null,
+      amount_year: null,
+      shed_note: null,
+    },
+    listing_agent: "Test Agent",
+    agency_type: "Sole",
+    date_listed: "2024-01-15",
+    address: "123 Test Street, Melbourne VIC 3000",
+    price: "$850,000",
+    bedrooms_icon_count: 3,
+    bathrooms_icon_count: 2,
+    parking_icon_count: 2,
+    title_ref: "TR-12345",
+    pid: "PID-67890",
+    year_built: "1995",
+    construction: "BV",
+    zoning: "Residential",
+    rates: "$2,500",
+    land_size: "650m²",
+    windows: ["Alum", "DBL"],
+    council: "Melbourne City Council",
+    council_water_rates: "$800",
+    building_size: "220m²",
+    roof: "Tile",
+    capital_value: "$750,000",
+    land_value: "$500,000",
+    vendors: "John Smith",
+    phone_numbers: "0412 345 678",
+    postal_address: "123 Test Street, Melbourne VIC 3000",
+    email: "john.smith@email.com",
+    solicitor: "Smith & Associates",
+    handwritten_notes_section: null,
+    bed_1: {
+      wardrobe_type: "WI",
+      has_checkbox: true,
+      measurements: "4.0 x 3.5",
+      ensuite: {
+        measurements: "2.5 x 2.0",
+        type: "Sep Shower",
+      },
+    },
+    bed_2: {
+      wardrobe_type: "BI",
+      has_checkbox: true,
+      measurements: "3.5 x 3.0",
+    },
+    bed_3: {
+      wardrobe_type: "BI",
+      has_checkbox: true,
+      measurements: "3.0 x 2.8",
+    },
+    bed_4: {
+      wardrobe_type: null,
+      has_checkbox: false,
+      measurements: null,
+    },
+    bed_5: {
+      wardrobe_type: null,
+      has_checkbox: false,
+      measurements: null,
+    },
+    bathroom: {
+      has_checkbox: true,
+      measurements: "2.8 x 2.2",
+      type: "Bath",
+    },
+    toilets: 2,
+    kitchen: { has_checkbox: true, measurements: "4.5 x 3.0" },
+    dining: { has_checkbox: true, measurements: "4.0 x 3.5" },
+    lounge: { has_checkbox: true, measurements: "5.0 x 4.0" },
+    family: { has_checkbox: true, measurements: "4.5 x 4.0" },
+    rumpus: { has_checkbox: false, measurements: null },
+    office: { has_checkbox: true, measurements: "3.0 x 2.5" },
+    laundry: { has_checkbox: true, measurements: "2.5 x 2.0" },
+    gas_hot_water: "Yes",
+    town_gas: "Yes",
+    bottled_gas: "No",
+    solar_hot_water: "No",
+    insulation: "Yes",
+    insulation_locations: { ceiling: true, walls: true, floor: false },
+    garage: "2",
+    car_port: null,
+    electric_r_door: "Yes",
+    septic_tank: null,
+    town_water: "Yes",
+    water_tank: null,
+    rewired: "2010",
+    replumbed: "2010",
+    strata_fees: null,
+    commission: "2.5%",
+    marketing_fee: "$3,000",
+    price_financial: "$850,000",
+    floor_coverings: true,
+    window_furnishings: true,
+    drapes_blinds: true,
+    insect_screens: true,
+    clothesline: true,
+    tv_antenna: true,
+    exhaust_fan: "2",
+    rangehood: "1",
+    stove: "Gas",
+    wall_oven: "Electric",
+    hot_plates: null,
+    microwave: null,
+    dishwasher: "Yes",
+    heating: "Ducted",
+    heat_pump: null,
+    wood_heater: null,
+    security_system: "Alarm",
+    security_doors: "Front",
+    shed: null,
+    smoke_detectors: "4",
+    solar_panels: null,
+    notes_page_content: null,
+    bottom_handwritten_note: null,
+    ...overrides,
+  } as ListingData;
+}
+
+/**
+ * Factory for creating partial listing data (e.g., from OCR)
+ */
+export function getMockPartialListingData(
+  overrides?: Partial<ListingData>,
+): Partial<ListingData> {
+  return {
+    address: "456 Sample Ave",
+    price: "$650,000",
+    bedrooms_icon_count: 2,
+    bathrooms_icon_count: 1,
+    parking_icon_count: 1,
+    ...overrides,
+  };
+}

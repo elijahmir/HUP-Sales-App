@@ -1,846 +1,898 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useEffect } from "react";
 import { ListingData } from "@/lib/gemini-ocr";
-import { PenTool } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Check,
+  ChevronDown,
+  Bed,
+  Bath,
+  Car,
+  Image as ImageIcon,
+} from "lucide-react";
 
 interface SmartListingFormProps {
-  initialData: Partial<ListingData>;
-  onChange: (data: Partial<ListingData>) => void;
+  initialData: ListingData | null;
+  onChange?: (data: ListingData) => void;
   readOnly?: boolean;
+  onViewImage?: () => void;
 }
+
+// Helper to safely get nested values (e.g., "construction.type")
+const getNestedValue = (obj: any, path: string) => {
+  return path
+    .split(".")
+    .reduce((prev, curr) => (prev ? prev[curr] : undefined), obj);
+};
+
+// Helper to safely set nested values
+const setNestedValue = (obj: any, path: string, value: any) => {
+  const newObj = JSON.parse(JSON.stringify(obj)); // Deep clone
+  const keys = path.split(".");
+  let current = newObj;
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (!current[keys[i]]) current[keys[i]] = {};
+    current = current[keys[i]];
+  }
+  current[keys[keys.length - 1]] = value;
+  return newObj;
+};
 
 export default function SmartListingForm({
   initialData,
   onChange,
   readOnly = false,
+  onViewImage,
 }: SmartListingFormProps) {
-  const [formData, setFormData] = useState<Partial<ListingData>>(
-    initialData || {},
+  const formData = initialData || {};
+
+  const handleChange = (path: string, value: any) => {
+    if (readOnly) return;
+    const newData = setNestedValue(formData, path, value);
+    if (onChange) onChange(newData);
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // FIELD COMPONENTS
+  // ─────────────────────────────────────────────────────────────
+
+  const InputField = ({
+    label,
+    path,
+    type = "text",
+    placeholder = "",
+    className = "",
+    labelClassName = "",
+    inputClassName = "",
+  }: {
+    label?: string;
+    path: string;
+    type?: string;
+    placeholder?: string;
+    className?: string;
+    labelClassName?: string;
+    inputClassName?: string;
+  }) => {
+    const value = getNestedValue(formData, path) || "";
+    return (
+      <div className={cn("flex flex-col", className)}>
+        {label && (
+          <label
+            className={cn(
+              "text-[10px] font-bold text-[#001F49] uppercase tracking-wider mb-0.5",
+              labelClassName,
+            )}
+          >
+            {label}
+          </label>
+        )}
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => handleChange(path, e.target.value)}
+          disabled={readOnly}
+          placeholder={placeholder}
+          className={cn(
+            "w-full bg-white border border-slate-300 px-2 py-1.5 text-sm text-slate-800 focus:outline-none focus:border-[#00ADEF] focus:ring-1 focus:ring-[#00ADEF]/20 transition-colors placeholder:text-slate-400",
+            readOnly && "cursor-default bg-slate-50 text-slate-600",
+            inputClassName,
+          )}
+        />
+      </div>
+    );
+  };
+
+  const SelectField = ({
+    label,
+    path,
+    options,
+    className = "",
+  }: {
+    label?: string;
+    path: string;
+    options: (string | number)[];
+    className?: string;
+  }) => {
+    let value = getNestedValue(formData, path) || "";
+    if (Array.isArray(value)) value = value.length > 0 ? value[0] : "";
+
+    return (
+      <div className={cn("flex flex-col", className)}>
+        {label && (
+          <label className="text-[10px] font-bold text-[#001F49] uppercase tracking-wider mb-0.5">
+            {label}
+          </label>
+        )}
+        <div className="relative">
+          <select
+            value={value}
+            onChange={(e) => handleChange(path, e.target.value)}
+            disabled={readOnly}
+            className="w-full bg-white border border-slate-300 px-2 py-1.5 text-sm text-slate-800 focus:outline-none focus:border-[#00ADEF] appearance-none cursor-pointer pr-6"
+          >
+            <option value="">–</option>
+            {options.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+        </div>
+      </div>
+    );
+  };
+
+  const CheckboxField = ({
+    label,
+    path,
+    className = "",
+  }: {
+    label: string;
+    path: string;
+    className?: string;
+  }) => {
+    const checked =
+      getNestedValue(formData, path) === true ||
+      getNestedValue(formData, path) === "Yes";
+    const isYesNo =
+      path.includes("gas") ||
+      path.includes("door") ||
+      path.includes("town") ||
+      path.includes("insulation");
+
+    const handleCheck = () => {
+      if (readOnly) return;
+      if (isYesNo) {
+        handleChange(path, checked ? "No" : "Yes");
+      } else {
+        handleChange(path, !checked);
+      }
+    };
+
+    return (
+      <div
+        onClick={handleCheck}
+        className={cn(
+          "flex items-center gap-2 cursor-pointer group select-none",
+          className,
+        )}
+      >
+        <div
+          className={cn(
+            "w-4 h-4 rounded-sm border border-slate-400 flex items-center justify-center transition-colors bg-white",
+            checked && "bg-[#00ADEF] border-[#00ADEF]",
+          )}
+        >
+          {checked && <Check className="w-3 h-3 text-white stroke-[3]" />}
+        </div>
+        <span className="text-xs text-slate-700 font-medium group-hover:text-[#001F49] transition-colors">
+          {label}
+        </span>
+      </div>
+    );
+  };
+
+  const YesNoField = ({
+    label,
+    path,
+    className = "",
+  }: {
+    label: string;
+    path: string;
+    className?: string;
+  }) => {
+    const value = getNestedValue(formData, path) || "";
+    return (
+      <div className={cn("flex items-center gap-2", className)}>
+        <span className="text-xs font-medium text-slate-700 min-w-[90px]">
+          {label}:
+        </span>
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => !readOnly && handleChange(path, "Yes")}
+            className={cn(
+              "px-2 py-0.5 text-xs rounded border cursor-pointer transition-colors",
+              value === "Yes"
+                ? "bg-[#00ADEF] text-white border-[#00ADEF]"
+                : "bg-white text-slate-600 border-slate-300 hover:border-[#00ADEF]",
+            )}
+          >
+            Yes
+          </button>
+          <button
+            type="button"
+            onClick={() => !readOnly && handleChange(path, "No")}
+            className={cn(
+              "px-2 py-0.5 text-xs rounded border cursor-pointer transition-colors",
+              value === "No"
+                ? "bg-slate-600 text-white border-slate-600"
+                : "bg-white text-slate-600 border-slate-300 hover:border-slate-500",
+            )}
+          >
+            No
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // SECTION COMPONENTS
+  // ─────────────────────────────────────────────────────────────
+
+  const BlueHeader = ({
+    children,
+    className = "",
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <div
+      className={cn(
+        "bg-[#001F49] text-white text-xs font-bold uppercase tracking-wider px-2 py-1",
+        className,
+      )}
+    >
+      {children}
+    </div>
   );
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    if (JSON.stringify(initialData) !== JSON.stringify(formData)) {
-      setFormData(initialData);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialData]);
+  // ─────────────────────────────────────────────────────────────
+  // MAIN FORM LAYOUT (Mirrors Original Paper Form)
+  // ─────────────────────────────────────────────────────────────
 
-  const handleChange = (newData: Partial<ListingData>) => {
-    if (readOnly) return;
-    setFormData(newData);
-    onChange(newData);
-  };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const updateField = (field: keyof ListingData, value: any) => {
-    const next = { ...formData, [field]: value };
-    handleChange(next);
-  };
-
-  const updateNestedField = (
-    section: keyof ListingData,
-    field: string,
-    value: any,
-  ) => {
-    const sectionData = (formData[section] as any) || {};
-    const next = {
-      ...formData,
-      [section]: {
-        ...sectionData,
-        [field]: value,
-      },
-    };
-    handleChange(next);
-  };
-
-  const updateDeepNestedField = (
-    section: keyof ListingData,
-    subSection: string,
-    field: string,
-    value: any,
-  ) => {
-    const sectionData = (formData[section] as any) || {};
-    const subSectionData = sectionData[subSection] || {};
-    const next = {
-      ...formData,
-      [section]: {
-        ...sectionData,
-        [subSection]: {
-          ...subSectionData,
-          [field]: value,
-        },
-      },
-    };
-    handleChange(next);
-  };
-
-  // Helper styles to mimic paper form
-  const paperCardClass = "bg-white border-2 border-gray-300 p-4 shadow-sm";
-  const paperLabelClass =
-    "block text-xs font-bold text-gray-800 uppercase tracking-tight mb-1";
-  const paperInputClass =
-    "w-full border-b border-gray-300 focus:border-blue-600 outline-none py-1 px-1 text-sm bg-transparent placeholder-gray-300 disabled:opacity-70 disabled:cursor-not-allowed";
-  const paperCheckboxClass =
-    "w-4 h-4 text-blue-600 border-gray-400 rounded focus:ring-blue-500 disabled:opacity-70";
-  const sectionTitleClass =
-    "font-bold text-sm text-white bg-[#001F49] py-1 px-2 inline-block mb-3 uppercase";
-
-  /* 
-     We use a fieldset here to disable all inputs when readOnly is true.
-     The styles 'border-none p-0 m-0 w-full' ensure it acts like a transparent wrapper.
-  */
   return (
-    <fieldset
-      disabled={readOnly}
-      className="max-w-[1200px] mx-auto space-y-6 font-sans text-gray-900 pb-20 border-none p-0 m-0 w-full group"
-    >
-      {/* HEADER: LOGO/AGENT PLACEHOLDER AREA */}
-      <div className="grid grid-cols-12 gap-4">
-        {/* LEFT COLUMN: 8 cols */}
-        <div className="col-span-12 lg:col-span-8 space-y-4">
-          {/* 1. PRINCIPAL / VENDOR & AGENT BLOCK */}
-          <div className={paperCardClass}>
-            <h3 className={sectionTitleClass}>Principal Details</h3>
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className={paperLabelClass}>Listing Agent</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.listing_agent || ""}
-                  onChange={(e) => updateField("listing_agent", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={paperLabelClass}>Agency Type</label>
-                <select
-                  className={paperInputClass}
-                  value={
-                    typeof formData.agency_type === "object"
-                      ? formData.agency_type?.value || ""
-                      : formData.agency_type || ""
-                  }
-                  onChange={(e) => updateField("agency_type", e.target.value)}
-                >
-                  <option value="">Select...</option>
-                  <option value="Sole">Sole</option>
-                  <option value="Open">Open</option>
-                  <option value="Joint">Joint</option>
-                </select>
-              </div>
+    <div className="w-full bg-white border border-slate-200 shadow-lg font-sans text-slate-800">
+      {/* ══════════════════════════════════════════════════════════
+          TOP HEADER - Logo + Agent/Date/Price
+          ══════════════════════════════════════════════════════════ */}
+      <div className="flex items-stretch border-b border-slate-300">
+        {/* Left: Harcourts Branding */}
+        <div className="flex-1 p-4 border-r border-slate-300">
+          <h1 className="font-display text-3xl font-black text-[#001F49] tracking-tight">
+            <span className="border-b-4 border-[#00ADEF] pb-1">Harcourts</span>
+          </h1>
+          {/* Bed/Bath/Parking Icons */}
+          <div className="flex items-center gap-4 mt-3">
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <Bed className="w-5 h-5" />
+              <span className="text-lg font-bold">
+                {formData.bedrooms_icon_count || "–"}
+              </span>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={paperLabelClass}>Vendor Name</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.vendors || ""}
-                  onChange={(e) => updateField("vendors", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={paperLabelClass}>Phone</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.phone_numbers || ""}
-                  onChange={(e) => updateField("phone_numbers", e.target.value)}
-                />
-              </div>
-              <div className="col-span-2">
-                <label className={paperLabelClass}>Vendor Email</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.email || ""}
-                  onChange={(e) => updateField("email", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={paperLabelClass}>Solicitor</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.solicitor || ""}
-                  onChange={(e) => updateField("solicitor", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={paperLabelClass}>Postal Address</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.postal_address || ""}
-                  onChange={(e) =>
-                    updateField("postal_address", e.target.value)
-                  }
-                />
-              </div>
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <Bath className="w-5 h-5" />
+              <span className="text-lg font-bold">
+                {formData.bathrooms_icon_count || "–"}
+              </span>
             </div>
-          </div>
-
-          {/* 2. PROPERTY DETAILS BLOCK */}
-          <div className={paperCardClass}>
-            <h3 className={sectionTitleClass}>Property Details</h3>
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-8">
-                <label className={paperLabelClass}>Address</label>
-                <input
-                  className={`${paperInputClass} font-bold text-base`}
-                  value={formData.address || ""}
-                  onChange={(e) => updateField("address", e.target.value)}
-                />
-              </div>
-              <div className="col-span-4">
-                <label className={paperLabelClass}>Price</label>
-                <input
-                  className={`${paperInputClass} font-bold text-base text-green-700`}
-                  value={formData.price || ""}
-                  onChange={(e) => updateField("price", e.target.value)}
-                />
-              </div>
-              {/* Legal */}
-              <div className="col-span-3">
-                <label className={paperLabelClass}>Title Ref</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.title_ref || ""}
-                  onChange={(e) => updateField("title_ref", e.target.value)}
-                />
-              </div>
-              <div className="col-span-3">
-                <label className={paperLabelClass}>PID</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.pid || ""}
-                  onChange={(e) => updateField("pid", e.target.value)}
-                />
-              </div>
-              <div className="col-span-3">
-                <label className={paperLabelClass}>Rates</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.rates || ""}
-                  onChange={(e) => updateField("rates", e.target.value)}
-                />
-              </div>
-              <div className="col-span-3">
-                <label className={paperLabelClass}>Zoning</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.zoning || ""}
-                  onChange={(e) => updateField("zoning", e.target.value)}
-                />
-              </div>
-
-              {/* Structure */}
-              <div className="col-span-3">
-                <label className={paperLabelClass}>Year Built</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.year_built || ""}
-                  onChange={(e) => updateField("year_built", e.target.value)}
-                />
-              </div>
-              <div className="col-span-3">
-                <label className={paperLabelClass}>Construction</label>
-                <select
-                  className={paperInputClass}
-                  value={
-                    typeof formData.construction === "object"
-                      ? formData.construction?.value || ""
-                      : formData.construction || ""
-                  }
-                  onChange={(e) => updateField("construction", e.target.value)}
-                >
-                  <option value="">-</option>
-                  <option value="B">B</option>
-                  <option value="BV">BV</option>
-                  <option value="WB">WB</option>
-                  <option value="R">R</option>
-                </select>
-              </div>
-              <div className="col-span-3">
-                <label className={paperLabelClass}>Roof</label>
-                <select
-                  className={paperInputClass}
-                  value={
-                    typeof formData.roof === "object"
-                      ? formData.roof?.value || ""
-                      : formData.roof || ""
-                  }
-                  onChange={(e) => updateField("roof", e.target.value)}
-                >
-                  <option value="">-</option>
-                  <option value="Tile">Tile</option>
-                  <option value="CB">CB</option>
-                  <option value="T">T</option>
-                </select>
-              </div>
-              <div className="col-span-3">
-                <label className={paperLabelClass}>Land Size</label>
-                <input
-                  className={paperInputClass}
-                  value={formData.land_size || ""}
-                  onChange={(e) => updateField("land_size", e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* 3. ROOMS & LAYOUT - MATCHING VISUAL FLOW */}
-          <div className={paperCardClass}>
-            <h3 className={sectionTitleClass}>Rooms</h3>
-            <div className="space-y-4">
-              {/* BEDROOM 1 + ENSUITE NESTED */}
-              <div className="border border-blue-100 bg-blue-50/30 p-3 rounded">
-                <div className="flex items-start justify-between mb-2">
-                  <span className="font-bold text-blue-900 uppercase text-sm">
-                    Bedroom 1
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={formData.bed_1?.has_checkbox || false}
-                      onChange={(e) =>
-                        updateNestedField(
-                          "bed_1",
-                          "has_checkbox",
-                          e.target.checked,
-                        )
-                      }
-                      className={paperCheckboxClass}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-12 gap-3 mb-2">
-                  <div className="col-span-4">
-                    <label className="text-[10px] uppercase text-gray-500">
-                      Size
-                    </label>
-                    <input
-                      className={paperInputClass}
-                      placeholder="3x3"
-                      value={formData.bed_1?.measurements || ""}
-                      onChange={(e) =>
-                        updateNestedField(
-                          "bed_1",
-                          "measurements",
-                          e.target.value,
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="col-span-4">
-                    <label className="text-[10px] uppercase text-gray-500">
-                      Wardrobe
-                    </label>
-                    <select
-                      className={paperInputClass}
-                      value={formData.bed_1?.wardrobe_type || ""}
-                      onChange={(e) =>
-                        updateNestedField(
-                          "bed_1",
-                          "wardrobe_type",
-                          e.target.value,
-                        )
-                      }
-                    >
-                      <option value="None">-</option>
-                      <option value="BI">BI</option>
-                      <option value="WI">WI</option>
-                      <option value="BI/WI">BI/WI</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* ENSUITE INSIDE BED 1 - UPDATED BINDING */}
-                <div className="mt-2 pt-2 border-t border-blue-200">
-                  <div className="flex items-center gap-4">
-                    <span className="text-xs font-bold text-blue-800 uppercase">
-                      Ensuite
-                    </span>
-                    <select
-                      className={`${paperInputClass} w-32`}
-                      value={formData.bed_1?.ensuite?.type || ""}
-                      onChange={(e) =>
-                        updateDeepNestedField(
-                          "bed_1",
-                          "ensuite",
-                          "type",
-                          e.target.value,
-                        )
-                      }
-                    >
-                      <option value="">-</option>
-                      <option value="SOB">SOB</option>
-                      <option value="Sep Shower">Sep Shower</option>
-                      <option value="Bath">Bath</option>
-                    </select>
-                    <input
-                      className={`${paperInputClass} w-24`}
-                      placeholder="Size"
-                      value={formData.bed_1?.ensuite?.measurements || ""}
-                      onChange={(e) =>
-                        updateDeepNestedField(
-                          "bed_1",
-                          "ensuite",
-                          "measurements",
-                          e.target.value,
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* OTHER BEDROOMS */}
-              <div className="space-y-2">
-                {[2, 3, 4, 5].map((i) => {
-                  const key = `bed_${i}` as keyof ListingData;
-                  const data = (formData[key] as any) || {};
-                  return (
-                    <div
-                      key={key}
-                      className="grid grid-cols-12 gap-3 items-center border-b border-gray-100 pb-1"
-                    >
-                      <div className="col-span-2 text-xs font-bold text-gray-600 uppercase">
-                        Bed {i}
-                      </div>
-                      <div className="col-span-3">
-                        <input
-                          className={paperInputClass}
-                          placeholder="Size"
-                          value={data.measurements || ""}
-                          onChange={(e) =>
-                            updateNestedField(
-                              key,
-                              "measurements",
-                              e.target.value,
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <select
-                          className={paperInputClass}
-                          value={data.wardrobe_type || ""}
-                          onChange={(e) =>
-                            updateNestedField(
-                              key,
-                              "wardrobe_type",
-                              e.target.value,
-                            )
-                          }
-                        >
-                          <option value="None">-</option>
-                          <option value="BI">BI</option>
-                          <option value="WI">WI</option>
-                          <option value="BI/WI">BI/WI</option>
-                        </select>
-                      </div>
-                      <div className="col-span-1">
-                        <input
-                          type="checkbox"
-                          checked={data.has_checkbox || false}
-                          onChange={(e) =>
-                            updateNestedField(
-                              key,
-                              "has_checkbox",
-                              e.target.checked,
-                            )
-                          }
-                          className={paperCheckboxClass}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* BATHROOM */}
-              <div className="grid grid-cols-12 gap-3 items-center pt-2">
-                <div className="col-span-2 text-xs font-bold text-gray-600 uppercase">
-                  Bathroom
-                </div>
-                <div className="col-span-3">
-                  <input
-                    className={paperInputClass}
-                    placeholder="Size"
-                    value={formData.bathroom?.measurements || ""}
-                    onChange={(e) =>
-                      updateNestedField(
-                        "bathroom",
-                        "measurements",
-                        e.target.value,
-                      )
-                    }
-                  />
-                </div>
-                <div className="col-span-3">
-                  <select
-                    className={paperInputClass}
-                    value={formData.bathroom?.type || ""}
-                    onChange={(e) =>
-                      updateNestedField("bathroom", "type", e.target.value)
-                    }
-                  >
-                    <option value="">-</option>
-                    <option value="SOB">SOB</option>
-                    <option value="Sep Shower">Sep Shower</option>
-                    <option value="Bath">Bath</option>
-                  </select>
-                </div>
-                <div className="col-span-1">
-                  <input
-                    type="checkbox"
-                    checked={formData.bathroom?.has_checkbox || false}
-                    onChange={(e) =>
-                      updateNestedField(
-                        "bathroom",
-                        "has_checkbox",
-                        e.target.checked,
-                      )
-                    }
-                    className={paperCheckboxClass}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-12 gap-3 items-center">
-                <div className="col-span-2 text-xs font-bold text-gray-600 uppercase">
-                  Toilets
-                </div>
-                <div className="col-span-2">
-                  <input
-                    type="number"
-                    className={paperInputClass}
-                    value={formData.toilets || ""}
-                    onChange={(e) =>
-                      updateField("toilets", parseInt(e.target.value))
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* LIVING AREAS */}
-              <div className="border-t border-gray-200 mt-2 pt-2 space-y-2">
-                {[
-                  "kitchen",
-                  "dining",
-                  "lounge",
-                  "family",
-                  "rumpus",
-                  "office",
-                  "laundry",
-                ].map((room) => {
-                  const key = room as keyof ListingData;
-                  const data = (formData[key] as any) || {};
-                  return (
-                    <div
-                      key={room}
-                      className="grid grid-cols-12 gap-3 items-center"
-                    >
-                      <div className="col-span-2 text-xs font-bold text-gray-600 uppercase">
-                        {room}
-                      </div>
-                      <div className="col-span-3">
-                        <input
-                          className={paperInputClass}
-                          placeholder="Size"
-                          value={data.measurements || ""}
-                          onChange={(e) =>
-                            updateNestedField(
-                              key,
-                              "measurements",
-                              e.target.value,
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="col-span-1">
-                        <input
-                          type="checkbox"
-                          checked={data.has_checkbox || false}
-                          onChange={(e) =>
-                            updateNestedField(
-                              key,
-                              "has_checkbox",
-                              e.target.checked,
-                            )
-                          }
-                          className={paperCheckboxClass}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* 4. UTILITIES BLOCK */}
-          <div className={paperCardClass}>
-            <h3 className={sectionTitleClass}>Services</h3>
-            <div className="grid grid-cols-3 gap-4">
-              {[
-                ["gas_hot_water", "Gas Hot Water"],
-                ["town_gas", "Town Gas"],
-                ["bottled_gas", "Bottled Gas"],
-                ["solar_hot_water", "Solar HW"],
-                ["town_water", "Town Water"],
-                ["insulation", "Insulation"], // Handling the main yes/no for insulation
-              ].map(([key, label]) => (
-                <div key={key}>
-                  <label className="text-[10px] uppercase text-gray-600">
-                    {label}
-                  </label>
-                  <select
-                    className={paperInputClass}
-                    value={(formData[key as keyof ListingData] as string) || ""}
-                    onChange={(e) =>
-                      updateField(key as keyof ListingData, e.target.value)
-                    }
-                  >
-                    <option value="">-</option>
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                  </select>
-                </div>
-              ))}
-            </div>
-            {/* Insulation Locations */}
-            <div className="mt-2 flex gap-4 text-xs">
-              {["ceiling", "walls", "floor"].map((loc) => (
-                <label
-                  key={loc}
-                  className="flex items-center gap-1 cursor-pointer"
-                >
-                  <input
-                    type="checkbox"
-                    checked={
-                      formData.insulation_locations?.[
-                        loc as "ceiling" | "walls" | "floor"
-                      ] || false
-                    }
-                    onChange={(e) =>
-                      updateDeepNestedField(
-                        "insulation",
-                        "locations",
-                        loc,
-                        e.target.checked,
-                      )
-                    }
-                    className={paperCheckboxClass}
-                  />
-                  <span className="uppercase">{loc}</span>
-                </label>
-              ))}
+            <div className="flex items-center gap-1.5 text-slate-600">
+              <Car className="w-5 h-5" />
+              <span className="text-lg font-bold">
+                {formData.parking_icon_count || "–"}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: 4 cols - INCLUSIONS & NOTES */}
-        <div className="col-span-12 lg:col-span-4 space-y-4">
-          {/* 5. TOP RIGHT NOTES (Hash, Shed Key, etc) */}
-          <div className="bg-yellow-50 border border-yellow-200 p-3 shadow-sm rounded">
-            <div className="space-y-2">
-              <div>
-                <label className="text-[10px] uppercase text-gray-500">
-                  Key #
-                </label>
-                <input
-                  className="w-full bg-white border border-yellow-300 p-1 font-mono text-sm"
-                  value={formData.handwritten_notes_top?.hash_number || ""}
-                  onChange={(e) =>
-                    updateNestedField(
-                      "handwritten_notes_top",
-                      "hash_number",
-                      e.target.value,
-                    )
-                  }
-                />
-              </div>
-              <div>
-                <label className="text-[10px] uppercase text-gray-500">
-                  Other
-                </label>
-                <input
-                  className="w-full bg-white border border-yellow-300 p-1 font-mono text-sm text-blue-600"
-                  value={formData.handwritten_notes_top?.shed_note || ""}
-                  onChange={(e) =>
-                    updateNestedField(
-                      "handwritten_notes_top",
-                      "shed_note",
-                      e.target.value,
-                    )
-                  }
-                />
-              </div>
-            </div>
+        {/* Right: Agent Info Grid */}
+        <div className="grid grid-cols-2 text-sm">
+          <div className="px-3 py-2 border-b border-r border-slate-300 bg-slate-50">
+            <span className="text-[10px] font-bold text-[#001F49] uppercase">
+              Listing Agent
+            </span>
+          </div>
+          <div className="px-3 py-2 border-b border-slate-300">
+            <input
+              value={formData.listing_agent || ""}
+              onChange={(e) => handleChange("listing_agent", e.target.value)}
+              disabled={readOnly}
+              className="w-full bg-transparent text-sm font-medium focus:outline-none"
+              placeholder="Agent name"
+            />
           </div>
 
-          {/* 6. INCLUSIONS CHECKLIST */}
-          <div className={paperCardClass}>
-            <h3 className={sectionTitleClass}>Inclusions</h3>
-            <div className="space-y-1">
-              {[
-                ["floor_coverings", "Floor Coverings"],
-                ["window_furnishings", "Window Furnishings"],
-                ["drapes_blinds", "Drapes / Blinds"],
-                ["insect_screens", "Insect Screens"],
-                ["clothesline", "Clothesline"],
-                ["tv_antenna", "TV Antenna"],
-              ].map(([key, label]) => (
-                <label
-                  key={key}
-                  className="flex items-center justify-between p-1 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-0"
-                >
-                  <span className="text-xs font-bold text-gray-700 uppercase">
-                    {label}
-                  </span>
-                  <input
-                    type="checkbox"
-                    checked={
-                      (formData[key as keyof ListingData] as boolean) || false
-                    }
-                    onChange={(e) =>
-                      updateField(key as keyof ListingData, e.target.checked)
-                    }
-                    className={paperCheckboxClass}
-                  />
-                </label>
-              ))}
-            </div>
-
-            {/* APPLIANCES TEXT INPUTS */}
-            <div className="mt-4 space-y-2">
-              {[
-                "stove",
-                "wall_oven",
-                "hot_plates",
-                "dishwasher",
-                "rangehood",
-                "exhaust_fan",
-              ].map((field) => (
-                <div key={field}>
-                  <label className="text-[10px] uppercase text-gray-500">
-                    {field.replace("_", " ")}
-                  </label>
-                  <input
-                    className={paperInputClass}
-                    value={
-                      (formData[field as keyof ListingData] as string) || ""
-                    }
-                    onChange={(e) =>
-                      updateField(field as keyof ListingData, e.target.value)
-                    }
-                  />
-                </div>
-              ))}
-            </div>
-
-            {/* HEATING/COOLING */}
-            <div className="mt-4 space-y-2 pt-4 border-t border-gray-200">
-              <h4 className="text-xs font-bold uppercase text-gray-900">
-                Heating / Cooling
-              </h4>
-              {[
-                "heating",
-                "wood_heater",
-                "heat_pump",
-                "security_system",
-                "solar_panels",
-              ].map((field) => (
-                <div key={field}>
-                  <label className="text-[10px] uppercase text-gray-500">
-                    {field.replace("_", " ")}
-                  </label>
-                  <input
-                    className={paperInputClass}
-                    value={
-                      (formData[field as keyof ListingData] as string) || ""
-                    }
-                    onChange={(e) =>
-                      updateField(field as keyof ListingData, e.target.value)
-                    }
-                  />
-                </div>
-              ))}
-            </div>
+          <div className="px-3 py-2 border-b border-r border-slate-300 bg-slate-50">
+            <span className="text-[10px] font-bold text-[#001F49] uppercase">
+              Agency Type
+            </span>
+          </div>
+          <div className="px-3 py-2 border-b border-slate-300 flex gap-2">
+            {["Sole", "Open", "Joint"].map((type) => (
+              <label
+                key={type}
+                className="flex items-center gap-1 cursor-pointer"
+              >
+                <input
+                  type="radio"
+                  name="agency_type"
+                  value={type}
+                  checked={formData.agency_type === type}
+                  onChange={(e) => handleChange("agency_type", e.target.value)}
+                  disabled={readOnly}
+                  className="w-3 h-3 accent-[#00ADEF]"
+                />
+                <span className="text-xs">{type}</span>
+              </label>
+            ))}
           </div>
 
-          {/* 7. FINANCIALS MINI BLOCK */}
-          <div className="bg-green-50 border border-green-200 p-3 shadow-sm rounded">
-            <h3 className="font-bold text-green-800 text-xs uppercase mb-2">
-              Financials
-            </h3>
-            <div className="space-y-2">
-              <div>
-                <label className="text-[10px] uppercase text-green-700">
-                  Commission
-                </label>
-                <input
-                  className="w-full bg-white border border-green-300 p-1 text-sm"
-                  value={formData.commission || ""}
-                  onChange={(e) => updateField("commission", e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-[10px] uppercase text-green-700">
-                  Marketing
-                </label>
-                <input
-                  className="w-full bg-white border border-green-300 p-1 text-sm"
-                  value={formData.marketing_fee || ""}
-                  onChange={(e) => updateField("marketing_fee", e.target.value)}
-                />
-              </div>
-            </div>
+          <div className="px-3 py-2 border-b border-r border-slate-300 bg-slate-50">
+            <span className="text-[10px] font-bold text-[#001F49] uppercase">
+              Date Listed
+            </span>
+          </div>
+          <div className="px-3 py-2 border-b border-slate-300">
+            <input
+              type="date"
+              value={formData.date_listed || ""}
+              onChange={(e) => handleChange("date_listed", e.target.value)}
+              disabled={readOnly}
+              className="w-full bg-transparent text-sm focus:outline-none cursor-pointer"
+            />
+          </div>
+
+          <div className="px-3 py-2 border-r border-slate-300 bg-slate-50">
+            <span className="text-[10px] font-bold text-[#001F49] uppercase">
+              Price
+            </span>
+          </div>
+          <div className="px-3 py-2">
+            <input
+              value={formData.price?.display_text || ""}
+              onChange={(e) =>
+                handleChange("price.display_text", e.target.value)
+              }
+              disabled={readOnly}
+              className="w-full bg-transparent text-sm font-semibold text-[#001F49] focus:outline-none"
+              placeholder="$000,000"
+            />
           </div>
         </div>
       </div>
 
-      {/* 8. NOTES SECTION (Full Width Bottom) */}
-      <div className={paperCardClass}>
-        <h3 className={sectionTitleClass}>
-          <PenTool className="w-3 h-3 inline mr-1" /> Notes Page
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-slate-50 p-4 rounded border border-slate-200">
-            <label className={paperLabelClass}>Transcript (OCR)</label>
-            <textarea
-              className="w-full h-48 bg-transparent text-xs font-mono text-gray-600 resize-none outline-none disabled:opacity-70"
-              value={formData.notes_page_content || ""}
-              onChange={(e) =>
-                updateField("notes_page_content", e.target.value)
-              }
-            />
-          </div>
-          <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
-            <label className={paperLabelClass}>
-              Handwritten Notes (Extracted)
-            </label>
-            <textarea
-              className="w-full h-48 bg-transparent text-lg font-handwriting text-blue-800 resize-none outline-none leading-relaxed disabled:opacity-70"
-              style={{
-                fontFamily: '"Comic Sans MS", "Chalkboard SE", sans-serif',
-              }}
-              value={formData.handwritten_notes_section || ""}
-              onChange={(e) =>
-                updateField("handwritten_notes_section", e.target.value)
-              }
-            />
-          </div>
-        </div>
-        <div className="mt-4">
-          <label className={paperLabelClass}>Bottom Note</label>
-          <input
-            className={`${paperInputClass} font-handwriting text-blue-600`}
-            value={formData.bottom_handwritten_note || ""}
-            onChange={(e) =>
-              updateField("bottom_handwritten_note", e.target.value)
-            }
+      {/* ══════════════════════════════════════════════════════════
+          HANDWRITTEN NOTES (Yellow Section)
+          ══════════════════════════════════════════════════════════ */}
+      <div className="bg-[#FFFEF0] border-b border-yellow-200 p-3">
+        <div className="grid grid-cols-3 gap-3">
+          <InputField
+            label="Financial Notes"
+            path="handwritten_notes_top.financial_note"
+            inputClassName="bg-transparent border-dashed border-yellow-300 italic"
+          />
+          <InputField
+            label="Property Notes"
+            path="handwritten_notes_top.property_note"
+            inputClassName="bg-transparent border-dashed border-yellow-300 italic"
+          />
+          <InputField
+            label="Other Notes"
+            path="handwritten_notes_top.other_notes"
+            inputClassName="bg-transparent border-dashed border-yellow-300 italic"
           />
         </div>
       </div>
-    </fieldset>
+
+      {/* ══════════════════════════════════════════════════════════
+          ADDRESS SECTION
+          ══════════════════════════════════════════════════════════ */}
+      <BlueHeader className="flex items-center justify-between">
+        <span>Address</span>
+        {onViewImage && (
+          <button
+            onClick={onViewImage}
+            className="flex items-center gap-1.5 px-2 py-0.5 bg-white/20 hover:bg-white/30 rounded text-white text-[10px] font-semibold uppercase transition-colors cursor-pointer"
+          >
+            <ImageIcon className="w-3 h-3" />
+            See Image
+          </button>
+        )}
+      </BlueHeader>
+      <div className="border-b border-slate-300">
+        <div className="px-2 py-2">
+          <input
+            value={formData.address || ""}
+            onChange={(e) => handleChange("address", e.target.value)}
+            disabled={readOnly}
+            className="w-full text-base font-semibold text-[#001F49] bg-transparent focus:outline-none"
+            placeholder="Property Address"
+          />
+        </div>
+        <div className="grid grid-cols-2 border-t border-slate-300">
+          <div className="flex items-center px-2 py-1.5 border-r border-slate-300">
+            <span className="text-[10px] font-bold text-[#001F49] uppercase mr-2">
+              Title Ref.
+            </span>
+            <input
+              value={formData.title_ref || ""}
+              onChange={(e) => handleChange("title_ref", e.target.value)}
+              disabled={readOnly}
+              className="flex-1 bg-transparent text-sm focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center px-2 py-1.5">
+            <span className="text-[10px] font-bold text-[#001F49] uppercase mr-2">
+              PID
+            </span>
+            <input
+              value={formData.pid || ""}
+              onChange={(e) => handleChange("pid", e.target.value)}
+              disabled={readOnly}
+              className="flex-1 bg-transparent text-sm focus:outline-none"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════
+          PROPERTY DETAILS GRID (4 columns like paper form)
+          ══════════════════════════════════════════════════════════ */}
+      <div className="border-b border-slate-300">
+        {/* Row 1 */}
+        <div className="grid grid-cols-4 border-b border-slate-200">
+          <div className="p-2 border-r border-slate-200">
+            <InputField label="Year Built" path="year_built" />
+          </div>
+          <div className="p-2 border-r border-slate-200">
+            <label className="text-[10px] font-bold text-[#001F49] uppercase tracking-wider mb-0.5 block">
+              Construction
+            </label>
+            <div className="flex gap-1 mt-1">
+              {["B", "BV", "WB", "R"].map((type) => (
+                <label
+                  key={type}
+                  className="flex items-center gap-0.5 cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="construction_type"
+                    value={type}
+                    checked={formData.construction?.type === type}
+                    onChange={(e) =>
+                      handleChange("construction.type", e.target.value)
+                    }
+                    disabled={readOnly}
+                    className="w-3 h-3 accent-[#00ADEF]"
+                  />
+                  <span className="text-xs font-medium">{type}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="p-2 border-r border-slate-200">
+            <InputField label="Zoning" path="zoning" />
+          </div>
+          <div className="p-2 flex items-end gap-1">
+            <InputField label="Rates" path="rates" className="flex-1" />
+            <span className="text-xs text-slate-500 pb-2">$</span>
+          </div>
+        </div>
+
+        {/* Row 2 */}
+        <div className="grid grid-cols-4 border-b border-slate-200">
+          <div className="p-2 border-r border-slate-200">
+            <InputField label="Land Size" path="land_size" />
+          </div>
+          <div className="p-2 border-r border-slate-200">
+            <label className="text-[10px] font-bold text-[#001F49] uppercase tracking-wider mb-0.5 block">
+              Windows
+            </label>
+            <div className="flex flex-wrap gap-x-2 gap-y-0.5 mt-1">
+              {["Timber", "Alum", "DBL", "Single"].map((type) => (
+                <label
+                  key={type}
+                  className="flex items-center gap-0.5 cursor-pointer"
+                >
+                  <input
+                    type="checkbox"
+                    checked={
+                      Array.isArray(formData.windows?.type)
+                        ? formData.windows.type.includes(type)
+                        : formData.windows?.type === type
+                    }
+                    onChange={(e) => {
+                      if (readOnly) return;
+                      const current = Array.isArray(formData.windows?.type)
+                        ? formData.windows.type
+                        : formData.windows?.type
+                          ? [formData.windows.type]
+                          : [];
+                      const updated = e.target.checked
+                        ? [...current, type]
+                        : current.filter((t: string) => t !== type);
+                      handleChange("windows.type", updated);
+                    }}
+                    disabled={readOnly}
+                    className="w-3 h-3 accent-[#00ADEF]"
+                  />
+                  <span className="text-[10px]">{type}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="p-2 border-r border-slate-200">
+            <InputField label="Council" path="council" />
+          </div>
+          <div className="p-2 flex items-end gap-1">
+            <InputField
+              label="Water Rates"
+              path="water_rates"
+              className="flex-1"
+            />
+            <span className="text-xs text-slate-500 pb-2">$</span>
+          </div>
+        </div>
+
+        {/* Row 3 */}
+        <div className="grid grid-cols-4">
+          <div className="p-2 border-r border-slate-200">
+            <InputField label="Building Size" path="building_size" />
+          </div>
+          <div className="p-2 border-r border-slate-200">
+            <label className="text-[10px] font-bold text-[#001F49] uppercase tracking-wider mb-0.5 block">
+              Roof
+            </label>
+            <div className="flex gap-2 mt-1">
+              {["Tile", "CB", "T"].map((type) => (
+                <label
+                  key={type}
+                  className="flex items-center gap-0.5 cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="roof_type"
+                    value={type}
+                    checked={formData.roof?.type === type}
+                    onChange={(e) => handleChange("roof.type", e.target.value)}
+                    disabled={readOnly}
+                    className="w-3 h-3 accent-[#00ADEF]"
+                  />
+                  <span className="text-xs font-medium">{type}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div className="p-2 border-r border-slate-200 flex items-end gap-1">
+            <InputField
+              label="Capital Value"
+              path="capital_value"
+              className="flex-1"
+            />
+            <span className="text-xs text-slate-500 pb-2">$</span>
+          </div>
+          <div className="p-2 flex items-end gap-1">
+            <InputField
+              label="Land Value"
+              path="land_value"
+              className="flex-1"
+            />
+            <span className="text-xs text-slate-500 pb-2">$</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════
+          VENDOR SECTION
+          ══════════════════════════════════════════════════════════ */}
+      <BlueHeader className="grid grid-cols-2">
+        <span>Vendor/s</span>
+        <span className="text-right">Phone Number/s</span>
+      </BlueHeader>
+      <div className="grid grid-cols-2 border-b border-slate-300">
+        <div className="p-2 border-r border-slate-300">
+          <input
+            value={formData.vendors || ""}
+            onChange={(e) => handleChange("vendors", e.target.value)}
+            disabled={readOnly}
+            className="w-full bg-transparent text-sm focus:outline-none"
+            placeholder="Vendor name(s)"
+          />
+        </div>
+        <div className="p-2">
+          <input
+            value={formData.phone_numbers || ""}
+            onChange={(e) => handleChange("phone_numbers", e.target.value)}
+            disabled={readOnly}
+            className="w-full bg-transparent text-sm focus:outline-none"
+            placeholder="Phone number(s)"
+          />
+        </div>
+      </div>
+
+      {/* Postal Address */}
+      <BlueHeader>Postal Address</BlueHeader>
+      <div className="border-b border-slate-300 p-2">
+        <input
+          value={formData.postal_address || ""}
+          onChange={(e) => handleChange("postal_address", e.target.value)}
+          disabled={readOnly}
+          className="w-full bg-transparent text-sm focus:outline-none"
+          placeholder="Postal address"
+        />
+      </div>
+
+      {/* Email / Solicitor */}
+      <div className="grid grid-cols-2 border-b border-slate-300">
+        <div className="p-2 border-r border-slate-300">
+          <label className="text-[10px] font-bold text-[#001F49] uppercase">
+            Email
+          </label>
+          <input
+            value={formData.email || ""}
+            onChange={(e) => handleChange("email", e.target.value)}
+            disabled={readOnly}
+            className="w-full bg-transparent text-sm focus:outline-none mt-0.5"
+            placeholder="Email address"
+          />
+        </div>
+        <div className="p-2">
+          <label className="text-[10px] font-bold text-[#001F49] uppercase">
+            Solicitor
+          </label>
+          <input
+            value={formData.solicitor || ""}
+            onChange={(e) => handleChange("solicitor", e.target.value)}
+            disabled={readOnly}
+            className="w-full bg-transparent text-sm focus:outline-none mt-0.5"
+            placeholder="Solicitor details"
+          />
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════
+          TWO COLUMN LAYOUT: ROOMS + UTILITIES
+          ══════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-2 border-b border-slate-300">
+        {/* LEFT COLUMN: Rooms */}
+        <div className="border-r border-slate-300">
+          {/* Bed 1 with Ensuite */}
+          <div className="grid grid-cols-[auto,1fr,1fr,1fr] items-center gap-1 p-1.5 border-b border-slate-200 text-xs">
+            <CheckboxField label="Bed 1:" path="bed_1.exists" />
+            <SelectField
+              path="bed_1.wardrobe_type"
+              options={["BI", "WI", ""]}
+              className="text-xs"
+            />
+            <InputField path="bed_1.measurements" placeholder="Size" />
+            <div className="text-[10px] text-slate-500">
+              <span className="font-bold">Ensuite:</span>
+              <div className="flex gap-1 mt-0.5">
+                <SelectField
+                  path="bed_1.ensuite.type"
+                  options={["SOB", "Sep Shower", "Bath"]}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Beds 2-5 */}
+          {[2, 3, 4, 5].map((num) => (
+            <div
+              key={num}
+              className="grid grid-cols-[auto,1fr,1fr,1fr] items-center gap-1 p-1.5 border-b border-slate-200 text-xs"
+            >
+              <CheckboxField label={`Bed ${num}:`} path={`bed_${num}.exists`} />
+              <SelectField
+                path={`bed_${num}.wardrobe_type`}
+                options={["BI", "WI", ""]}
+              />
+              <InputField path={`bed_${num}.measurements`} placeholder="Size" />
+              <div />
+            </div>
+          ))}
+
+          {/* Bathroom */}
+          <div className="grid grid-cols-[auto,1fr,1fr] items-center gap-1 p-1.5 border-b border-slate-200 text-xs">
+            <CheckboxField label="Bathroom:" path="bathroom.exists" />
+            <SelectField
+              path="bathroom.type"
+              options={["SOB", "Sep Shower", "Bath"]}
+            />
+            <InputField path="bathroom.measurements" placeholder="Size" />
+          </div>
+
+          {/* Toilets */}
+          <div className="flex items-center gap-2 p-1.5 border-b border-slate-200 text-xs">
+            <span className="font-bold text-slate-700">Toilets:</span>
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((n) => (
+                <label
+                  key={n}
+                  className="flex items-center gap-0.5 cursor-pointer"
+                >
+                  <input
+                    type="radio"
+                    name="toilets"
+                    value={n}
+                    checked={
+                      formData.toilets === n || formData.toilets === String(n)
+                    }
+                    onChange={() => handleChange("toilets", n)}
+                    disabled={readOnly}
+                    className="w-3 h-3 accent-[#00ADEF]"
+                  />
+                  <span>{n}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Living Areas */}
+          {[
+            "Kitchen",
+            "Dining",
+            "Lounge",
+            "Family",
+            "Rumpus",
+            "Office",
+            "Laundry",
+          ].map((room) => {
+            const key = room.toLowerCase();
+            return (
+              <div
+                key={key}
+                className="grid grid-cols-[auto,1fr,1fr] items-center gap-1 p-1.5 border-b border-slate-200 text-xs"
+              >
+                <CheckboxField label={`${room}:`} path={`${key}.exists`} />
+                <InputField path={`${key}.measurements`} placeholder="Size" />
+                {key !== "laundry" && (
+                  <InputField
+                    path={`${key}.connected_to`}
+                    placeholder="Connected to"
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* RIGHT COLUMN: Utilities & Features */}
+        <div className="text-xs">
+          {/* Utilities */}
+          <div className="p-2 border-b border-slate-200 space-y-1.5">
+            <YesNoField label="Gas Hot Water" path="gas_hot_water" />
+            <YesNoField label="Town Gas" path="town_gas" />
+            <YesNoField label="Bottled Gas" path="bottled_gas" />
+            <YesNoField label="Solar Hot Water" path="solar_hot_water" />
+            <YesNoField label="Insulation" path="insulation" />
+            <div className="flex items-center gap-3 pl-24">
+              <CheckboxField
+                label="Ceiling"
+                path="insulation_locations.ceiling"
+              />
+              <CheckboxField label="Walls" path="insulation_locations.walls" />
+              <CheckboxField label="Floor" path="insulation_locations.floor" />
+            </div>
+          </div>
+
+          {/* Garage / Carport */}
+          <div className="grid grid-cols-2 gap-2 p-2 border-b border-slate-200">
+            <InputField label="Garage" path="garage" />
+            <InputField label="Car Port" path="car_port" />
+          </div>
+
+          {/* Electric Door / Septic */}
+          <div className="p-2 border-b border-slate-200 space-y-1.5">
+            <YesNoField label="Electric R/Door" path="electric_r_door" />
+            <InputField label="Septic Tank" path="septic_tank" />
+            <YesNoField label="Town Water" path="town_water" />
+            <InputField
+              label="Water Tank (L)"
+              path="water_tank_capacity_liters"
+            />
+          </div>
+
+          {/* Rewired / Replumbed / Strata */}
+          <div className="grid grid-cols-2 gap-2 p-2 border-b border-slate-200">
+            <InputField label="Rewired" path="rewired" />
+            <InputField label="Replumbed" path="replumbed" />
+          </div>
+          <div className="p-2 border-b border-slate-200">
+            <InputField label="Strata Fees" path="strata_fees" />
+          </div>
+
+          {/* Commission / Marketing */}
+          <div className="grid grid-cols-2 gap-2 p-2 border-b border-slate-200">
+            <InputField label="Commission" path="commission" />
+            <InputField label="Marketing Fee" path="marketing_fee" />
+          </div>
+
+          {/* Chattels (Checkboxes) */}
+          <div className="p-2 border-b border-slate-200">
+            <div className="grid grid-cols-2 gap-y-1 gap-x-4">
+              <CheckboxField label="Floor Coverings" path="floor_coverings" />
+              <CheckboxField label="Insect Screens" path="insect_screens" />
+              <CheckboxField
+                label="Window Furnishings"
+                path="window_furnishings"
+              />
+              <CheckboxField label="Clothesline" path="clothesline" />
+              <CheckboxField label="Drapes/Blinds" path="drapes_blinds" />
+              <CheckboxField label="TV Antenna" path="tv_antenna" />
+            </div>
+          </div>
+
+          {/* Appliances */}
+          <div className="p-2 space-y-1">
+            <div className="grid grid-cols-2 gap-2">
+              <InputField label="Exhaust Fan" path="exhaust_fan" />
+              <InputField label="Rangehood" path="rangehood" />
+              <InputField label="Stove" path="stove" />
+              <InputField label="Wall Oven" path="wall_oven" />
+              <InputField label="Hot Plates" path="hot_plates" />
+              <InputField label="Microwave" path="microwave" />
+              <InputField label="Dishwasher" path="dishwasher" />
+              <InputField label="Heating" path="heating" />
+              <InputField label="Heat Pump" path="heat_pump" />
+              <InputField label="Wood Heater" path="wood_heater" />
+              <InputField label="Security System" path="security_system" />
+              <InputField label="Security Doors" path="security_doors" />
+              <InputField label="Shed" path="shed" />
+              <InputField label="Smoke Detectors" path="smoke_detectors" />
+              <InputField label="Solar Panels" path="solar_panels" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════
+          BOTTOM NOTES SECTION
+          ══════════════════════════════════════════════════════════ */}
+      <div className="p-3">
+        <label className="text-[10px] font-bold text-[#001F49] uppercase tracking-wider mb-1 block">
+          Additional Notes
+        </label>
+        <textarea
+          value={formData.handwritten_notes_section || ""}
+          onChange={(e) =>
+            handleChange("handwritten_notes_section", e.target.value)
+          }
+          disabled={readOnly}
+          rows={4}
+          className="w-full bg-slate-50 border border-slate-200 rounded p-2 text-sm text-slate-800 focus:outline-none focus:border-[#00ADEF] resize-none"
+          placeholder="Additional notes..."
+        />
+      </div>
+
+      {/* Notes Page Content */}
+      {(formData.notes_page_content || !readOnly) && (
+        <div className="p-3 border-t border-slate-200 bg-slate-50">
+          <label className="text-[10px] font-bold text-[#001F49] uppercase tracking-wider mb-1 block">
+            Notes Page Content
+          </label>
+          <textarea
+            value={formData.notes_page_content || ""}
+            onChange={(e) => handleChange("notes_page_content", e.target.value)}
+            disabled={readOnly}
+            rows={4}
+            className="w-full bg-white border border-slate-200 rounded p-2 text-sm text-slate-800 focus:outline-none focus:border-[#00ADEF] resize-none"
+            placeholder="Content from notes page..."
+          />
+        </div>
+      )}
+    </div>
   );
 }
