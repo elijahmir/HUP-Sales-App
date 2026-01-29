@@ -13,6 +13,17 @@
 "date_listed": "date",
 
 "address": "string",
+"address_components": {
+"unit": "string",
+"street_number": "string",
+"street_name": "string",
+"suburb": "string",
+"state": {
+"type": "select",
+"options": ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"]
+},
+"postcode": "string"
+},
 "title_ref": "string",
 "pid": "string",
 

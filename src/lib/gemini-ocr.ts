@@ -14,6 +14,14 @@ export interface ListingData {
   agency_type?: "Sole" | "Open" | "Joint";
   date_listed?: string;
   address?: string;
+  address_components?: {
+    unit?: string;
+    street_number?: string;
+    street_name?: string;
+    suburb?: string;
+    state?: "NSW" | "VIC" | "QLD" | "SA" | "WA" | "TAS" | "NT" | "ACT";
+    postcode?: string;
+  };
   title_ref?: string;
   pid?: string;
   price?: {
@@ -180,6 +188,23 @@ const listingSchema: ResponseSchema = {
     },
     date_listed: { type: SchemaType.STRING, nullable: true },
     address: { type: SchemaType.STRING, nullable: true },
+    address_components: {
+      type: SchemaType.OBJECT,
+      properties: {
+        unit: { type: SchemaType.STRING, nullable: true },
+        street_number: { type: SchemaType.STRING, nullable: true },
+        street_name: { type: SchemaType.STRING, nullable: true },
+        suburb: { type: SchemaType.STRING, nullable: true },
+        state: {
+          type: SchemaType.STRING,
+          format: "enum",
+          nullable: true,
+          enum: ["NSW", "VIC", "QLD", "SA", "WA", "TAS", "NT", "ACT"],
+        },
+        postcode: { type: SchemaType.STRING, nullable: true },
+      },
+      nullable: true,
+    },
     title_ref: { type: SchemaType.STRING, nullable: true },
     pid: { type: SchemaType.STRING, nullable: true },
     price: {
@@ -486,6 +511,15 @@ export async function* extractListingDataStream(
     Pay close attention to checkboxes, circled options, and handwritten notes.
     For 'exists' fields in rooms, set to true if the room has data or is checked.
     If a field is empty, return null or empty string.
+    
+    IMPORTANT: For the address field, also parse it into address_components following Australian address standards:
+    - unit: Unit/Apartment number if present (e.g., "Unit 5", "3", or from format "3/123 Main St" extract "3")
+    - street_number: Street number including any suffix (e.g., "123", "45A")
+    - street_name: Full street name WITH street type (e.g., "Main Street", "Oak Avenue", "Victoria Road")
+    - suburb: Suburb/locality name (e.g., "Surry Hills", "South Melbourne")
+    - state: Australian state code - MUST be one of: NSW, VIC, QLD, SA, WA, TAS, NT, ACT
+    - postcode: 4-digit Australian postcode (e.g., "2000", "3000")
+    
     Return ONLY the structured JSON.`;
 
     yield {
