@@ -13,6 +13,11 @@ export interface ListingData {
   listing_agent?: string;
   agency_type?: "Sole" | "Open" | "Joint";
   date_listed?: string;
+  appraisal_date?: string; // YYYY-MM-DD
+  vendor_first_name?: string;
+  vendor_last_name?: string;
+  vendor_email?: string;
+  vendor_phone?: string;
   address?: string;
   address_components?: {
     unit?: string;
@@ -187,6 +192,11 @@ const listingSchema: ResponseSchema = {
       enum: ["Sole", "Open", "Joint"],
     },
     date_listed: { type: SchemaType.STRING, nullable: true },
+    appraisal_date: { type: SchemaType.STRING, nullable: true },
+    vendor_first_name: { type: SchemaType.STRING, nullable: true },
+    vendor_last_name: { type: SchemaType.STRING, nullable: true },
+    vendor_email: { type: SchemaType.STRING, nullable: true },
+    vendor_phone: { type: SchemaType.STRING, nullable: true },
     address: { type: SchemaType.STRING, nullable: true },
     address_components: {
       type: SchemaType.OBJECT,
@@ -520,7 +530,14 @@ export async function* extractListingDataStream(
     - state: Australian state code - MUST be one of: NSW, VIC, QLD, SA, WA, TAS, NT, ACT
     - postcode: 4-digit Australian postcode (e.g., "2000", "3000")
     
-    Return ONLY the structured JSON.`;
+    Return ONLY the structured JSON.
+    
+    Also extract:
+    - appraisal_date: Date of the appraisal appointment (YYYY-MM-DD)
+    - vendor_first_name: First name of the vendor (primary)
+    - vendor_last_name: Last name of the vendor (primary)
+    - vendor_email: Email address of the vendor
+    - vendor_phone: Phone number of the vendor`;
 
     yield {
       type: "thought",

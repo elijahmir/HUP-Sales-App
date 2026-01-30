@@ -2,6 +2,7 @@
 
 import { ListingData } from "@/lib/gemini-ocr";
 import { cn } from "@/lib/utils";
+import { VAULTRE_AGENTS } from "@/data/vaultre-agents";
 import {
   Check,
   ChevronDown,
@@ -345,13 +346,22 @@ export default function SmartListingForm({
               </span>
             </div>
             <div className="px-3 py-2 border-b border-slate-300">
-              <input
+              <select
                 value={formData.listing_agent || ""}
                 onChange={(e) => handleChange("listing_agent", e.target.value)}
                 disabled={readOnly}
-                className="w-full bg-transparent text-sm font-medium focus:outline-none"
-                placeholder="Agent name"
-              />
+                className={cn(
+                  "w-full bg-transparent text-sm font-medium focus:outline-none appearance-none cursor-pointer",
+                  !formData.listing_agent && "text-slate-400",
+                )}
+              >
+                <option value="">Select Agent</option>
+                {VAULTRE_AGENTS.map((agent) => (
+                  <option key={agent.id} value={agent.name}>
+                    {agent.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="px-3 py-2 border-b border-r border-slate-300 bg-slate-50">
@@ -391,6 +401,20 @@ export default function SmartListingForm({
                 type="date"
                 value={formData.date_listed || ""}
                 onChange={(e) => handleChange("date_listed", e.target.value)}
+                disabled={readOnly}
+                className="w-full bg-transparent text-sm focus:outline-none cursor-pointer"
+              />
+            </div>
+            <div className="px-3 py-2 border-b border-r border-slate-300 bg-slate-50">
+              <span className="text-[10px] font-bold text-[#001F49] uppercase">
+                Appraisal Date
+              </span>
+            </div>
+            <div className="px-3 py-2 border-b border-slate-300">
+              <input
+                type="date"
+                value={formData.appraisal_date || ""}
+                onChange={(e) => handleChange("appraisal_date", e.target.value)}
                 disabled={readOnly}
                 className="w-full bg-transparent text-sm focus:outline-none cursor-pointer"
               />
@@ -565,6 +589,49 @@ export default function SmartListingForm({
                 onChange={(e) => handleChange("pid", e.target.value)}
                 disabled={readOnly}
                 className="flex-1 bg-transparent text-sm focus:outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ══════════════════════════════════════════════════════════
+          VENDOR SECTION
+          ══════════════════════════════════════════════════════════ */}
+        <BlueHeader>Vendor Details</BlueHeader>
+        <div className="border-b border-slate-300 mb-6">
+          <div className="grid grid-cols-2 border-b border-slate-100">
+            <div className="p-3 border-r border-slate-100">
+              <InputField
+                label="First Name"
+                path="vendor_first_name"
+                placeholder="First Name"
+                className="w-full"
+              />
+            </div>
+            <div className="p-3">
+              <InputField
+                label="Last Name"
+                path="vendor_last_name"
+                placeholder="Last Name"
+                className="w-full"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 border-b border-slate-100">
+            <div className="p-3 border-r border-slate-100">
+              <InputField
+                label="Email"
+                path="vendor_email"
+                placeholder="email@example.com"
+                className="w-full"
+              />
+            </div>
+            <div className="p-3">
+              <InputField
+                label="Phone"
+                path="vendor_phone"
+                placeholder="0400 000 000"
+                className="w-full"
               />
             </div>
           </div>

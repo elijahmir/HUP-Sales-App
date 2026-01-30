@@ -58,6 +58,20 @@ export async function POST(req: NextRequest) {
               );
               // Verify generic JSON parsing just to be safe
               const parsed = JSON.parse(cleanedJson);
+
+              // ─────────────────────────────────────────────────────────────
+              // POST-PROCESSING: Fuzzy match agent name
+              // ─────────────────────────────────────────────────────────────
+              if (parsed.listing_agent) {
+                const { findAgentByOCR } =
+                  await import("@/data/vaultre-agents");
+                const matchedAgent = findAgentByOCR(parsed.listing_agent);
+                if (matchedAgent) {
+                  parsed.listing_agent = matchedAgent.name;
+                  parsed.vaultre_agent_id = matchedAgent.id; // Optional: pass ID if needed
+                }
+              }
+
               const event = `event: complete\ndata: ${JSON.stringify(parsed)}\n\n`;
               controller.enqueue(encoder.encode(event));
               finalJsonFound = true;

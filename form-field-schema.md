@@ -6,6 +6,11 @@
 },
 
 "listing_agent": "string",
+"appraisal_date": "string (YYYY-MM-DD)",
+"vendor_first_name": "string",
+"vendor_last_name": "string",
+"vendor_email": "string",
+"vendor_phone": "string",
 "agency_type": {
 "type": "select",
 "options": ["Sole", "Open", "Joint"]

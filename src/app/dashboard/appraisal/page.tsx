@@ -19,6 +19,7 @@ import SmartListingForm from "@/components/smart-listing-form";
 import AppraisalLoading from "@/components/appraisal-loading";
 import DocumentPreview from "@/components/document-preview";
 import ConfirmationModal from "@/components/confirmation-modal";
+import PropertyExistsModal from "@/components/property-exists-modal";
 import StarBorder from "@/components/StarBorder";
 import TrueFocus from "@/components/TrueFocus";
 import "@/components/StarBorder.css";
@@ -218,17 +219,10 @@ export default function AppraisalPage() {
     }
   };
 
-  const handleConfirmAction = async () => {
-    if (modalConfig.type === "discard") {
-      setStatus("idle");
-      setSelectedFiles([]);
-      setExtractedData(null);
-      setShowPreview(false);
-      setModalConfig((prev) => ({ ...prev, isOpen: false }));
-      toast.info("Listing discarded.");
-      return;
-    }
+  const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
+  const [duplicateProperty, setDuplicateProperty] = useState<any>(null);
 
+  const proceedWithCreation = async () => {
     setIsSubmitting(true);
     try {
       const {
@@ -236,12 +230,28 @@ export default function AppraisalPage() {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
 
+      // Create in VaultRE
+      const vaultResponse = await fetch("/api/vaultre/create-appraisal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ formData: extractedData }),
+      });
+
+      const vaultResult = await vaultResponse.json();
+      if (!vaultResponse.ok) {
+        throw new Error(
+          vaultResult.error || "Failed to create appraisal in VaultRE",
+        );
+      }
+
       const finalData = {
         ...extractedData,
         agent_name: userName || "Unknown Agent",
         created_at: new Date().toISOString(),
         listing_source: "AI_OCR_APP",
         raw_ocr_notes: processingThought,
+        vaultre_property_id: vaultResult.id,
+        vaultre_status: "created",
       };
 
       const { error: dbError } = await supabase
@@ -257,31 +267,69 @@ export default function AppraisalPage() {
 
       if (dbError) throw dbError;
 
-      const response = await fetch(
-        "https://hup.app.n8n.cloud/webhook/create-appraisal",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(finalData),
-        },
-      );
+      // Optional: Keep n8n webhook if needed, or remove
+      // const response = await fetch(
+      //   "https://hup.app.n8n.cloud/webhook/create-appraisal",
+      //   ...
+      // );
 
-      if (!response.ok) {
-        console.warn("n8n webhook failed, but DB saved.");
-      }
-
-      toast.success("Success! Appraisal saved and workflow triggered.");
+      toast.success("Success! Appraisal created in VaultRE and saved.");
 
       setExtractedData(null);
       setSelectedFiles([]);
       setStatus("idle");
       setShowPreview(false);
+      setDuplicateModalOpen(false);
     } catch (err: any) {
       console.error(err);
       toast.error(`Submission failed: ${err.message}`);
     } finally {
       setIsSubmitting(false);
       setModalConfig((prev) => ({ ...prev, isOpen: false }));
+    }
+  };
+
+  const handleConfirmAction = async () => {
+    if (modalConfig.type === "discard") {
+      setStatus("idle");
+      setSelectedFiles([]);
+      setExtractedData(null);
+      setShowPreview(false);
+      setModalConfig((prev) => ({ ...prev, isOpen: false }));
+      toast.info("Listing discarded.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    // Check for existing property in VaultRE
+    try {
+      if (!extractedData?.address_components) {
+        throw new Error("Address data missing");
+      }
+
+      const checkResponse = await fetch("/api/vaultre/search-property", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(extractedData.address_components),
+      });
+
+      const checkResult = await checkResponse.json();
+
+      if (checkResult.exists && checkResult.property) {
+        setDuplicateProperty(checkResult.property);
+        setDuplicateModalOpen(true);
+        setModalConfig((prev) => ({ ...prev, isOpen: false })); // Close confirm modal
+        return; // Wait for user decision in PropertyExistsModal
+      }
+
+      // If no duplicate, proceed directly
+      await proceedWithCreation();
+    } catch (err: any) {
+      console.error("VaultRE check failed:", err);
+      toast.warning("Could not check VaultRE for duplicates. Proceeding...");
+      // Optionally proceed anyway or stop
+      await proceedWithCreation();
     }
   };
 
@@ -605,6 +653,17 @@ export default function AppraisalPage() {
             </div>
           </motion.div>
         )}
+        {/* PROPERTY EXISTS MODAL */}
+        <PropertyExistsModal
+          isOpen={duplicateModalOpen}
+          onClose={() => {
+            setDuplicateModalOpen(false);
+            setIsSubmitting(false);
+          }}
+          onContinue={proceedWithCreation}
+          property={duplicateProperty || { displayAddress: "", id: 0 }}
+          isProcessing={isSubmitting}
+        />
       </AnimatePresence>
     </div>
   );
