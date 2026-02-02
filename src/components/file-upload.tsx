@@ -27,6 +27,8 @@ export default function FileUpload({
     accept: {
       "image/jpeg": [".jpg", ".jpeg"],
       "image/png": [".png"],
+      "image/heic": [".heic"],
+      "image/heif": [".heif"],
       "application/pdf": [".pdf"],
     },
     maxFiles: 10,
@@ -78,7 +80,7 @@ export default function FileUpload({
           {isDragActive ? "Drop files here" : "Upload Listing Authority"}
         </p>
         <p className="text-slate-500 text-sm max-w-xs mx-auto">
-          Drag & drop scanned documents (PDF, JPG, PNG)
+          Drag & drop scanned documents (PDF, JPG, PNG, HEIC)
         </p>
       </div>
 
@@ -86,6 +88,8 @@ export default function FileUpload({
         <span>JPG</span>
         <span className="w-px h-4 bg-slate-200" />
         <span>PNG</span>
+        <span className="w-px h-4 bg-slate-200" />
+        <span>HEIC</span>
         <span className="w-px h-4 bg-slate-200" />
         <span>PDF</span>
       </div>

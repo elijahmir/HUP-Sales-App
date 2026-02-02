@@ -145,6 +145,7 @@ export async function searchPropertyByAddress(
   const response = await fetch(url.toString(), {
     method: "GET",
     headers: getHeaders(),
+    cache: "no-store", // Prevent Next.js caching
   });
 
   if (!response.ok) {
@@ -155,9 +156,47 @@ export async function searchPropertyByAddress(
   return response.json();
 }
 
+// Suffix Expansion Map
+const SUFFIXES: Record<string, string> = {
+  st: "street",
+  rd: "road",
+  pl: "place",
+  ave: "avenue",
+  dr: "drive",
+  cl: "close",
+  ct: "court",
+  ln: "lane",
+  cres: "crescent",
+  pde: "parade",
+  hwy: "highway",
+  tce: "terrace",
+};
+
 /**
- * EXHAUSTIVE CHECK: Search by Suburb ID + Pagination
- * Matches n8n workflow logic to ensure no duplicates are missed.
+ * Normalize street name with suffix expansion
+ * e.g. "Moonbeam Pl" -> "moonbeamplace"
+ */
+function normalizeAndExpand(name: string): string {
+  if (!name) return "";
+  const lower = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim();
+  const parts = lower.split(/\s+/);
+
+  if (parts.length > 1) {
+    const last = parts[parts.length - 1];
+    if (SUFFIXES[last]) {
+      parts[parts.length - 1] = SUFFIXES[last];
+    }
+  }
+
+  return parts.join("").replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * OPTIMIZED CHECK: Search by Expanded Street Name
+ * Uses /search/properties/address API for O(1) performance
  */
 export async function checkPropertyExists(addressComponents: {
   unit?: string;
@@ -168,138 +207,114 @@ export async function checkPropertyExists(addressComponents: {
 }): Promise<{
   exists: boolean;
   matches: PropertySearchResult[];
+  property?: PropertySearchResult;
 }> {
-  console.log("Checking property exists (Exhaustive):", addressComponents);
+  console.log("Checking property exists (Fast):", addressComponents);
 
-  // 1. Get Suburb ID
-  const suburbs = await searchSuburbs(addressComponents.suburb);
-  const targetSuburb = suburbs.find(
-    (s) =>
-      s.name.toLowerCase() === addressComponents.suburb.toLowerCase() &&
-      (addressComponents.postcode
-        ? s.postcode === addressComponents.postcode
-        : true),
-  );
+  const {
+    unit: targetUnitRaw,
+    street_number: targetNumberRaw,
+    street_name: targetNameRaw,
+    suburb: targetSuburbRaw,
+  } = addressComponents;
 
-  if (!targetSuburb) {
-    console.log("Suburb not found, falling back to basic search");
-    // Fallback? Or just return false?
-    // If suburb doesn't exist in Vault, property likely doesn't either.
-    return { exists: false, matches: [] };
-  }
+  // 1. Normalize Inputs
+  const targetStreetName = normalizeAndExpand(targetNameRaw);
+  const targetStreetNo = (targetNumberRaw || "").toString().trim();
+  const targetUnit = (targetUnitRaw || "").toString().trim();
+  const targetSuburb = (targetSuburbRaw || "").toLowerCase().trim();
 
-  // 2. Fetch ALL properties in suburb using generic /properties endpoint
-  const { baseUrl } = getConfig();
-  const matches: PropertySearchResult[] = [];
-  let page = 1;
-  const pageSize = 100;
-  let hasMore = true;
-  const MAX_PAGES = 50; // Check up to 5000 properties - should cover any suburb
+  // 2. Perform Targeted Search
+  // We search for the street name (expanded) to get a list of candidates
+  // e.g. "Moonbeam Pl" -> "moonbeamplace" -> Search "Moonbeam Place"
+  // VaultRE search matches on partial address, so searching street name is safest
+  const searchTerm = targetNameRaw
+    .replace(" Pl", " Place")
+    .replace(" St", " Street")
+    .replace(" Rd", " Road"); // Simple pre-expansion for search term
 
-  // --- 1. Extract & Parse Target Address (n8n Logic) ---
-  const rawStreet = [
-    addressComponents.street_number,
-    addressComponents.street_name,
-  ]
-    .filter(Boolean)
-    .join(" ");
+  // Actually, let's use the raw street name first, but if it has known abbreviation, try expanded
+  // Use the API search
+  let candidates: PropertySearchResult[] = [];
 
-  // Regex to capture the full number part (e.g. "1/60" or "24") and the street name
-  const streetMatch = rawStreet.match(/^([\d/]+)\s*(.*)$/);
+  try {
+    // Search 1: Exact Street Name provided
+    const res1 = await searchPropertyByAddress(targetNameRaw);
+    candidates = [...res1.items];
 
-  let targetUnit = "";
-  let targetStreetNo = "";
-  let targetStreetName = rawStreet; // Default fallback
-
-  if (streetMatch) {
-    const fullNumber = streetMatch[1].trim(); // "1/60" or "24"
-    // n8n logic: toLowerCase().replace(/[^a-z0-9]/g, '').trim()
-    targetStreetName = streetMatch[2]
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "")
-      .trim();
-
-    if (fullNumber.includes("/")) {
-      // Split "1/60" -> Unit 1, Number 60
-      const parts = fullNumber.split("/");
-      targetUnit = parts[0];
-      targetStreetNo = parts[1];
-    } else {
-      // Just "24" -> Unit Empty, Number 24
-      targetStreetNo = fullNumber;
-    }
-  } else {
-    // Fallback if regex fails (unlikely given join space)
-    targetStreetName = rawStreet
-      .toLowerCase()
-      .replace(/[^a-z0-9]/g, "")
-      .trim();
-  }
-
-  // Debug logging for n8n Logic
-  console.log("n8n Logic Target:", {
-    targetUnit,
-    targetStreetNo,
-    targetStreetName,
-  });
-
-  while (hasMore) {
-    // UPDATED: Use generic /properties endpoint to cover all property types
-    const url = new URL(`${baseUrl}/properties`);
-    url.searchParams.set("suburbs", targetSuburb.id.toString());
-    url.searchParams.set("page", page.toString());
-    url.searchParams.set("pagesize", pageSize.toString());
-    url.searchParams.set("sort", "modified");
-    url.searchParams.set("sortOrder", "desc");
-
-    try {
-      const res = await fetch(url.toString(), {
-        method: "GET",
-        headers: getHeaders(),
-      });
-
-      if (!res.ok) break;
-
-      const data = await res.json();
-      const items = data.items || [];
-
-      if (items.length === 0) {
-        hasMore = false;
-        break;
+    // Search 2: If no matches, try Expanded Street Name (if different)
+    const expandedName = normalizeAndExpand(targetNameRaw); // returns "moonbeamplace"
+    // We need a human-readable expanded name for search?
+    // normalizeAndExpand returns "moonbeamplace". API might need "Moonbeam Place".
+    // Let's use the simple suffix map substitution for the SEARCH TERM
+    let expandedSearchTerm = targetNameRaw;
+    const parts = targetNameRaw.split(/\s+/);
+    if (parts.length > 1) {
+      const last = parts[parts.length - 1].toLowerCase();
+      if (SUFFIXES[last]) {
+        parts[parts.length - 1] = SUFFIXES[last]; // e.g. "place"
+        // Capitalize? Vault search is case insensitive usually
+        expandedSearchTerm = parts.join(" ");
       }
+    }
 
-      for (const p of items) {
-        if (!p.address) continue;
-
-        // n8n Logic: Parsing Vault Address directly
-        const vaultStreetName = (p.address.street || "")
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, "")
-          .trim();
-        const vaultStreetNo = (p.address.streetNumber || "").toString().trim();
-        const vaultUnit = (p.address.unitNumber || "").toString().trim();
-
-        // CHECK 2: Street Name
-        if (vaultStreetName !== targetStreetName) continue;
-
-        // CHECK 3: Unit & Street Number
-        // Explicit comparison
-        if (vaultStreetNo === targetStreetNo && vaultUnit === targetUnit) {
-          matches.push(p);
+    if (expandedSearchTerm.toLowerCase() !== targetNameRaw.toLowerCase()) {
+      console.log(`Searching expanded term: "${expandedSearchTerm}"`);
+      const res2 = await searchPropertyByAddress(expandedSearchTerm);
+      // Merge unique candidates
+      const existingIds = new Set(candidates.map((c) => c.id));
+      for (const item of res2.items) {
+        if (!existingIds.has(item.id)) {
+          candidates.push(item);
         }
       }
-
-      if (page >= data.totalPages) hasMore = false;
-      page++;
-
-      if (page > MAX_PAGES) hasMore = false;
-    } catch (e) {
-      console.error("Exhaustive search error:", e);
-      break;
     }
-  }
 
-  return { exists: matches.length > 0, matches: matches };
+    console.log(`Found ${candidates.length} candidates. Filtering...`);
+
+    const matches: PropertySearchResult[] = [];
+
+    // 3. Filter Candidates Strictly
+    for (const p of candidates) {
+      if (!p.address) continue;
+
+      const vaultStreetName = normalizeAndExpand(p.address.street || "");
+      const vaultStreetNo = (p.address.streetNumber || "").toString().trim();
+      const vaultUnit = (p.address.unitNumber || "").toString().trim();
+      const vaultSuburb = (p.address.suburb?.name || "").toLowerCase().trim();
+
+      // Debug log for potential matches
+      if (vaultStreetNo === targetStreetNo) {
+        console.log(
+          `Candidate [${p.id}]: ${p.displayAddress} | Suburb: ${vaultSuburb} vs ${targetSuburb}`,
+        );
+      }
+
+      // Check Suburb
+      if (vaultSuburb !== targetSuburb) continue;
+
+      // Check Street Name (Normalized)
+      if (vaultStreetName !== targetStreetName) continue;
+
+      // Check Street Number
+      if (vaultStreetNo !== targetStreetNo) continue;
+
+      // Check Unit (Allow exact match or both empty)
+      if (vaultUnit !== targetUnit) continue;
+
+      matches.push(p);
+    }
+
+    return {
+      exists: matches.length > 0,
+      matches,
+      property: matches[0], // Frontend expects this for the modal
+    };
+  } catch (error) {
+    console.error("Fast search failed:", error);
+    // Fail safe? Or throw?
+    throw error;
+  }
 }
 
 // REMOVED: normalizeStreetType (Incompatible with n8n logic)
@@ -316,6 +331,7 @@ export async function createAppraisal(
   const response = await fetch(`${baseUrl}/properties/residential/sale`, {
     method: "POST",
     headers: getHeaders(),
+    cache: "no-store",
     body: JSON.stringify(data),
   });
 

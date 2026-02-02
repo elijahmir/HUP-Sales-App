@@ -285,7 +285,7 @@ export default function SmartListingForm({
       ].filter(Boolean);
 
       // Fix "Unit 5/" space issue if exists
-      let fullAddr = parts.join(" ").replace("/ ", "/").trim();
+      const fullAddr = parts.join(" ").replace("/ ", "/").trim();
 
       // Update if different
       if (fullAddr !== formData.address) {
@@ -551,7 +551,7 @@ export default function SmartListingForm({
                 ].filter(Boolean);
 
                 // Handle unit format logic: "Unit 5" vs "5/"
-                let fullAddr = parts.join(" ").replace("/ ", "/").trim();
+                const fullAddr = parts.join(" ").replace("/ ", "/").trim();
 
                 // Avoid infinite loop by checking if different
                 if (fullAddr !== formData.address) {

@@ -48,16 +48,21 @@ export async function POST(req: NextRequest) {
 
           // At the end, try to parse the buffer and send a final event
           try {
-            // Find the outermost braces
-            const firstBrace = jsonBuffer.indexOf("{");
-            const lastBrace = jsonBuffer.lastIndexOf("}");
+            // Robust JSON extraction:
+            // 1. Remove markdown code blocks (```json ... ```) with regex
+            let cleanBuffer = jsonBuffer
+              .replace(/```json\n?|\n?```/g, "")
+              .trim();
+
+            // 2. Find the outermost braces to handle any preamble/postamble text
+            const firstBrace = cleanBuffer.indexOf("{");
+            const lastBrace = cleanBuffer.lastIndexOf("}");
+
             if (firstBrace !== -1 && lastBrace !== -1) {
-              const cleanedJson = jsonBuffer.substring(
-                firstBrace,
-                lastBrace + 1,
-              );
+              cleanBuffer = cleanBuffer.substring(firstBrace, lastBrace + 1);
+
               // Verify generic JSON parsing just to be safe
-              const parsed = JSON.parse(cleanedJson);
+              const parsed = JSON.parse(cleanBuffer);
 
               // ─────────────────────────────────────────────────────────────
               // POST-PROCESSING: Fuzzy match agent name
@@ -75,14 +80,23 @@ export async function POST(req: NextRequest) {
               const event = `event: complete\ndata: ${JSON.stringify(parsed)}\n\n`;
               controller.enqueue(encoder.encode(event));
               finalJsonFound = true;
+            } else {
+              console.warn("[OCR API] No JSON braces found in buffer");
             }
           } catch (e) {
-            console.warn("Could not parse final JSON from stream buffer", e);
+            console.error("[OCR API] JSON Parse Error:", e);
+            console.warn(
+              "[OCR API] Buffer content (partial):",
+              jsonBuffer.substring(0, 500),
+            );
           }
 
           if (!finalJsonFound) {
             // Fallback: send error
-            const event = `event: error\ndata: ${JSON.stringify({ error: "Failed to parse JSON response" })}\n\n`;
+            console.error(
+              "[OCR API] Failed to extract valid JSON from model response.",
+            );
+            const event = `event: error\ndata: ${JSON.stringify({ error: "Failed to parse valid JSON from AI response." })}\n\n`;
             controller.enqueue(encoder.encode(event));
           }
 

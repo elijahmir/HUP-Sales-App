@@ -214,6 +214,49 @@ export default function DashboardHub() {
           </Link>
         </motion.div>
 
+        {/* SAA Form - New */}
+        <motion.div variants={item} className="md:col-span-2 group relative">
+          <Link href="/dashboard/saa" className="block h-full">
+            <div className="relative h-full bg-gradient-to-br from-[#00ADEF]/5 to-emerald-500/5 rounded-2xl p-8 overflow-hidden shadow-sm border border-emerald-500/20 transition-all duration-300 hover:shadow-md hover:border-emerald-500/30 hover:-translate-y-1 flex flex-col justify-between">
+              <div className="absolute top-0 right-0 p-4 opacity-5">
+                <FileText className="w-32 h-32 text-emerald-600" />
+              </div>
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col gap-5">
+                <div className="inline-flex items-center gap-2 self-start bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                    New Feature
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h2 className="font-display text-2xl font-bold tracking-tight text-[#001F49]">
+                    Sole Agency Agreement
+                  </h2>
+                  <p className="text-slate-500 text-base max-w-md leading-relaxed">
+                    Create compliant digital agency agreements with DocuSign
+                    integration in minutes.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 mt-6 pt-5 border-t border-emerald-100 flex items-center justify-between group-hover:border-emerald-200 transition-colors">
+                <span className="font-semibold text-base text-emerald-700">
+                  Create Agreement
+                </span>
+                <div className="w-9 h-9 rounded-full bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 group-hover:text-emerald-800 transition-all duration-300">
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+          </Link>
+        </motion.div>
+
         {/* Recent Activity - 2 cols */}
         <motion.div variants={item} className="xl:col-span-2 relative">
           <div className="h-full bg-white rounded-2xl p-6 border border-slate-200 shadow-sm transition-all hover:shadow-md flex flex-col relative">

@@ -52,6 +52,21 @@ const OCR_STAGES = [
   },
 ];
 
+const PING_STYLES = `
+  @keyframes ping-force {
+    75%, 100% { transform: scale(2); opacity: 0; }
+  }
+  .animate-ping-force {
+    animation: ping-force 1s cubic-bezier(0, 0, 0.2, 1) infinite !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-ping-force {
+      animation-duration: 1s !important;
+      transition-duration: 1s !important;
+    }
+  }
+`;
+
 export default function AppraisalLoading({
   currentThought = "",
   modelName = "Gemini AI",
@@ -116,7 +131,8 @@ export default function AppraisalLoading({
         <div className="carousel-item-title flex items-center gap-2 mb-2">
           <span>AI Analyzing</span>
           <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#00ADEF] opacity-75"></span>
+            <style>{PING_STYLES}</style>
+            <span className="animate-ping-force absolute inline-flex h-full w-full rounded-full bg-[#00ADEF] opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[#00ADEF]"></span>
           </span>
         </div>

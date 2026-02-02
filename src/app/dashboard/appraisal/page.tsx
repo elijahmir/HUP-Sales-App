@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import {
   Sparkles,
@@ -105,13 +106,57 @@ export default function AppraisalPage() {
   >([]);
 
   const handleFileSelect = async (files: File[]) => {
+    // Dynamic import for heic2any to ensure it runs only on client side if needed
+    // checking for window just in case, though this is a client component
+    const heic2any = (await import("heic2any")).default;
+
     const newFiles = await Promise.all(
       files.map(async (file) => {
+        let processedFile = file;
+
+        // HEIC/HEIF Conversion Logic
+        if (
+          file.type === "image/heic" ||
+          file.type === "image/heif" ||
+          file.name.toLowerCase().endsWith(".heic") ||
+          file.name.toLowerCase().endsWith(".heif")
+        ) {
+          try {
+            const toastId = toast.loading(`Converting ${file.name}...`);
+            const convertedBlob = await heic2any({
+              blob: file,
+              toType: "image/jpeg",
+              quality: 0.8,
+            });
+
+            // heic2any can return a single blob or an array of blobs. Handle both.
+            const blob = Array.isArray(convertedBlob)
+              ? convertedBlob[0]
+              : convertedBlob;
+
+            processedFile = new File(
+              [blob],
+              file.name.replace(/\.(heic|heif)$/i, ".jpg"),
+              {
+                type: "image/jpeg",
+              },
+            );
+            toast.dismiss(toastId);
+          } catch (e) {
+            console.error("HEIC conversion failed", e);
+            toast.error(`Failed to convert ${file.name}`);
+            // Fallback to original file, though preview might fail
+          }
+        }
+
         return new Promise<{ file: File; preview: string }>((resolve) => {
           const reader = new FileReader();
           reader.onload = () =>
-            resolve({ file, preview: reader.result as string });
-          reader.readAsDataURL(file);
+            resolve({
+              file: processedFile,
+              preview: reader.result as string,
+            });
+          reader.readAsDataURL(processedFile);
         });
       }),
     );
@@ -164,9 +209,24 @@ export default function AppraisalPage() {
       const decoder = new TextDecoder();
       let buffer = "";
 
+      // Timeout Safety Valve: If no response or completion within 90s, force stop
+      const timeoutId = setTimeout(() => {
+        if (!isProcessingComplete) {
+          reader.cancel();
+          toast.error(
+            "Analysis timed out. Please try again or use fewer pages.",
+          );
+          setStatus("idle");
+          setIsProcessingComplete(false);
+        }
+      }, 90000); // 90 seconds
+
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          clearTimeout(timeoutId);
+          break;
+        }
 
         const text = decoder.decode(value, { stream: true });
         buffer += text;
@@ -275,6 +335,7 @@ export default function AppraisalPage() {
 
       toast.success("Success! Appraisal created in VaultRE and saved.");
 
+      // For testing speed: DO NOT reset form
       setExtractedData(null);
       setSelectedFiles([]);
       setStatus("idle");
@@ -315,9 +376,21 @@ export default function AppraisalPage() {
       });
 
       const checkResult = await checkResponse.json();
+      console.log("Duplicate Check Result:", checkResult); // DEBUG LOG
+      console.log("Duplicate Check Result:", checkResult); // DEBUG LOG
+
+      if (!checkResponse.ok || checkResult.error) {
+        console.warn("Duplicate check API error:", checkResult.error);
+        // Fallback: If check fails, ASK user or BLOCK?
+        // For now, let's BLOCK and show error to debug why it fails
+        throw new Error(
+          `Duplicate check failed: ${checkResult.error || "Unknown error"}`,
+        );
+      }
 
       if (checkResult.exists && checkResult.property) {
         setDuplicateProperty(checkResult.property);
+        setIsSubmitting(false); // CRITICAL FIX: Stop loading so user can interact with the modal
         setDuplicateModalOpen(true);
         setModalConfig((prev) => ({ ...prev, isOpen: false })); // Close confirm modal
         return; // Wait for user decision in PropertyExistsModal
@@ -327,9 +400,10 @@ export default function AppraisalPage() {
       await proceedWithCreation();
     } catch (err: any) {
       console.error("VaultRE check failed:", err);
-      toast.warning("Could not check VaultRE for duplicates. Proceeding...");
-      // Optionally proceed anyway or stop
-      await proceedWithCreation();
+      toast.error(`Check Failed: ${err.message}. Please check logs.`);
+      setIsSubmitting(false);
+      setModalConfig((prev) => ({ ...prev, isOpen: false })); // Close modal so it doesn't look stuck
+      return;
     }
   };
 
@@ -659,6 +733,7 @@ export default function AppraisalPage() {
           onClose={() => {
             setDuplicateModalOpen(false);
             setIsSubmitting(false);
+            setModalConfig((prev) => ({ ...prev, isOpen: false })); // Close modal so it doesn't look stuck
           }}
           onContinue={proceedWithCreation}
           property={duplicateProperty || { displayAddress: "", id: 0 }}
