@@ -1,5 +1,25 @@
 # What's New
 
+## 📱 HEIC Support & System Hardening
+
+We've improved compatibility for mobile users and significantly hardened the system's security and stability.
+
+### 🍏 HEIC Image Support
+
+- **iPhone Compatibility**: Now supports direct upload of `.heic` and `.heif` images (Live Photos/iPhone standard format).
+- **Auto-Conversion**: Automatically converts HEIC to high-quality JPEG on the fly during upload.
+
+### 🧠 OCR Stability & Reliability
+
+- **Smart Timeout**: Added a 90-second safety valve to prevent the "Generating Digital Twin" process from hanging indefinitely.
+- **Robust Parsing**: Enhanced the AI response handler to intelligently ignore markdown formatting, resolving the "stuck" analysis issue.
+
+### 🛡️ Security & Performance
+
+- **Production Headers**: Implemented strict security headers (HSTS, X-Frame-Options, X-Content-Type-Options) for production deployments.
+- **Repository Cleanup**: Removed over 20 unused development scripts to keep the codebase clean and secure.
+- **Build Optimization**: Resolved Next.js build warnings for a smoother deployment pipeline.
+
 ## 🚀 VaultRE Integration Enhancements
 
 We've significantly improved the reliability and accuracy of the appraisal creation process.
