@@ -1159,9 +1159,9 @@ export function buildPayload(formData: FormData): SubmissionPayload {
         : createNullVendor(),
 
     // Marketing
-    marketing_total_cost: formatNumberWithCommas(
+    marketing_total_cost: `$${formatNumberWithCommas(
       String(calculateMarketingTotal(formData.selectedMarketing)),
-    ),
+    )}`,
     marketing_total_cost_in_words: dollarAmountToWords(
       calculateMarketingTotal(formData.selectedMarketing),
       false,
@@ -1233,7 +1233,7 @@ export function buildPayload(formData: FormData): SubmissionPayload {
     // Main File Name: [Street] - Sole Agency & Neighbourhood Disputes
     file_name_main: `${toUpper(
       formData.propertyStreet,
-    )} - Sole Agency & Neighbourhood Disputes`,
+    )} - Sole Agency Agreement`,
   } as SubmissionPayload; // Casting to avoid strict excess property checks on ...marketingFields
 
   return payload;
@@ -1252,26 +1252,44 @@ export async function submitForm(formData: FormData) {
     throw new Error("User not authenticated");
   }
 
-  const { error } = await supabase.from("sales_listings").insert({
-    user_id: user.id,
-    address: `${payload.property_street}, ${payload.property_suburb}`,
-    suburb: payload.property_suburb,
-    state: payload.property_state,
-    postcode: payload.property_postcode,
-    status: "draft",
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    form_data: payload as any, // Storing the full payload or formData
-    agent_name: payload.agent_name,
-    vendor_name: payload.all_vendors_names,
-  });
+  const { data: submission, error } = await supabase
+    .from("sales_listings")
+    .insert({
+      user_id: user.id,
+      address: `${payload.property_street}, ${payload.property_suburb}`,
+      suburb: payload.property_suburb,
+      state: payload.property_state,
+      postcode: payload.property_postcode,
+      status: "draft",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      payload: payload as any, // Storing the full payload
+      agent_name: payload.agent_name,
+      vendor_name: payload.all_vendors_names,
+    })
+    .select("id, seq_id")
+    .single();
 
   if (error) {
     console.error("Supabase error:", error);
     throw new Error("Failed to save to database: " + error.message);
   }
 
-  // 2. Send to Webhook (n8n)
+  console.log(
+    "✅ Saved to Supabase. ID:",
+    submission.id,
+    "Seq:",
+    submission.seq_id,
+  );
+
+  // 2. Append sequential ID to file_name and send FULL payload to Webhook
+  // User requested short IDs like 1, 2, 3...
+  payload.file_name = `${payload.file_name}[${submission.seq_id}]`;
+
+  console.log("📤 Submitting to webhook:", WEBHOOK_URL);
+  console.log("📦 Payload:", JSON.stringify(payload, null, 2));
+
+  // 3. Send to Webhook (n8n)
   try {
     const response = await fetch(WEBHOOK_URL, {
       method: "POST",
@@ -1289,7 +1307,7 @@ export async function submitForm(formData: FormData) {
     return {
       success: true,
       vendorName: payload.all_vendors_names,
-      docusignUrl: result.docusignUrl, // Assuming n8n returns this
+      docusignUrl: result.docusign_url,
     };
   } catch (error) {
     console.error("Webhook error:", error);

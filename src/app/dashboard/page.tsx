@@ -190,10 +190,10 @@ export default function DashboardHub() {
 
                 <div className="space-y-2">
                   <h2 className="font-display text-3xl font-bold tracking-tight">
-                    Appraisal AI
+                    Front Sheet AI
                   </h2>
                   <p className="text-sky-100 text-base max-w-md leading-relaxed">
-                    Instantly extract property data from listing sheets using
+                    Instantly extract property data from front sheets using
                     Gemini AI vision.
                   </p>
                 </div>

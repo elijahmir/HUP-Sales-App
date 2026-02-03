@@ -16,7 +16,7 @@ import {
   Trash2,
 } from "lucide-react";
 import FileUpload from "@/components/file-upload";
-import SmartListingForm from "@/components/smart-listing-form";
+import FrontSheetForm from "@/components/front-sheet-form";
 import AppraisalLoading from "@/components/appraisal-loading";
 import DocumentPreview from "@/components/document-preview";
 import ConfirmationModal from "@/components/confirmation-modal";
@@ -491,7 +491,7 @@ export default function AppraisalPage() {
               </div>
 
               <p className="text-lg md:text-xl text-slate-500 leading-relaxed max-w-md">
-                Your intelligent copilot for processing listing authorities with
+                Your intelligent copilot for processing front sheets with
                 precision.
               </p>
 
@@ -717,7 +717,7 @@ export default function AppraisalPage() {
                 <div
                   className={`${showPreview ? "flex-1 overflow-y-auto" : "h-full overflow-y-auto"} custom-scrollbar bg-slate-50 rounded-xl border border-slate-200`}
                 >
-                  <SmartListingForm
+                  <FrontSheetForm
                     initialData={extractedData || {}}
                     onChange={(newData) => setExtractedData(newData)}
                     onViewImage={() => setShowPreview(true)}

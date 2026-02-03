@@ -318,9 +318,21 @@ export default function SAAFormPage() {
             isLastStep={currentStep === steps.length - 1}
             onSubmit={handleInitialSubmit}
             isSubmitting={isSubmitting}
+            showNavigation={false}
           />
 
-          <div className="mt-8">{renderStepContent()}</div>
+          <div className="my-8">{renderStepContent()}</div>
+
+          <FormStepper
+            steps={steps}
+            currentStep={currentStep}
+            onStepChange={handleStepChange}
+            canProceed={checkCanProceed()}
+            isLastStep={currentStep === steps.length - 1}
+            onSubmit={handleInitialSubmit}
+            isSubmitting={isSubmitting}
+            showStepIndicators={false}
+          />
         </div>
       </main>
 

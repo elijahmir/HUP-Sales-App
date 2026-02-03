@@ -77,7 +77,7 @@ export default function FileUpload({
 
       <div>
         <p className="font-display text-lg font-bold text-[#001F49] mb-1.5">
-          {isDragActive ? "Drop files here" : "Upload Listing Authority"}
+          {isDragActive ? "Drop files here" : "Upload Front Sheet"}
         </p>
         <p className="text-slate-500 text-sm max-w-xs mx-auto">
           Drag & drop scanned documents (PDF, JPG, PNG, HEIC)

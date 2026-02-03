@@ -74,30 +74,46 @@ export interface ListingData {
 
   // Rooms
   bed_1?: {
-    exists: boolean;
+    exists?: boolean;
     wardrobe_type?: "BI" | "WI" | "None";
     measurements?: string;
-    ensuite?: { measurements?: string; type?: "SOB" | "Sep Shower" | "Bath" };
+    size_width?: string;
+    size_height?: string;
+    ensuite?: {
+      exists?: boolean;
+      measurements?: string;
+      size_width?: string;
+      size_height?: string;
+      type?: "SOB" | "Sep Shower" | "Bath";
+    };
   };
   bed_2?: {
-    exists: boolean;
+    exists?: boolean;
     wardrobe_type?: "BI" | "WI" | "None";
     measurements?: string;
+    size_width?: string;
+    size_height?: string;
   };
   bed_3?: {
-    exists: boolean;
+    exists?: boolean;
     wardrobe_type?: "BI" | "WI" | "None";
     measurements?: string;
+    size_width?: string;
+    size_height?: string;
   };
   bed_4?: {
-    exists: boolean;
+    exists?: boolean;
     wardrobe_type?: "BI" | "WI" | "None";
     measurements?: string;
+    size_width?: string;
+    size_height?: string;
   };
   bed_5?: {
-    exists: boolean;
+    exists?: boolean;
     wardrobe_type?: "BI" | "WI" | "None";
     measurements?: string;
+    size_width?: string;
+    size_height?: string;
   };
 
   bathroom?: {
@@ -107,13 +123,54 @@ export interface ListingData {
   };
   toilets?: number | string; // 1, 2, 3, 4
 
-  kitchen?: { exists: boolean; measurements?: string; connected_to?: string };
-  dining?: { exists: boolean; measurements?: string; connected_to?: string };
-  lounge?: { exists: boolean; measurements?: string; connected_to?: string };
-  family?: { exists: boolean; measurements?: string; connected_to?: string };
-  rumpus?: { exists: boolean; measurements?: string; connected_to?: string };
-  office?: { exists: boolean; measurements?: string; connected_to?: string };
-  laundry?: { exists: boolean; measurements?: string };
+  kitchen?: {
+    exists?: boolean;
+    measurements?: string;
+    size_width?: string;
+    size_height?: string;
+    connected_to?: string;
+  };
+  dining?: {
+    exists?: boolean;
+    measurements?: string;
+    size_width?: string;
+    size_height?: string;
+    connected_to?: string;
+  };
+  lounge?: {
+    exists?: boolean;
+    measurements?: string;
+    size_width?: string;
+    size_height?: string;
+    connected_to?: string;
+  };
+  family?: {
+    exists?: boolean;
+    measurements?: string;
+    size_width?: string;
+    size_height?: string;
+    connected_to?: string;
+  };
+  rumpus?: {
+    exists?: boolean;
+    measurements?: string;
+    size_width?: string;
+    size_height?: string;
+    connected_to?: string;
+  };
+  office?: {
+    exists?: boolean;
+    measurements?: string;
+    size_width?: string;
+    size_height?: string;
+    connected_to?: string;
+  };
+  laundry?: {
+    exists?: boolean;
+    measurements?: string;
+    size_width?: string;
+    size_height?: string;
+  };
 
   // Utilities & Features
   gas_hot_water?: "Yes" | "No";
@@ -299,13 +356,18 @@ const listingSchema: ResponseSchema = {
     bed_1: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         wardrobe_type: { type: SchemaType.STRING, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
         ensuite: {
           type: SchemaType.OBJECT,
           properties: {
+            exists: { type: SchemaType.BOOLEAN, nullable: true },
             measurements: { type: SchemaType.STRING, nullable: true },
+            size_width: { type: SchemaType.STRING, nullable: true },
+            size_height: { type: SchemaType.STRING, nullable: true },
             type: { type: SchemaType.STRING, nullable: true },
           },
           nullable: true,
@@ -316,36 +378,44 @@ const listingSchema: ResponseSchema = {
     bed_2: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         wardrobe_type: { type: SchemaType.STRING, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
     },
     bed_3: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         wardrobe_type: { type: SchemaType.STRING, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
     },
     bed_4: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         wardrobe_type: { type: SchemaType.STRING, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
     },
     bed_5: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         wardrobe_type: { type: SchemaType.STRING, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
     },
@@ -364,8 +434,10 @@ const listingSchema: ResponseSchema = {
     kitchen: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
         connected_to: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
@@ -373,8 +445,10 @@ const listingSchema: ResponseSchema = {
     dining: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
         connected_to: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
@@ -382,8 +456,10 @@ const listingSchema: ResponseSchema = {
     lounge: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
         connected_to: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
@@ -391,8 +467,10 @@ const listingSchema: ResponseSchema = {
     family: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
         connected_to: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
@@ -400,8 +478,10 @@ const listingSchema: ResponseSchema = {
     rumpus: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
         connected_to: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
@@ -409,8 +489,10 @@ const listingSchema: ResponseSchema = {
     office: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
         connected_to: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
@@ -418,8 +500,10 @@ const listingSchema: ResponseSchema = {
     laundry: {
       type: SchemaType.OBJECT,
       properties: {
-        exists: { type: SchemaType.BOOLEAN },
+        exists: { type: SchemaType.BOOLEAN, nullable: true },
         measurements: { type: SchemaType.STRING, nullable: true },
+        size_width: { type: SchemaType.STRING, nullable: true },
+        size_height: { type: SchemaType.STRING, nullable: true },
       },
       nullable: true,
     },
@@ -529,6 +613,13 @@ export async function* extractListingDataStream(
     - suburb: Suburb/locality name (e.g., "Surry Hills", "South Melbourne")
     - state: Australian state code - MUST be one of: NSW, VIC, QLD, SA, WA, TAS, NT, ACT
     - postcode: 4-digit Australian postcode (e.g., "2000", "3000")
+    
+    CRITICAL: For ROOM DIMENSIONS (Bed 1-5, Ensuite, Kitchen, Dining, Lounge, Family, Rumpus, Office, Laundry):
+    - If you see dimensions like "4x5", "3x4", or similar patterns, parse them into SEPARATE fields:
+      - size_width: the first number (e.g., "4" from "4x5")
+      - size_height: the second number (e.g., "5" from "4x5")
+    - Also store the full measurement string in the 'measurements' field (e.g., "4x5")
+    - If only an X or checkmark is present, set exists=true but leave size_width/size_height empty
     
     Return ONLY the structured JSON.
     

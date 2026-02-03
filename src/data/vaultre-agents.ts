@@ -1,7 +1,7 @@
 /**
- * VaultRE Agent ID Mapping
- * Maps agent names to their VaultRE system IDs
- * Source: agent_id.md in Appraisal Process folder
+ * VaultRE Staff ID Mapping
+ * Maps staff names to their VaultRE system IDs
+ * Source: VaultRE website property access dropdown (verified 2026-02-03)
  */
 
 export interface VaultREAgent {
@@ -10,56 +10,84 @@ export interface VaultREAgent {
   searchTerms: string[]; // For fuzzy matching from OCR
 }
 
+// IDs verified from VaultRE website property access dropdown
 export const VAULTRE_AGENTS: VaultREAgent[] = [
+  // Sales Team - Primary Agents
   { name: "STEPH BARKER", id: 321997, searchTerms: ["steph", "barker"] },
-  { name: "JODI CAMERON", id: 322057, searchTerms: ["jodi", "cameron"] },
-  { name: "WENDY SQUIB", id: 322017, searchTerms: ["wendy", "squib"] },
-  { name: "BRAD REEVES", id: 322052, searchTerms: ["brad", "reeves"] },
-  { name: "BEN WAKEFIELD", id: 322022, searchTerms: ["ben", "wakefield"] },
-  { name: "JORDAN BOCK", id: 317562, searchTerms: ["jordan", "bock"] },
-  { name: "HAYLEY GOULD", id: 322027, searchTerms: ["hayley", "gould"] },
-  { name: "LYNDA MCDONALD", id: 351177, searchTerms: ["lynda", "mcdonald"] },
-  { name: "NAOMI CAMERON", id: 322055, searchTerms: ["naomi", "cameron"] },
-  { name: "DANNI GARNER", id: 322042, searchTerms: ["danni", "garner"] },
-  { name: "STUART JONES", id: 322047, searchTerms: ["stuart", "jones"] },
-  { name: "TAYLA JONES", id: 403782, searchTerms: ["tayla", "jones"] },
-  { name: "BROOKE BARKER", id: 429152, searchTerms: ["brooke", "barker"] },
-  { name: "PAIGE HODGES", id: 395202, searchTerms: ["paige", "hodges"] },
-  { name: "HOLLY JONES", id: 401877, searchTerms: ["holly", "jones"] },
-  { name: "BIANCA JAMES", id: 418327, searchTerms: ["bianca", "james"] },
   {
-    name: "ALLI GOLDSWORTHY",
-    id: 401847,
-    searchTerms: ["alli", "goldsworthy"],
+    name: "WENDY SQUIBB",
+    id: 201056,
+    searchTerms: ["wendy", "squibb", "squib"],
+  },
+  { name: "BRAD REEVES", id: 261128, searchTerms: ["brad", "reeves"] },
+  { name: "COLIN TUNN", id: 201027, searchTerms: ["colin", "tunn"] },
+  { name: "JODI TUNN", id: 201028, searchTerms: ["jodi", "tunn"] },
+
+  // Additional Sales Staff
+  { name: "ANNALEE BIDWELL", id: 428636, searchTerms: ["annalee", "bidwell"] },
+  { name: "JAYDEN BROWN", id: 353372, searchTerms: ["jayden", "brown"] },
+  {
+    name: "RAYMOND BUITENHUIS",
+    id: 201035,
+    searchTerms: ["raymond", "buitenhuis"],
+  },
+  { name: "JARROD BURR", id: 441209, searchTerms: ["jarrod", "burr"] },
+  { name: "GRACE CEREZO", id: 381157, searchTerms: ["grace", "cerezo"] },
+  { name: "ZARLEE CUSICK", id: 201058, searchTerms: ["zarlee", "cusick"] },
+  {
+    name: "ANDREW DE BOMFORD",
+    id: 242598,
+    searchTerms: ["andrew", "bomford", "de bomford"],
   },
   {
     name: "REBECCA DONALDSON",
-    id: 401922,
+    id: 257389,
     searchTerms: ["rebecca", "donaldson", "bec"],
   },
-  { name: "TAYLAH MORRISON", id: 406917, searchTerms: ["taylah", "morrison"] },
-  { name: "KRYSTAL STACEY", id: 407122, searchTerms: ["krystal", "stacey"] },
-  { name: "LORI WHITELEY", id: 401597, searchTerms: ["lori", "whiteley"] },
-  { name: "MONIQUE CLARKE", id: 407377, searchTerms: ["monique", "clarke"] },
-  { name: "TAYLOR REEVES", id: 403142, searchTerms: ["taylor", "reeves"] },
-  { name: "MADISON TOLOMEI", id: 406552, searchTerms: ["madison", "tolomei"] },
-  { name: "CLAIRE REES", id: 410217, searchTerms: ["claire", "rees"] },
-  { name: "LANI STRACHAN", id: 410587, searchTerms: ["lani", "strachan"] },
-  { name: "RILEY LEAHY", id: 418112, searchTerms: ["riley", "leahy"] },
-  { name: "ASHLEE BRAGA", id: 433177, searchTerms: ["ashlee", "braga"] },
-  { name: "INDIA MCGREGOR", id: 447907, searchTerms: ["india", "mcgregor"] },
-  { name: "ABBEY SQUIB", id: 464457, searchTerms: ["abbey", "squib"] },
-  { name: "AMY GOLDSWORTHY", id: 480432, searchTerms: ["amy", "goldsworthy"] },
+  { name: "MADDISON DUNCAN", id: 384455, searchTerms: ["maddison", "duncan"] },
+  { name: "MEL EATON", id: 282368, searchTerms: ["mel", "eaton"] },
+  {
+    name: "SARAH ELPHINSTONE",
+    id: 230515,
+    searchTerms: ["sarah", "elphinstone"],
+  },
+  {
+    name: "SELENA ELPHINSTONE",
+    id: 332827,
+    searchTerms: ["selena", "elphinstone"],
+  },
+  { name: "MARLEE GARWOOD", id: 201031, searchTerms: ["marlee", "garwood"] },
+  { name: "RICHARD JACKSON", id: 201051, searchTerms: ["richard", "jackson"] },
+  { name: "LEAH KETTLE", id: 340706, searchTerms: ["leah", "kettle"] },
+  { name: "KURT KNOWLES", id: 201043, searchTerms: ["kurt", "knowles"] },
+  { name: "JAKUB LEHMAN", id: 201053, searchTerms: ["jakub", "lehman"] },
   {
     name: "ELIJAH MIRANDILLA",
     id: 491423,
     searchTerms: ["elijah", "mirandilla"],
   },
+  { name: "JASMIN PALMER", id: 354337, searchTerms: ["jasmin", "palmer"] },
+  { name: "NICOLA QUINN", id: 419661, searchTerms: ["nicola", "quinn"] },
+  { name: "ANISSA ROUSE", id: 470180, searchTerms: ["anissa", "rouse"] },
+  { name: "ALLIE STOKES", id: 497054, searchTerms: ["allie", "stokes"] },
+  { name: "JULIE SUTCLIFFE", id: 252070, searchTerms: ["julie", "sutcliffe"] },
+  { name: "OLIVIA VENN", id: 463593, searchTerms: ["olivia", "venn"] },
+  { name: "NATHAN WHITE", id: 407442, searchTerms: ["nathan", "white"] },
+  {
+    name: "GEORGIA WHITEHEAD",
+    id: 441214,
+    searchTerms: ["georgia", "whitehead"],
+  },
+  {
+    name: "DANIELLE WINKLER",
+    id: 343747,
+    searchTerms: ["danielle", "winkler"],
+  },
 ];
 
 /**
  * Find best matching agent from OCR-extracted name
- * @param ocrText - Raw text from OCR (could be partial like "Wendy" or "W. Squib")
+ * @param ocrText - Raw text from OCR (could be partial like "Wendy" or "W. Squibb")
  * @returns Best matching agent or null if no match
  */
 export function findAgentByOCR(ocrText: string): VaultREAgent | null {

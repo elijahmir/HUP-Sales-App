@@ -96,8 +96,8 @@ export async function POST(req: NextRequest) {
       appraisal: formData.appraisal_date
         ? new Date(formData.appraisal_date).toISOString()
         : undefined,
-      editableBy: [{ id: agent.id }],
-      accessBy: [{ id: agent.id }],
+      // NOTE: accessBy/editableBy omitted - API defaults are used
+      // The -1 value is only valid for GET/filtering, not POST/create
       type: { id: 1 }, // Default to House/Residential
     };
 

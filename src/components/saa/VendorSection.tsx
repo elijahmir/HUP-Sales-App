@@ -124,6 +124,78 @@ export function VendorSection({
             </div>
           </div>
 
+          {formData.vendorStructure === "Trust" && (
+            <>
+              <div className="col-span-full">
+                <label className="field-label">Name of Trust</label>
+                <input
+                  type="text"
+                  value={formData.trustName}
+                  onChange={(e) =>
+                    updateFormData({ trustName: e.target.value })
+                  }
+                  className={`input-field ${
+                    errors.trustName ? "border-red-500" : ""
+                  }`}
+                  placeholder="The Family Trust"
+                />
+                {errors.trustName && (
+                  <p className="error-text">{errors.trustName}</p>
+                )}
+              </div>
+
+              <div className="col-span-full">
+                <label className="field-label block mb-3">Trustee Type</label>
+                <div className="flex gap-4">
+                  {[
+                    { val: "individual", label: "Individual Trustee(s)" },
+                    { val: "company", label: "Corporate Trustee" },
+                  ].map((opt) => (
+                    <label
+                      key={opt.val}
+                      className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${
+                        formData.trusteeType === opt.val
+                          ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
+                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="trusteeType"
+                        value={opt.val}
+                        checked={formData.trusteeType === opt.val}
+                        onChange={(e) =>
+                          updateFormData({
+                            trusteeType: e.target.value as any,
+                            vendorCount:
+                              e.target.value === "company"
+                                ? formData.hasMultipleDirectors
+                                  ? 2
+                                  : 1
+                                : formData.vendorCount,
+                          })
+                        }
+                        className="hidden"
+                      />
+                      <div
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center ${
+                          formData.trusteeType === opt.val
+                            ? "border-harcourts-blue bg-harcourts-blue"
+                            : "border-gray-300 bg-white"
+                        }`}
+                      >
+                        {formData.trusteeType === opt.val && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                        )}
+                      </div>
+                      <span className="text-sm font-medium">{opt.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
           {(formData.vendorStructure === "Company" ||
             (formData.vendorStructure === "Trust" &&
               formData.trusteeType === "company")) && (
@@ -177,118 +249,62 @@ export function VendorSection({
                 )}
               </div>
 
-              <div className="col-span-full">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.hasMultipleDirectors}
-                    onChange={(e) =>
-                      updateFormData({ hasMultipleDirectors: e.target.checked })
-                    }
-                    className="rounded border-gray-300 text-harcourts-blue focus:ring-harcourts-blue"
-                  />
-                  <span className="text-sm text-gray-700">
-                    Two or more Directors (Required for signing block)
-                  </span>
+              <div className="col-span-full md:col-span-8">
+                <label className="field-label">
+                  Does the company have more than 1 Director?
                 </label>
-              </div>
-            </>
-          )}
-
-          {formData.vendorStructure === "Trust" && (
-            <>
-              <div className="col-span-full">
-                <label className="field-label block mb-3">Trustee Type</label>
-                <div className="flex gap-4">
-                  {[
-                    { val: "individual", label: "Individual Trustee(s)" },
-                    { val: "company", label: "Company Trustee" },
-                  ].map((opt) => (
-                    <label
-                      key={opt.val}
-                      className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${
-                        formData.trusteeType === opt.val
-                          ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
-                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="trusteeType"
-                        value={opt.val}
-                        checked={formData.trusteeType === opt.val}
-                        onChange={(e) =>
-                          updateFormData({ trusteeType: e.target.value as any })
-                        }
-                        className="hidden"
-                      />
-                      <div
-                        className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                          formData.trusteeType === opt.val
-                            ? "border-harcourts-blue bg-harcourts-blue"
-                            : "border-gray-300 bg-white"
-                        }`}
-                      >
-                        {formData.trusteeType === opt.val && (
-                          <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                        )}
-                      </div>
-                      <span className="text-sm font-medium">{opt.label}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className="col-span-full">
-                <label className="field-label">Name of Trust</label>
-                <input
-                  type="text"
-                  value={formData.trustName}
+                <select
+                  value={formData.hasMultipleDirectors ? "yes" : "no"}
                   onChange={(e) =>
-                    updateFormData({ trustName: e.target.value })
+                    updateFormData({
+                      hasMultipleDirectors: e.target.value === "yes",
+                      vendorCount: e.target.value === "yes" ? 2 : 1,
+                    })
                   }
-                  className={`input-field ${
-                    errors.trustName ? "border-red-500" : ""
-                  }`}
-                  placeholder="The Family Trust"
-                />
-                {errors.trustName && (
-                  <p className="error-text">{errors.trustName}</p>
-                )}
+                  className="input-field appearance-none bg-white"
+                >
+                  <option value="no">No - Sole Director/Secretary</option>
+                  <option value="yes">Yes - Secretary + Director</option>
+                </select>
               </div>
             </>
           )}
 
-          <div className="md:col-span-4">
-            <label className="field-label">
-              Number of{" "}
-              {formData.vendorStructure === "Company"
-                ? "Directors"
-                : formData.vendorStructure === "Trust"
-                  ? "Trustees"
-                  : "Vendors"}
-            </label>
-            <select
-              value={formData.vendorCount}
-              onChange={(e) => handleVendorCountChange(e.target.value)}
-              className="input-field appearance-none bg-white"
-            >
-              {[1, 2, 3, 4].map((num) => (
-                <option key={num} value={num}>
-                  {num}
-                </option>
-              ))}
-            </select>
-          </div>
+          {(formData.vendorStructure === "Individual" ||
+            (formData.vendorStructure === "Trust" &&
+              formData.trusteeType === "individual")) && (
+            <div className="md:col-span-4">
+              <label className="field-label">
+                Number of{" "}
+                {formData.vendorStructure === "Trust" ? "Trustees" : "Signers"}
+              </label>
+              <select
+                value={formData.vendorCount}
+                onChange={(e) => handleVendorCountChange(e.target.value)}
+                className="input-field appearance-none bg-white"
+              >
+                {[1, 2, 3, 4].map((num) => (
+                  <option key={num} value={num}>
+                    {num}{" "}
+                    {formData.vendorStructure === "Trust"
+                      ? "Trustee"
+                      : "Signer"}
+                    {num > 1 ? "s" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* ID Warning */}
         <div className="p-4 bg-blue-50/50 rounded-lg border border-blue-100 flex gap-3 text-sm text-gray-600 mb-6">
           <AlertCircle className="w-5 h-5 text-harcourts-blue flex-shrink-0 mt-0.5" />
           <p>
-            Please ensure Full Legal Names are used as they appear on the Title
-            and Identification documents. If the prompt name differs from the
-            Title, use the &quot;Name on Title&quot; option below.
+            Please ensure Full Legal Name as it appears on the Government Issued
+            ID is entered. If this name differs from that which is on the Title,
+            please tick the &quot;Different name on title?&quot; box and add the
+            name that appears on Title in the text field.
           </p>
         </div>
 
@@ -363,7 +379,7 @@ export function VendorSection({
                         updateVendor(index, "nameOnTitle", e.target.value)
                       }
                       className="input-field"
-                      placeholder="Name as it appears on Title Deed"
+                      placeholder="Name as it appears on Title"
                     />
                     {/* NOTE: We aren't explicitly error blocking this field's input in validation yet for specific key, 
                          but logic is there if error key existed. 
