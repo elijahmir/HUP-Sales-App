@@ -1218,22 +1218,46 @@ export function buildPayload(formData: FormData): SubmissionPayload {
       .map((value) => `[${value}]`)
       .join(""),
 
-    // Folder Name: [Street Name] [Number], [Suburb] (Number always behind)
-    // Logic: If street starts with number (e.g. "123 TEST"), flip to "TEST 123"
+    // Folder Name: [Street Name] [Number], [Suburb] in Proper Case
+    // Example: "1_60 GALVIN STREET" → "Galvin Street 1-60, South Launceston"
     file_name_folder: (() => {
-      const street = toUpper(formData.propertyStreet);
-      const suburb = toUpper(formData.propertySuburb);
-      // Match number at start (digits optionally followed by letter)
-      const match = street.match(/^(\d+[A-Za-z]?)\s+(.*)$/);
-      // If match, flip: group 2 (name) + group 1 (number). Else keep as is.
-      const formattedStreet = match ? `${match[2]} ${match[1]}` : street;
-      return `${formattedStreet}, ${suburb}`;
+      // Title Case helper - capitalizes first letter of each word
+      const toProperCase = (str: string) =>
+        str
+          .toLowerCase()
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+
+      let street = formData.propertyStreet;
+      const suburb = formData.propertySuburb;
+      // Replace _/ with - for unit numbers (e.g., "1_60" or "1/60" → "1-60")
+      street = street.replace(/(\d+)[_\/](\d+)/g, "$1-$2");
+      // Match number at start (e.g., "1-60 Galvin Street" or "60 Galvin Street")
+      const match = street.match(/^([\d\-]+[A-Za-z]?)\s+(.*)$/);
+      // If match, flip: [Street Name] [Number] (e.g., "Galvin Street 1-60")
+      const formattedStreet = match
+        ? `${toProperCase(match[2])} ${match[1]}`
+        : toProperCase(street);
+      return `${formattedStreet}, ${toProperCase(suburb)}`;
     })(),
 
-    // Main File Name: [Street] - Sole Agency & Neighbourhood Disputes
-    file_name_main: `${toUpper(
-      formData.propertyStreet,
-    )} - Sole Agency Agreement`,
+    // Main File Name: Proper Case, replace _/ with - for unit numbers
+    // Example: "1_60 GALVIN STREET" → "1-60 Galvin Street - Sole Agency Agreement"
+    file_name_main: (() => {
+      // Title Case helper
+      const toProperCase = (str: string) =>
+        str
+          .toLowerCase()
+          .split(" ")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ");
+
+      let street = formData.propertyStreet;
+      // Replace _/ with - for unit numbers (e.g., "1_60" or "1/60" → "1-60")
+      street = street.replace(/(\d+)[_\/](\d+)/g, "$1-$2");
+      return `${toProperCase(street)} - Sole Agency Agreement`;
+    })(),
   } as SubmissionPayload; // Casting to avoid strict excess property checks on ...marketingFields
 
   return payload;
