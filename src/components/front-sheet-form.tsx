@@ -4,7 +4,7 @@
 import { ListingData } from "@/lib/gemini-ocr";
 import { cn } from "@/lib/utils";
 import { VAULTRE_AGENTS } from "@/data/vaultre-agents";
-import { Printer, Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon } from "lucide-react";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 // ─────────────────────────────────────────────────────────────
@@ -257,10 +257,6 @@ export default function FrontSheetForm({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
     <FormContext.Provider value={{ formData, handleChange, readOnly }}>
       <div className="w-full max-w-5xl mx-auto">
@@ -287,13 +283,7 @@ export default function FrontSheetForm({
                   View Original
                 </button>
               )}
-              <button
-                onClick={handlePrint}
-                className="flex items-center gap-2 px-4 py-1.5 text-sm bg-[#001F49] text-white hover:bg-[#002D6A] rounded transition-colors"
-              >
-                <Printer className="w-4 h-4" />
-                Print
-              </button>
+              
             </div>
           </div>
         </div>
@@ -304,7 +294,10 @@ export default function FrontSheetForm({
         {/* ══════════════════════════════════════════════════════════════
             FORM BODY
         ══════════════════════════════════════════════════════════════ */}
-        <div className="bg-white shadow-lg border border-slate-300 print:shadow-none print:border-0">
+        <div
+          
+          className="bg-white shadow-lg border border-slate-300 print:shadow-none print:border-0"
+        >
           {/* ─────────────────────────────────────────────────────────────
               SECTION 1: HEADER (Only ONE logo here)
           ───────────────────────────────────────────────────────────── */}
@@ -1063,17 +1056,7 @@ export default function FrontSheetForm({
       </div>
 
       {/* Print Styles */}
-      <style jsx global>{`
-        @media print {
-          body {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-          }
-          .print\\:hidden {
-            display: none !important;
-          }
-        }
-      `}</style>
+      
     </FormContext.Provider>
   );
 }

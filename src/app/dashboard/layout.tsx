@@ -7,6 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { LogOut, Home, ChevronRight } from "lucide-react";
 import { motion, useScroll, useMotionValue, useTransform } from "framer-motion";
 import { useEffect } from "react";
+import { InactivityProvider } from "@/components/providers/inactivity-provider";
 
 function useBoundedScroll(threshold: number) {
   const { scrollY } = useScroll();
@@ -31,7 +32,7 @@ function useBoundedScroll(threshold: number) {
 
 function getBreadcrumb(pathname: string): string | null {
   if (pathname === "/dashboard") return null;
-  if (pathname.includes("/appraisal")) return "Appraisal AI";
+  if (pathname.includes("/appraisal")) return "Front Sheet AI";
   if (pathname.includes("/saa")) return "Sole Agency Agreement";
   if (pathname.includes("/settings")) return "Settings";
   return null;
@@ -59,93 +60,95 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans">
-      {/* Floating Navigation Bar */}
-      <motion.header
-        style={{
-          y: headerY,
-          opacity: headerOpacity,
-        }}
-        className="fixed top-4 left-4 right-4 z-50"
-      >
-        <div className="max-w-7xl mx-auto">
-          <nav className="bg-white rounded-2xl shadow-lg shadow-slate-900/5 border border-slate-100 px-4 sm:px-6 py-3">
-            <div className="flex justify-between items-center">
-              {/* Left: Logo + Breadcrumb */}
-              <div className="flex items-center gap-3 sm:gap-4">
-                <Link
-                  href="/dashboard"
-                  className="group flex items-center gap-3 hover:opacity-90 transition-opacity"
-                >
-                  <div className="relative w-28 sm:w-32 h-8">
-                    <Image
-                      src="https://resources.cloudhi.io/images/logo/harcourts-international-logo.svg"
-                      alt="Harcourts"
-                      fill
-                      className="object-contain"
-                      priority
-                    />
-                  </div>
-                  <div className="hidden sm:flex items-center">
-                    <div className="w-px h-6 bg-slate-200 mx-3" />
-                    <span className="text-[#00ADEF] font-semibold text-sm tracking-tight">
-                      Sales App
-                    </span>
-                  </div>
-                </Link>
+      <InactivityProvider>
+        {/* Floating Navigation Bar */}
+        <motion.header
+          style={{
+            y: headerY,
+            opacity: headerOpacity,
+          }}
+          className="fixed top-4 left-4 right-4 z-50"
+        >
+          <div className="max-w-7xl mx-auto">
+            <nav className="bg-white rounded-2xl shadow-lg shadow-slate-900/5 border border-slate-100 px-4 sm:px-6 py-3">
+              <div className="flex justify-between items-center">
+                {/* Left: Logo + Breadcrumb */}
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <Link
+                    href="/dashboard"
+                    className="group flex items-center gap-3 hover:opacity-90 transition-opacity"
+                  >
+                    <div className="relative w-28 sm:w-32 h-8">
+                      <Image
+                        src="https://resources.cloudhi.io/images/logo/harcourts-international-logo.svg"
+                        alt="Harcourts"
+                        fill
+                        className="object-contain"
+                        priority
+                      />
+                    </div>
+                    <div className="hidden sm:flex items-center">
+                      <div className="w-px h-6 bg-slate-200 mx-3" />
+                      <span className="text-[#00ADEF] font-semibold text-sm tracking-tight">
+                        Sales App
+                      </span>
+                    </div>
+                  </Link>
 
-                {/* Breadcrumb */}
-                {breadcrumb && (
-                  <div className="hidden md:flex items-center gap-2 text-sm text-slate-400 ml-2">
-                    <ChevronRight className="w-4 h-4" />
-                    <span className="font-medium text-slate-600">
-                      {breadcrumb}
-                    </span>
-                  </div>
-                )}
+                  {/* Breadcrumb */}
+                  {breadcrumb && (
+                    <div className="hidden md:flex items-center gap-2 text-sm text-slate-400 ml-2">
+                      <ChevronRight className="w-4 h-4" />
+                      <span className="font-medium text-slate-600">
+                        {breadcrumb}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: Actions */}
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <Link
+                    href="/dashboard"
+                    className={`p-2.5 rounded-xl transition-all duration-200 ${
+                      pathname === "/dashboard"
+                        ? "bg-sky-50 text-[#00ADEF]"
+                        : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                    }`}
+                    title="Dashboard Home"
+                    aria-label="Go to Dashboard Home"
+                  >
+                    <Home className="w-5 h-5" />
+                  </Link>
+
+                  <div className="hidden sm:block w-px h-6 bg-slate-200 mx-1" />
+
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-2 text-slate-500 hover:text-slate-700 hover:bg-slate-50 px-3 py-2 rounded-xl transition-all duration-200 text-sm font-medium group"
+                    aria-label="Sign out"
+                  >
+                    <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="hidden sm:inline">Sign Out</span>
+                  </button>
+                </div>
               </div>
+            </nav>
+          </div>
+        </motion.header>
 
-              {/* Right: Actions */}
-              <div className="flex items-center gap-1 sm:gap-2">
-                <Link
-                  href="/dashboard"
-                  className={`p-2.5 rounded-xl transition-all duration-200 ${
-                    pathname === "/dashboard"
-                      ? "bg-sky-50 text-[#00ADEF]"
-                      : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-                  }`}
-                  title="Dashboard Home"
-                  aria-label="Go to Dashboard Home"
-                >
-                  <Home className="w-5 h-5" />
-                </Link>
+        {/* Main Content */}
+        <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12">
+          {children}
+        </main>
 
-                <div className="hidden sm:block w-px h-6 bg-slate-200 mx-1" />
-
-                <button
-                  onClick={handleSignOut}
-                  className="flex items-center gap-2 text-slate-500 hover:text-slate-700 hover:bg-slate-50 px-3 py-2 rounded-xl transition-all duration-200 text-sm font-medium group"
-                  aria-label="Sign out"
-                >
-                  <LogOut className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-                  <span className="hidden sm:inline">Sign Out</span>
-                </button>
-              </div>
-            </div>
-          </nav>
-        </div>
-      </motion.header>
-
-      {/* Main Content */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12">
-        {children}
-      </main>
-
-      {/* Minimal Footer */}
-      <footer className="py-6 text-center">
-        <p className="text-sm text-slate-400">
-          © {new Date().getFullYear()} Harcourts Ulverstone & Penguin
-        </p>
-      </footer>
+        {/* Minimal Footer */}
+        <footer className="py-6 text-center">
+          <p className="text-sm text-slate-400">
+            © {new Date().getFullYear()} Harcourts Ulverstone & Penguin
+          </p>
+        </footer>
+      </InactivityProvider>
     </div>
   );
 }

@@ -642,7 +642,7 @@ export default function AppraisalPage() {
             key="review"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="w-full flex flex-col"
+            className="w-full flex flex-col h-[calc(100vh-140px)]"
           >
             {/* Header Bar */}
             <div className="sticky top-20 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-between rounded-t-xl shadow-sm -mx-4 sm:-mx-6 lg:-mx-8">
@@ -695,34 +695,48 @@ export default function AppraisalPage() {
             </div>
 
             {/* Content Area */}
-            <div className="flex-1 overflow-hidden relative mt-4">
+            <div className="flex-1 overflow-hidden relative mt-4 min-h-0">
               <div
                 className={`h-full transition-all duration-300 ${
                   showPreview
-                    ? "flex flex-col gap-4"
+                    ? "flex flex-row gap-4"
                     : "w-full max-w-5xl mx-auto"
                 }`}
               >
-                {/* Preview Panel - Now on top when visible */}
+                {/* Form Panel */}
+                <div
+                  className={`${
+                    showPreview ? "w-1/2" : "w-full"
+                  } h-full overflow-y-auto custom-scrollbar bg-slate-50 rounded-xl border border-slate-200`}
+                >
+                  <div
+                    style={
+                      showPreview
+                        ? {
+                            zoom: "0.65",
+                            width: "100%",
+                            transformOrigin: "top left",
+                          }
+                        : undefined
+                    }
+                  >
+                    <FrontSheetForm
+                      initialData={extractedData || {}}
+                      onChange={(newData) => setExtractedData(newData)}
+                      onViewImage={() => setShowPreview(true)}
+                    />
+                  </div>
+                </div>
+
+                {/* Preview Panel */}
                 {showPreview && (
-                  <div className="h-[350px] bg-slate-900 rounded-xl overflow-hidden shadow-inner shrink-0">
+                  <div className="w-1/2 h-full bg-slate-900 rounded-xl overflow-hidden shadow-inner shrink-0 flex flex-col">
                     <DocumentPreview
                       files={selectedFiles}
                       onClose={() => setShowPreview(false)}
                     />
                   </div>
                 )}
-
-                {/* Form Panel */}
-                <div
-                  className={`${showPreview ? "flex-1 overflow-y-auto" : "h-full overflow-y-auto"} custom-scrollbar bg-slate-50 rounded-xl border border-slate-200`}
-                >
-                  <FrontSheetForm
-                    initialData={extractedData || {}}
-                    onChange={(newData) => setExtractedData(newData)}
-                    onViewImage={() => setShowPreview(true)}
-                  />
-                </div>
               </div>
             </div>
           </motion.div>

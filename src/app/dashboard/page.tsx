@@ -149,12 +149,12 @@ export default function DashboardHub() {
         <div>
           <h1 className="font-display text-3xl md:text-4xl font-bold text-[#001F49] tracking-tight">
             Welcome back,{" "}
-            <span className="text-[#00ADEF]">
-              {userEmail ? userEmail.split("@")[0] : "Agent"}
+            <span className="text-[#00ADEF] capitalize">
+              {userEmail ? userEmail.split("@")[0].split(".")[0] : "Agent"}
             </span>
           </h1>
           <p className="text-slate-500 mt-2 text-lg">
-            Your AI-powered command center for property appraisals.
+            Your AI-powered command center for property listings.
           </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100 self-start md:self-auto">
@@ -193,8 +193,8 @@ export default function DashboardHub() {
                     Front Sheet AI
                   </h2>
                   <p className="text-sky-100 text-base max-w-md leading-relaxed">
-                    Instantly extract property data from front sheets using
-                    Gemini AI vision.
+                    Instantly extract hand written front sheet data and upload
+                    to VaultRE.
                   </p>
                 </div>
               </div>
@@ -273,7 +273,7 @@ export default function DashboardHub() {
                   <Clock className="w-4 h-4" />
                 </div>
                 <h3 className="font-display text-lg font-bold text-[#001F49]">
-                  Recent Appraisals
+                  Recent Front Sheets
                 </h3>
               </div>
               <button className="text-xs font-semibold text-[#00ADEF] hover:bg-sky-50 px-2.5 py-1.5 rounded-lg transition-colors uppercase tracking-wide">
@@ -289,7 +289,7 @@ export default function DashboardHub() {
               ) : appraisals.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-40 text-slate-400 text-sm">
                   <FileText className="w-6 h-6 mb-2 opacity-30" />
-                  No appraisals yet
+                  No front sheets yet
                 </div>
               ) : (
                 appraisals.map((appraisal) => (
@@ -424,10 +424,10 @@ export default function DashboardHub() {
                     <Plus className="w-4 h-4 text-sky-300" />
                   </div>
                   <span className="font-semibold text-sm text-white">
-                    Start Appraisal
+                    Upload Front Sheet
                   </span>
                   <span className="text-xs text-slate-400 mt-1">
-                    Upload & process listing
+                    To VaultRE
                   </span>
                 </Link>
 
