@@ -335,7 +335,6 @@ export default function AppraisalPage() {
 
       toast.success("Success! Appraisal created in VaultRE and saved.");
 
-      // For testing speed: DO NOT reset form
       setExtractedData(null);
       setSelectedFiles([]);
       setStatus("idle");
@@ -344,6 +343,75 @@ export default function AppraisalPage() {
     } catch (err: any) {
       console.error(err);
       toast.error(`Submission failed: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+      setModalConfig((prev) => ({ ...prev, isOpen: false }));
+    }
+  };
+
+  const proceedWithUpdate = async () => {
+    if (!duplicateProperty?.id) {
+      toast.error("No property ID for update");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("No authenticated user");
+
+      // Update in VaultRE
+      const vaultResponse = await fetch("/api/vaultre/update-property", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          propertyId: duplicateProperty.id,
+          formData: extractedData,
+        }),
+      });
+
+      const vaultResult = await vaultResponse.json();
+      if (!vaultResponse.ok) {
+        throw new Error(
+          vaultResult.error || "Failed to update property in VaultRE",
+        );
+      }
+
+      const finalData = {
+        ...extractedData,
+        agent_name: userName || "Unknown Agent",
+        created_at: new Date().toISOString(),
+        listing_source: "AI_OCR_APP",
+        raw_ocr_notes: processingThought,
+        vaultre_property_id: duplicateProperty.id,
+        vaultre_status: "updated",
+      };
+
+      const { error: dbError } = await supabase
+        .from("sales_appraisals")
+        .insert({
+          user_id: user.id,
+          agent_name: userName,
+          address: extractedData?.address,
+          vendor_name: extractedData?.vendors,
+          status: "completed",
+          form_data: finalData,
+        });
+
+      if (dbError) throw dbError;
+
+      toast.success("Success! Property updated in VaultRE.");
+
+      setExtractedData(null);
+      setSelectedFiles([]);
+      setStatus("idle");
+      setShowPreview(false);
+      setDuplicateModalOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      toast.error(`Update failed: ${err.message}`);
     } finally {
       setIsSubmitting(false);
       setModalConfig((prev) => ({ ...prev, isOpen: false }));
@@ -389,7 +457,32 @@ export default function AppraisalPage() {
       }
 
       if (checkResult.exists && checkResult.property) {
-        setDuplicateProperty(checkResult.property);
+        // Fetch full property details for the modal
+        try {
+          const detailsResponse = await fetch(
+            `/api/vaultre/get-property?id=${checkResult.property.id}`,
+          );
+          if (detailsResponse.ok) {
+            const fullDetails = await detailsResponse.json();
+            // Build agent name from contactStaff
+            const agentName = fullDetails.contactStaff?.[0]
+              ? `${fullDetails.contactStaff[0].firstName || ""} ${fullDetails.contactStaff[0].lastName || ""}`.trim()
+              : undefined;
+
+            setDuplicateProperty({
+              ...checkResult.property,
+              ...fullDetails,
+              agentName,
+            });
+          } else {
+            // Fallback to basic info if details fetch fails
+            setDuplicateProperty(checkResult.property);
+          }
+        } catch {
+          // Fallback to basic info
+          setDuplicateProperty(checkResult.property);
+        }
+
         setIsSubmitting(false); // CRITICAL FIX: Stop loading so user can interact with the modal
         setDuplicateModalOpen(true);
         setModalConfig((prev) => ({ ...prev, isOpen: false })); // Close confirm modal
@@ -749,7 +842,7 @@ export default function AppraisalPage() {
             setIsSubmitting(false);
             setModalConfig((prev) => ({ ...prev, isOpen: false })); // Close modal so it doesn't look stuck
           }}
-          onContinue={proceedWithCreation}
+          onUpdate={proceedWithUpdate}
           property={duplicateProperty || { displayAddress: "", id: 0 }}
           isProcessing={isSubmitting}
         />

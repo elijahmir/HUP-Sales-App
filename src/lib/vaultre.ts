@@ -87,6 +87,74 @@ function getHeaders() {
 }
 
 /**
+ * Full property details for display in duplicate modal
+ */
+export interface PropertyDetails {
+  id: number;
+  displayAddress: string;
+  unitNumber?: string;
+  status?: string;
+  bed?: number;
+  bath?: number;
+  garages?: number;
+  contactStaff?: { id: number; firstName?: string; lastName?: string }[];
+  appraisalPriceLower?: number;
+  appraisalPriceUpper?: number;
+  created?: string;
+  modified?: string;
+}
+
+/**
+ * Fetch full property details by ID
+ */
+export async function getPropertyDetails(
+  propertyId: number,
+): Promise<PropertyDetails | null> {
+  try {
+    const { baseUrl } = getConfig();
+
+    const response = await fetch(
+      `${baseUrl}/properties/residential/sale/${propertyId}`,
+      {
+        method: "GET",
+        headers: getHeaders(),
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        `Failed to fetch property ${propertyId}: ${response.status}`,
+      );
+      return null;
+    }
+
+    const data = await response.json();
+
+    // Log raw address for debugging
+    console.log(`  [${propertyId}] Raw address:`, JSON.stringify(data.address));
+
+    return {
+      id: data.id,
+      displayAddress: data.displayAddress || "",
+      unitNumber: data.address?.unitNumber || "",
+      status: data.saleLife?.status || data.status,
+      bed: data.bed,
+      bath: data.bath,
+      garages: data.garages,
+      contactStaff: data.contactStaff,
+      appraisalPriceLower: data.appraisalPriceLower,
+      appraisalPriceUpper: data.appraisalPriceUpper,
+      created: data.created,
+      modified: data.modified,
+    };
+  } catch (error) {
+    console.error("Failed to get property details:", error);
+    return null;
+  }
+}
+
+/**
  * Test API connection by fetching first page of properties
  */
 export async function testConnection(): Promise<{
@@ -211,104 +279,122 @@ export async function checkPropertyExists(addressComponents: {
 }> {
   console.log("Checking property exists (Fast):", addressComponents);
 
-  const {
-    unit: targetUnitRaw,
-    street_number: targetNumberRaw,
-    street_name: targetNameRaw,
-    suburb: targetSuburbRaw,
-  } = addressComponents;
-
-  // 1. Normalize Inputs
-  const targetStreetName = normalizeAndExpand(targetNameRaw);
-  const targetStreetNo = (targetNumberRaw || "").toString().trim();
-  const targetUnit = (targetUnitRaw || "").toString().trim();
-  const targetSuburb = (targetSuburbRaw || "").toLowerCase().trim();
-
-  // 2. Perform Targeted Search
-  // We search for the street name (expanded) to get a list of candidates
-  // e.g. "Moonbeam Pl" -> "moonbeamplace" -> Search "Moonbeam Place"
-  // VaultRE search matches on partial address, so searching street name is safest
-  const searchTerm = targetNameRaw
-    .replace(" Pl", " Place")
-    .replace(" St", " Street")
-    .replace(" Rd", " Road"); // Simple pre-expansion for search term
-
-  // Actually, let's use the raw street name first, but if it has known abbreviation, try expanded
-  // Use the API search
-  let candidates: PropertySearchResult[] = [];
-
   try {
-    // Search 1: Exact Street Name provided
-    const res1 = await searchPropertyByAddress(targetNameRaw);
-    candidates = [...res1.items];
+    const {
+      unit: targetUnitRaw,
+      street_number: targetNumberRaw,
+      street_name: targetNameRaw,
+      suburb: targetSuburbRaw,
+    } = addressComponents;
 
-    // Search 2: If no matches, try Expanded Street Name (if different)
-    const expandedName = normalizeAndExpand(targetNameRaw); // returns "moonbeamplace"
-    // We need a human-readable expanded name for search?
-    // normalizeAndExpand returns "moonbeamplace". API might need "Moonbeam Place".
-    // Let's use the simple suffix map substitution for the SEARCH TERM
-    let expandedSearchTerm = targetNameRaw;
-    const parts = targetNameRaw.split(/\s+/);
-    if (parts.length > 1) {
-      const last = parts[parts.length - 1].toLowerCase();
-      if (SUFFIXES[last]) {
-        parts[parts.length - 1] = SUFFIXES[last]; // e.g. "place"
-        // Capitalize? Vault search is case insensitive usually
-        expandedSearchTerm = parts.join(" ");
+    // 1. Normalize Inputs
+    const targetStreetName = normalizeAndExpand(targetNameRaw);
+    const targetStreetNo = (targetNumberRaw || "").toString().trim();
+    const targetUnit = (targetUnitRaw || "").toString().trim();
+    const targetSuburb = (targetSuburbRaw || "").toLowerCase().trim();
+
+    // 2. Perform Targeted Search
+    // STRATEGY UPDATE: Search for "StreetNo StreetName" first to avoid pagination limits
+    // e.g. "568 Preston Road" instead of just "Preston Road"
+    let candidates: PropertySearchResult[] = [];
+
+    try {
+      // Search 1: Specific "Number Street" (Most accurate)
+      if (targetStreetNo) {
+        const specificSearch = `${targetStreetNo} ${targetNameRaw}`;
+        console.log(
+          `VaultRE Search: searching for specific "${specificSearch}"`,
+        );
+        const resSpecific = await searchPropertyByAddress(specificSearch);
+        console.log(
+          `VaultRE Search: returned ${resSpecific.items.length} results from "${specificSearch}"`,
+        );
+        candidates = [...resSpecific.items];
       }
-    }
 
-    if (expandedSearchTerm.toLowerCase() !== targetNameRaw.toLowerCase()) {
-      console.log(`Searching expanded term: "${expandedSearchTerm}"`);
-      const res2 = await searchPropertyByAddress(expandedSearchTerm);
-      // Merge unique candidates
-      const existingIds = new Set(candidates.map((c) => c.id));
-      for (const item of res2.items) {
-        if (!existingIds.has(item.id)) {
-          candidates.push(item);
-        }
+      // Search 2: If specific search failed/empty, fallback to Street Name only
+      if (candidates.length === 0) {
+        console.log(
+          `VaultRE Search: specific search empty, falling back to "${targetNameRaw}"`,
+        );
+        const resBroad = await searchPropertyByAddress(targetNameRaw);
+        console.log(
+          `VaultRE Search: returned ${resBroad.items.length} results from "${targetNameRaw}"`,
+        );
+        candidates = [...resBroad.items];
+      }
+    } catch (error) {
+      console.error("Search failed, trying fallback:", error);
+      // Fallback if specific search errors out
+      try {
+        const resBroader = await searchPropertyByAddress(targetNameRaw);
+        candidates = [...resBroader.items];
+      } catch (e) {
+        console.error("Broad search also failed", e);
       }
     }
 
     console.log(`Found ${candidates.length} candidates. Filtering...`);
+    console.log(
+      `Target: unit="${targetUnit}" streetNo="${targetStreetNo}" street="${targetStreetName}" suburb="${targetSuburb}"`,
+    );
 
-    const matches: PropertySearchResult[] = [];
+    const exactMatches: PropertySearchResult[] = [];
+    const addressMatchCandidates: PropertySearchResult[] = [];
 
-    // 3. Filter Candidates Strictly
+    // 3. First pass: Filter by street/suburb/number (ignore unit from search - it's unreliable)
     for (const p of candidates) {
       if (!p.address) continue;
 
       const vaultStreetName = normalizeAndExpand(p.address.street || "");
       const vaultStreetNo = (p.address.streetNumber || "").toString().trim();
-      const vaultUnit = (p.address.unitNumber || "").toString().trim();
       const vaultSuburb = (p.address.suburb?.name || "").toLowerCase().trim();
-
-      // Debug log for potential matches
-      if (vaultStreetNo === targetStreetNo) {
-        console.log(
-          `Candidate [${p.id}]: ${p.displayAddress} | Suburb: ${vaultSuburb} vs ${targetSuburb}`,
-        );
-      }
 
       // Check Suburb
       if (vaultSuburb !== targetSuburb) continue;
-
-      // Check Street Name (Normalized)
+      // Check Street Name
       if (vaultStreetName !== targetStreetName) continue;
-
       // Check Street Number
       if (vaultStreetNo !== targetStreetNo) continue;
 
-      // Check Unit (Allow exact match or both empty)
-      if (vaultUnit !== targetUnit) continue;
+      // Address matches! Add to candidates for unit check
+      console.log(`  [${p.id}]: Address match - need to verify unit`);
+      addressMatchCandidates.push(p);
+    }
 
-      matches.push(p);
+    // 4. Second pass: Fetch full details to get actual unit from displayAddress
+    console.log(
+      `Verifying unit for ${addressMatchCandidates.length} address matches...`,
+    );
+
+    for (const p of addressMatchCandidates) {
+      const details = await getPropertyDetails(p.id);
+      if (!details) {
+        console.log(`  [${p.id}]: Failed to fetch details, skipping`);
+        continue;
+      }
+
+      // Use address.unitNumber from full API response (not displayAddress which is unreliable)
+      const actualUnit = (details.unitNumber || "").toString().trim();
+
+      console.log(
+        `  [${p.id}]: address="${details.displayAddress}" unitNumber="${actualUnit}" target="${targetUnit}"`,
+      );
+
+      // Check Unit - STRICT EXACT MATCHING
+      if (actualUnit !== targetUnit) {
+        console.log(`    SKIP: unit mismatch`);
+        continue;
+      }
+
+      console.log(`    EXACT MATCH FOUND!`);
+      exactMatches.push(p);
     }
 
     return {
-      exists: matches.length > 0,
-      matches,
-      property: matches[0], // Frontend expects this for the modal
+      exists: exactMatches.length > 0,
+      matches: exactMatches,
+      property: exactMatches[0],
     };
   } catch (error) {
     console.error("Fast search failed:", error);
@@ -351,9 +437,45 @@ export async function createAppraisal(
 }
 
 /**
+ * Update an existing property in VaultRE
+ * Uses PUT /properties/residential/sale/{id}
+ */
+export async function updateProperty(
+  propertyId: number,
+  data: CreateAppraisalData,
+): Promise<{ success: boolean; propertyId?: number; error?: string }> {
+  const { baseUrl } = getConfig();
+
+  const response = await fetch(
+    `${baseUrl}/properties/residential/sale/${propertyId}`,
+    {
+      method: "PUT",
+      headers: getHeaders(),
+      cache: "no-store",
+      body: JSON.stringify(data),
+    },
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    return {
+      success: false,
+      error: `Failed to update property: ${response.status} - ${text}`,
+    };
+  }
+
+  const result = await response.json();
+  return {
+    success: true,
+    propertyId: result.id,
+  };
+}
+
+/**
  * Search for suburbs to get their ID
  * VaultRE requires suburb ID for property creation
  */
+
 export async function searchSuburbs(
   term: string,
 ): Promise<{ id: number; name: string; postcode: string; state: string }[]> {

@@ -606,6 +606,21 @@ export async function* extractListingDataStream(
     For 'exists' fields in rooms, set to true if the room has data or is checked.
     If a field is empty, return null or empty string.
     
+    CRITICAL - HANDWRITTEN NOTES EXTRACTION (DO NOT SKIP):
+    - Scan the ENTIRE document for ANY handwritten text - margins, blank spaces, between sections
+    - The "Property notes and description" section (usually a blank area for notes) is VERY IMPORTANT
+    - Even if handwriting is messy, abbreviated, or uses shorthand, transcribe it as best as possible
+    - Capture ALL property features, conditions, renovations, and observations mentioned in handwriting
+    - Look for notes about: flooring, roofing, heating, renovations, council info, rates, outdoor areas, appliances
+    - Use these fields to capture notes:
+      - handwritten_notes_section: Main notes/description area content (CRITICAL - transcribe everything here)
+      - bottom_handwritten_note: Any notes at the bottom of any page
+      - notes_page_content: Dedicated notes page content
+      - handwritten_notes_top.property_note: Property feature notes at top
+      - handwritten_notes_top.financial_note: Price/financial notes at top
+      - handwritten_notes_top.other_notes: Any other handwritten content
+    - Example notes to look for: "vinyl floors", "new roof", "HWC", "solar panels", "council rates", "patio", etc.
+    
     IMPORTANT: For the address field, also parse it into address_components following Australian address standards:
     - unit: Unit/Apartment number if present (e.g., "Unit 5", "3", or from format "3/123 Main St" extract "3")
     - street_number: Street number including any suffix (e.g., "123", "45A")

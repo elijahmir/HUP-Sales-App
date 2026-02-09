@@ -1,11 +1,22 @@
-import { createAppraisal, CreateAppraisalData } from "@/lib/vaultre";
+import {
+  updateProperty,
+  CreateAppraisalData,
+  searchSuburbs,
+} from "@/lib/vaultre";
 import { getAgentByName } from "@/data/vaultre-agents";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { formData } = body;
+    const { propertyId, formData } = body;
+
+    if (!propertyId) {
+      return NextResponse.json(
+        { error: "Property ID is required" },
+        { status: 400 },
+      );
+    }
 
     // Validate required fields
     if (!formData.listing_agent) {
@@ -40,9 +51,6 @@ export async function POST(req: NextRequest) {
     const addr = formData.address_components;
 
     // Lookup Suburb ID
-    // We assume the suburb name is correct or we find the best match
-    // If postcode is available, filter by it
-    const { searchSuburbs } = await import("@/lib/vaultre");
     const suburbs = await searchSuburbs(addr.suburb);
 
     let suburbId: number | undefined;
@@ -65,7 +73,7 @@ export async function POST(req: NextRequest) {
       suburbId = suburbs[0].id;
     }
 
-    const appraisalData: CreateAppraisalData = {
+    const updateData: CreateAppraisalData = {
       address: {
         unitNumber: addr.unit || undefined,
         streetNumber: addr.street_number,
@@ -96,20 +104,21 @@ export async function POST(req: NextRequest) {
       appraisal: formData.appraisal_date
         ? new Date(formData.appraisal_date).toISOString()
         : undefined,
-      // NOTE: accessBy/editableBy omitted - API defaults are used
-      // The -1 value is only valid for GET/filtering, not POST/create
       type: { id: 1 }, // Default to House/Residential
     };
 
-    const result = await createAppraisal(appraisalData);
+    const result = await updateProperty(propertyId, updateData);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 500 });
     }
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      success: true,
+      id: result.propertyId,
+    });
   } catch (error) {
-    console.error("Create appraisal error:", error);
+    console.error("Property update error:", error);
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Internal server error",

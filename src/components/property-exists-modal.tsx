@@ -3,20 +3,28 @@
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle,
-  X,
-  Loader2,
   Building2,
-  CheckCircle2,
+  User,
+  Bed,
+  Bath,
+  Car,
+  DollarSign,
 } from "lucide-react";
 
 interface PropertyExistsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onContinue: () => void;
+  onUpdate: () => void;
   property: {
     displayAddress: string;
     id: number;
     status?: string;
+    bed?: number;
+    bath?: number;
+    garages?: number;
+    agentName?: string;
+    appraisalPriceLower?: number;
+    appraisalPriceUpper?: number;
   };
   isProcessing?: boolean;
 }
@@ -37,13 +45,30 @@ const SPIN_STYLES = `
   }
 `;
 
+function formatPrice(value?: number): string {
+  if (!value) return "";
+  return new Intl.NumberFormat("en-AU", {
+    style: "currency",
+    currency: "AUD",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 export default function PropertyExistsModal({
   isOpen,
   onClose,
-  onContinue,
+  onUpdate,
   property,
   isProcessing = false,
 }: PropertyExistsModalProps) {
+  const hasFeatures =
+    property.bed !== undefined ||
+    property.bath !== undefined ||
+    property.garages !== undefined;
+
+  const hasPriceRange =
+    property.appraisalPriceLower || property.appraisalPriceUpper;
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -75,18 +100,65 @@ export default function PropertyExistsModal({
                     Property Already Exists
                   </h3>
                   <p className="mt-2 text-sm text-slate-500 leading-relaxed">
-                    A property with this address was found in VaultRE. Creating
-                    a duplicate might cause confusion.
+                    This property exists in VaultRE. Click{" "}
+                    <strong>Update Property</strong> to add new appraisal data.
                   </p>
 
-                  <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                    <div className="flex items-center gap-2 mb-1">
+                  <div className="mt-4 p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
+                    {/* Address */}
+                    <div className="flex items-center gap-2">
                       <Building2 className="w-4 h-4 text-slate-400" />
                       <span className="text-sm font-semibold text-slate-900">
                         {property.displayAddress}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-slate-500 ml-6">
+
+                    {/* Agent */}
+                    {property.agentName && (
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
+                        <User className="w-3.5 h-3.5 text-slate-400" />
+                        <span>Agent: {property.agentName}</span>
+                      </div>
+                    )}
+
+                    {/* Features (Bed/Bath/Car) */}
+                    {hasFeatures && (
+                      <div className="flex items-center gap-4 text-xs text-slate-600">
+                        {property.bed !== undefined && (
+                          <span className="flex items-center gap-1">
+                            <Bed className="w-3.5 h-3.5" />
+                            {property.bed}
+                          </span>
+                        )}
+                        {property.bath !== undefined && (
+                          <span className="flex items-center gap-1">
+                            <Bath className="w-3.5 h-3.5" />
+                            {property.bath}
+                          </span>
+                        )}
+                        {property.garages !== undefined && (
+                          <span className="flex items-center gap-1">
+                            <Car className="w-3.5 h-3.5" />
+                            {property.garages}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Price Range */}
+                    {hasPriceRange && (
+                      <div className="flex items-center gap-2 text-xs text-slate-600">
+                        <DollarSign className="w-3.5 h-3.5 text-slate-400" />
+                        <span>
+                          {formatPrice(property.appraisalPriceLower)}
+                          {property.appraisalPriceUpper &&
+                            ` - ${formatPrice(property.appraisalPriceUpper)}`}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* ID and Status */}
+                    <div className="flex items-center gap-3 text-xs text-slate-500 pt-1 border-t border-slate-200">
                       <span>ID: {property.id}</span>
                       {property.status && (
                         <span className="px-2 py-0.5 bg-slate-200 rounded-full text-slate-600 font-medium capitalize">
@@ -98,7 +170,7 @@ export default function PropertyExistsModal({
                 </div>
               </div>
 
-              <div className="mt-8 flex items-center justify-end gap-3 cancel-button-group">
+              <div className="mt-6 flex items-center justify-end gap-3">
                 <button
                   onClick={onClose}
                   disabled={isProcessing}
@@ -107,9 +179,9 @@ export default function PropertyExistsModal({
                   Cancel
                 </button>
                 <button
-                  onClick={onContinue}
+                  onClick={onUpdate}
                   disabled={isProcessing}
-                  className="px-5 py-2.5 text-sm font-semibold text-white bg-amber-600 hover:bg-amber-700 rounded-xl shadow-lg shadow-amber-900/10 flex items-center gap-2 transition-all active:scale-[0.98]"
+                  className="px-5 py-2.5 text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl shadow-lg shadow-sky-900/10 flex items-center gap-2 transition-all active:scale-[0.98]"
                 >
                   {isProcessing ? (
                     <>
@@ -134,10 +206,10 @@ export default function PropertyExistsModal({
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                         ></path>
                       </svg>
-                      Creating...
+                      Updating...
                     </>
                   ) : (
-                    "Create Anyway"
+                    "Update Property"
                   )}
                 </button>
               </div>
