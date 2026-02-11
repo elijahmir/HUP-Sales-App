@@ -9,11 +9,20 @@ export function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-// Australian mobile validation (starts with 04 or +614, 10 digits)
-export function isValidMobile(mobile: string): boolean {
+// Mobile validation based on country code
+// +61 (Australia): 9 digits (e.g. 418213931)
+// +63 (Philippines): 10 digits (e.g. 9665971704)
+export function isValidMobile(
+  mobile: string,
+  countryCode: string = "+61",
+): boolean {
   if (!mobile) return false;
   const cleaned = mobile.replace(/[\s-]/g, "");
-  return /^(04\d{8}|\+614\d{8})$/.test(cleaned);
+  if (countryCode === "+63") {
+    return /^\d{10}$/.test(cleaned);
+  }
+  // Default: Australia (+61) — 9 digits
+  return /^\d{9}$/.test(cleaned);
 }
 
 // Australian landline validation (starts with 02/03/07/08, 10 digits)
@@ -220,8 +229,11 @@ export function isValidVendor(formData: FormData): ValidationResult {
 
     if (!isRequired(vendor.mobile)) {
       errors[`${prefix}.mobile`] = `Vendor ${i + 1} Mobile is required`;
-    } else if (!isValidMobile(vendor.mobile)) {
-      errors[`${prefix}.mobile`] = `Invalid Australian mobile (04...)`;
+    } else if (!isValidMobile(vendor.mobile, vendor.mobileCountryCode)) {
+      errors[`${prefix}.mobile`] =
+        vendor.mobileCountryCode === "+63"
+          ? `Invalid Philippine mobile (10 digits)`
+          : `Invalid Australian mobile (9 digits)`;
     }
 
     if (

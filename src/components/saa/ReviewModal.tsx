@@ -265,7 +265,10 @@ export function ReviewModal({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <InfoItem label="Full Name" value={vendor.fullName} />
                       <InfoItem label="Email" value={vendor.email} isEmail />
-                      <InfoItem label="Mobile" value={vendor.mobile} />
+                      <InfoItem
+                        label="Mobile"
+                        value={`${vendor.mobileCountryCode} ${vendor.mobile}`}
+                      />
                       {vendor.homePhone && (
                         <InfoItem label="Home Phone" value={vendor.homePhone} />
                       )}

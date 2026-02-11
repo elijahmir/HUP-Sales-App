@@ -384,6 +384,8 @@ export interface VendorPayload {
   email: string | null;
   email_val: string | null; // NEW: Always has vendor email
   mobile: string | null;
+  mobile_countrycode: string | null;
+  mobile_number: string | null;
   home_phone: string | null;
   street: string | null;
   suburb: string | null;
@@ -397,6 +399,8 @@ export interface SubmissionPayload {
   agent_name: string;
   agent_email: string;
   agent_mobile: string;
+  agent_mobile_countrycode: string;
+  agent_mobile_number: string;
   office_name: string;
   office_street: string;
   office_suburb: string;
@@ -538,6 +542,8 @@ function createNullVendor(): VendorPayload {
     email: null,
     email_val: null,
     mobile: null,
+    mobile_countrycode: null,
+    mobile_number: null,
     home_phone: null,
     street: null,
     suburb: null,
@@ -550,6 +556,13 @@ function createNullVendor(): VendorPayload {
 export function buildPayload(formData: FormData): SubmissionPayload {
   // Helper to uppercase string fields except emails
   const toUpper = (value: string): string => value.toUpperCase();
+
+  // Helper to format vendor mobile with country code
+  const formatVendorMobile = (vendorIndex: number): string => {
+    const v = formData.vendors[vendorIndex];
+    const cleaned = v.mobile.replace(/[\s-]/g, "");
+    return `${v.mobileCountryCode} ${cleaned}`;
+  };
 
   // Get selected marketing items with full details for individual fields
   const selectedMarketingItems = formData.selectedMarketing
@@ -656,6 +669,14 @@ export function buildPayload(formData: FormData): SubmissionPayload {
     agent_name: toUpper(formData.agentName),
     agent_email: formData.agentEmail.toLowerCase(),
     agent_mobile: toUpper(formData.agentMobile),
+    agent_mobile_countrycode: (() => {
+      const match = formData.agentMobile.match(/^\+(\d+)\s/);
+      return match ? match[1] : "61";
+    })(),
+    agent_mobile_number: (() => {
+      const parts = formData.agentMobile.split(/\s+/);
+      return parts.length > 1 ? parts.slice(1).join("") : formData.agentMobile;
+    })(),
     office_name: toUpper(formData.officeName),
     office_street: toUpper(formData.officeStreet),
     office_suburb: toUpper(formData.officeSuburb),
@@ -1000,9 +1021,13 @@ export function buildPayload(formData: FormData): SubmissionPayload {
               ? null
               : formData.vendors[0].email.toLowerCase(),
             email_val: formData.vendors[0].email.toLowerCase(),
-            mobile: isNonIndividual
+            mobile: isNonIndividual ? null : formatVendorMobile(0),
+            mobile_countrycode: isNonIndividual
               ? null
-              : toUpper(formData.vendors[0].mobile),
+              : formData.vendors[0].mobileCountryCode.replace("+", ""),
+            mobile_number: isNonIndividual
+              ? null
+              : formData.vendors[0].mobile.replace(/[\s-]/g, "") || null,
             home_phone: isNonIndividual
               ? null
               : formData.vendors[0].homePhone
@@ -1044,9 +1069,13 @@ export function buildPayload(formData: FormData): SubmissionPayload {
               ? null
               : formData.vendors[1].email.toLowerCase(),
             email_val: formData.vendors[1].email.toLowerCase(),
-            mobile: isNonIndividual
+            mobile: isNonIndividual ? null : formatVendorMobile(1),
+            mobile_countrycode: isNonIndividual
               ? null
-              : toUpper(formData.vendors[1].mobile),
+              : formData.vendors[1].mobileCountryCode.replace("+", ""),
+            mobile_number: isNonIndividual
+              ? null
+              : formData.vendors[1].mobile.replace(/[\s-]/g, "") || null,
             home_phone: isNonIndividual
               ? null
               : formData.vendors[1].homePhone
@@ -1088,9 +1117,13 @@ export function buildPayload(formData: FormData): SubmissionPayload {
               ? null
               : formData.vendors[2].email.toLowerCase(),
             email_val: formData.vendors[2].email.toLowerCase(),
-            mobile: isNonIndividual
+            mobile: isNonIndividual ? null : formatVendorMobile(2),
+            mobile_countrycode: isNonIndividual
               ? null
-              : toUpper(formData.vendors[2].mobile),
+              : formData.vendors[2].mobileCountryCode.replace("+", ""),
+            mobile_number: isNonIndividual
+              ? null
+              : formData.vendors[2].mobile.replace(/[\s-]/g, "") || null,
             home_phone: isNonIndividual
               ? null
               : formData.vendors[2].homePhone
@@ -1132,9 +1165,13 @@ export function buildPayload(formData: FormData): SubmissionPayload {
               ? null
               : formData.vendors[3].email.toLowerCase(),
             email_val: formData.vendors[3].email.toLowerCase(),
-            mobile: isNonIndividual
+            mobile: isNonIndividual ? null : formatVendorMobile(3),
+            mobile_countrycode: isNonIndividual
               ? null
-              : toUpper(formData.vendors[3].mobile),
+              : formData.vendors[3].mobileCountryCode.replace("+", ""),
+            mobile_number: isNonIndividual
+              ? null
+              : formData.vendors[3].mobile.replace(/[\s-]/g, "") || null,
             home_phone: isNonIndividual
               ? null
               : formData.vendors[3].homePhone

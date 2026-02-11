@@ -1,6 +1,7 @@
 export interface VendorInfo {
   fullName: string;
   email: string;
+  mobileCountryCode: string;
   mobile: string;
   homePhone: string;
   sameAsProperty: boolean;
@@ -135,6 +136,7 @@ export function createEmptyVendor(): VendorInfo {
   return {
     fullName: "",
     email: "",
+    mobileCountryCode: "+61",
     mobile: "",
     homePhone: "",
     sameAsProperty: false,

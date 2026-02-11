@@ -1,26 +1,23 @@
 # What's New
 
-## 🎨 Dashboard UI Enhancements (Feb 2026)
+## 🤖 SUPERCHARGED AI OCR (Feb 2026)
 
-We've polished the dashboard for a more personalized and clear experience:
+The app now runs on **Google Gemini 2.0 Flash**, delivering human-level handwriting recognition:
 
-- **Personalized Welcome**: Now greets you by name (e.g., "Welcome back, Brad") instead of using your full email.
-- **Clearer Terminology**: Renamed "Recent Appraisals" to "**Recent Front Sheets**" to better reflect the workflow.
-- **Quick Actions**: Updated button labels to "**Upload Front Sheet**" and "**To VaultRE**" for clarity.
-- **Improved Navigation**: Breadcrumbs now correctly display "**Front Sheet AI**".
+- **Writes Like a Pro**: Extracts messy, cursive, and slanted handwriting with incredible accuracy.
+- **Improved Field Detection**: Smarter extraction of 'Method of Sale', Vendor Names, and complex Addresses.
+- **Thinking Process**: Watch the AI analyze your document in real-time with the new "Processing Thought" stream.
 
-## 🌗 Side-by-Side Contract Review
+## 🔄 INTELLIGENT DUPLICATE HANDLING
 
-The Contract Review screen has been completely reimagined for efficiency:
+We've overhauled how the app interacts with VaultRE to keep your database clean:
 
-- **Split View Layout**: Now displays the **Original Document** (Right) and **Digital Form** (Left) side-by-side.
-- **Smart Scaling**: The digital form automatically scales down to fit the split view while maintaining full functionality.
-- **Matched Heights**: Both panels utilize the full screen height with independent scrolling, ensuring a seamless comparison experience.
+- **Update vs. Create**: If a property already exists, you can now **UPDATE** it with the new appraisal data instead of creating a duplicate.
+- **Precision Matching**: The app now finds specific units (e.g., `1/568`) even when VaultRE's search misses them. No more false duplicates for Unit 1 vs. House 1.
+- **Detailed Preview**: Review existing property details (Status, Agent, Price) before syncing to ensure you're updating the right record.
 
-## 🛡️ Enhanced Security: Inactivity Timeout
+## ✨ POLISHED EXPERIENCE
 
-To protect your sensitive data, we've implemented an intelligent inactivity timeout:
-
-- **Auto-Logout**: Sessions automatically close after **15 minutes** of inactivity.
-- **Smart Warning**: A warning modal appears **1 minute before** timeout, giving you a chance to stay logged in.
-- **Activity Monitoring**: The system intelligently detects mouse movements, clicks, and keyboard usage to keep your session active while you work.
+- **AI Assistant Badge**: A new visual indicator for AI-processed appraisals.
+- **Automatic Reset**: Form clears automatically after successful submission for rapid-fire processing.
+- **Smart Loading**: Cleaner loading states and error messages during synchronization.

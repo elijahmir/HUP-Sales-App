@@ -409,21 +409,44 @@ export function VendorSection({
 
                 <div className="md:col-span-6">
                   <label className="field-label">Mobile Number</label>
-                  <input
-                    type="tel"
-                    value={formData.vendors[index].mobile}
-                    onChange={(e) =>
-                      updateVendor(
-                        index,
-                        "mobile",
-                        e.target.value.replace(/[^0-9\s+]/g, ""),
-                      )
-                    }
-                    className={`input-field ${
-                      errors[`vendors[${index}].mobile`] ? "border-red-500" : ""
-                    }`}
-                    placeholder="0400 000 000"
-                  />
+                  <div className="flex gap-2">
+                    <select
+                      value={formData.vendors[index].mobileCountryCode}
+                      onChange={(e) =>
+                        updateVendor(index, "mobileCountryCode", e.target.value)
+                      }
+                      className="input-field w-[120px] flex-shrink-0 appearance-none bg-white"
+                    >
+                      <option value="+61">+61 AU</option>
+                      <option value="+63">+63 PH</option>
+                    </select>
+                    <input
+                      type="tel"
+                      value={formData.vendors[index].mobile}
+                      onChange={(e) =>
+                        updateVendor(
+                          index,
+                          "mobile",
+                          e.target.value.replace(/[^0-9]/g, ""),
+                        )
+                      }
+                      className={`input-field flex-1 ${
+                        errors[`vendors[${index}].mobile`]
+                          ? "border-red-500"
+                          : ""
+                      }`}
+                      placeholder={
+                        formData.vendors[index].mobileCountryCode === "+63"
+                          ? "9665971704"
+                          : "418213931"
+                      }
+                      maxLength={
+                        formData.vendors[index].mobileCountryCode === "+63"
+                          ? 10
+                          : 9
+                      }
+                    />
+                  </div>
                   {errors[`vendors[${index}].mobile`] && (
                     <p className="error-text">
                       {errors[`vendors[${index}].mobile`]}
