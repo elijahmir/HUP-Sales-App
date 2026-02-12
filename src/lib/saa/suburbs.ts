@@ -230,6 +230,28 @@ export const tasmaniaSuburbs: SuburbData[] = [
   { suburb: "Currie", postcode: "7256", state: "TAS" },
   { suburb: "Grassy", postcode: "7256", state: "TAS" },
   { suburb: "Naracoopa", postcode: "7256", state: "TAS" },
+  // Central Highlands / Great Lake area
+  { suburb: "Miena", postcode: "7030", state: "TAS" },
+  { suburb: "Liawenee", postcode: "7030", state: "TAS" },
+  { suburb: "Arthurs Lake", postcode: "7030", state: "TAS" },
+  { suburb: "Interlaken", postcode: "7030", state: "TAS" },
+  { suburb: "Cramps Bay", postcode: "7030", state: "TAS" },
+  { suburb: "Wilburville", postcode: "7030", state: "TAS" },
+  { suburb: "Flintstone", postcode: "7030", state: "TAS" },
+  { suburb: "Shannon", postcode: "7030", state: "TAS" },
+  { suburb: "Steppes", postcode: "7030", state: "TAS" },
+  { suburb: "Bothwell", postcode: "7030", state: "TAS" },
+  { suburb: "Bronte Park", postcode: "7140", state: "TAS" },
+  { suburb: "London Lakes", postcode: "7140", state: "TAS" },
+  { suburb: "Ouse", postcode: "7140", state: "TAS" },
+  { suburb: "Derwent Bridge", postcode: "7140", state: "TAS" },
+  { suburb: "Tarraleah", postcode: "7140", state: "TAS" },
+  { suburb: "Wayatinah", postcode: "7140", state: "TAS" },
+  { suburb: "Breona", postcode: "7304", state: "TAS" },
+  { suburb: "Reynolds Neck", postcode: "7304", state: "TAS" },
+  { suburb: "Brandum", postcode: "7304", state: "TAS" },
+  { suburb: "Doctors Point", postcode: "7304", state: "TAS" },
+  { suburb: "Tods Corner", postcode: "7304", state: "TAS" },
 ];
 
 // Common suburbs from other Australian states for cross-reference
