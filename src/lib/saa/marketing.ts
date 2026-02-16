@@ -159,18 +159,58 @@ export const marketingItems: MarketingItem[] = [
   },
 
   // Group: RIX Images
-  { id: "rix-home", name: "Home Package", price: 352, group: "RIX Images" },
-  { id: "rix-land", name: "Land Package", price: 165, group: "RIX Images" },
+  {
+    id: "rix-refresh",
+    name: "Property Refresh Package (5-8 standard images)",
+    price: 132,
+    group: "RIX Images",
+  },
+  {
+    id: "rix-rental",
+    name: "Rental Package (Max. 10 standard images)",
+    price: 176,
+    group: "RIX Images",
+  },
+  {
+    id: "rix-land",
+    name: "Land Block Package (Max. 8-10 standard images + aerial)",
+    price: 176,
+    group: "RIX Images",
+  },
+  {
+    id: "rix-home",
+    name: "Home Sales Package (Max 15 standard + aerial + floorplan)",
+    price: 363,
+    group: "RIX Images",
+  },
   {
     id: "rix-premium",
-    name: "Premium Package",
-    price: 550,
+    name: "Premium Package (Max 30 standard/lifestyle + aerial + plans)",
+    price: 572,
     group: "RIX Images",
   },
   {
     id: "rix-premium-plus",
-    name: "Premium Plus Package",
-    price: 990,
+    name: "Premium Plus Package (Max 30 standard/lifestyle/sunset + aerial + plans)",
+    price: 792,
+    group: "RIX Images",
+  },
+  {
+    id: "rix-extra",
+    name: "Extra Images Pack (5-8 images)",
+    price: 71.5,
+    group: "RIX Images",
+  },
+  {
+    id: "rix-removal",
+    name: "Clear room/multiple object removal (per room)",
+    price: 35.2,
+    group: "RIX Images",
+  },
+  {
+    id: "rix-staging",
+    name: "Virtual Staging (per room)",
+    price: 55,
     group: "RIX Images",
   },
 
