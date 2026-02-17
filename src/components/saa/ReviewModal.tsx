@@ -10,13 +10,14 @@ import {
 } from "lucide-react";
 import type { FormData } from "@/lib/saa/types";
 import { formatNumberWithCommas } from "@/lib/saa/validation";
-import { marketingItems } from "@/lib/saa/marketing";
+import { MarketingItem } from "@/lib/saa/marketing";
 
 interface ReviewModalProps {
   isOpen: boolean;
   formData: FormData;
   onConfirm: () => void;
   onCancel: () => void;
+  items: MarketingItem[]; // Helper prop
 }
 
 export function ReviewModal({
@@ -24,6 +25,7 @@ export function ReviewModal({
   formData,
   onConfirm,
   onCancel,
+  items,
 }: ReviewModalProps) {
   if (!isOpen) return null;
 
@@ -309,9 +311,7 @@ export function ReviewModal({
                   <>
                     <ul className="space-y-2">
                       {formData.selectedMarketing.map((itemId, index) => {
-                        const item = marketingItems.find(
-                          (i) => i.id === itemId,
-                        );
+                        const item = items.find((i) => i.id === itemId);
                         return (
                           <li
                             key={index}
@@ -341,9 +341,7 @@ export function ReviewModal({
                           {formatNumberWithCommas(
                             formData.selectedMarketing
                               .reduce((total, itemId) => {
-                                const item = marketingItems.find(
-                                  (i) => i.id === itemId,
-                                );
+                                const item = items.find((i) => i.id === itemId);
                                 return total + (item?.price || 0);
                               }, 0)
                               .toString(),

@@ -1,18 +1,20 @@
 import { ShoppingCart, CheckCircle, Info } from "lucide-react";
 import type { FormData } from "@/lib/saa/types";
-import { marketingItems, getMarketingGroups } from "@/lib/saa/marketing";
+import { MarketingItem, getMarketingGroups } from "@/lib/saa/marketing";
 import { formatNumberWithCommas } from "@/lib/saa/validation";
 
 interface MarketingSectionProps {
   formData: FormData;
   updateFormData: (updates: Partial<FormData>) => void;
+  items: MarketingItem[];
 }
 
 export function MarketingSection({
   formData,
   updateFormData,
+  items,
 }: MarketingSectionProps) {
-  const marketingGroups = getMarketingGroups();
+  const marketingGroups = getMarketingGroups(items);
 
   const handleToggle = (id: string) => {
     const selected = new Set(formData.selectedMarketing);
@@ -25,7 +27,7 @@ export function MarketingSection({
   };
 
   const totalCost = formData.selectedMarketing.reduce((sum, id) => {
-    const item = marketingItems.find((i) => i.id === id);
+    const item = items.find((i) => i.id === id);
     return sum + (item?.price || 0);
   }, 0);
 

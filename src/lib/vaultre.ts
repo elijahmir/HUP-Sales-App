@@ -64,6 +64,19 @@ export interface CreateAppraisalData {
   type: { id: number }; // Required by VaultRE
 }
 
+export interface VaultREExpenseType {
+  id: number;
+  name: string;
+  description?: string;
+  amount: number;
+  gstInclusive: boolean;
+  companyContribution: number;
+  supplier?: {
+    id: number;
+    name: string;
+  };
+}
+
 // API Configuration
 function getConfig() {
   const apiKey = process.env.VAULTRE_API_KEY;
@@ -260,6 +273,53 @@ function normalizeAndExpand(name: string): string {
   }
 
   return parts.join("").replace(/[^a-z0-9]/g, "");
+}
+
+/**
+ * Fetch expense types (marketing items) from VaultRE
+ */
+export async function getExpenseTypes(): Promise<VaultREExpenseType[]> {
+  try {
+    const { baseUrl } = getConfig();
+    const response = await fetch(
+      `${baseUrl}/advertising/expenseTypes?pagesize=100&page=1`,
+      {
+        method: "GET",
+        headers: {
+          ...getHeaders(),
+          Accept: "application/json",
+        },
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      // Log the text for debugging
+      const text = await response.text();
+      console.error(
+        `VaultRE API error fetching expenses: ${response.status} - ${text}`,
+      );
+      throw new Error(`Failed to fetch expense types: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Check if data has items property (pagination wrapper)
+    if (data && Array.isArray(data.items)) {
+      return data.items;
+    }
+
+    // Check if data is array itself
+    if (Array.isArray(data)) {
+      return data;
+    }
+
+    console.warn("Unexpected VaultRE response format for expense types:", data);
+    return [];
+  } catch (error) {
+    console.error("Error fetching VaultRE expense types:", error);
+    return [];
+  }
 }
 
 /**

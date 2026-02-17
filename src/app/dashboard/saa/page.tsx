@@ -34,11 +34,14 @@ import {
 } from "@/lib/saa/historyStorage";
 import { submitForm } from "@/lib/saa/api";
 
+import { MarketingItem } from "@/lib/saa/marketing";
+
 export default function SAAFormPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
+  const [marketingOptions, setMarketingOptions] = useState<MarketingItem[]>([]);
 
   // Modals & UI State
   const [showHistory, setShowHistory] = useState(false);
@@ -58,6 +61,32 @@ export default function SAAFormPage() {
 
   useEffect(() => {
     setHistoryEntries(getHistory());
+
+    async function loadMarketing() {
+      try {
+        const response = await fetch("/api/vaultre/expense-types");
+        if (!response.ok) {
+          throw new Error("Failed to fetch expense types");
+        }
+        const types = await response.json();
+        const mapped: MarketingItem[] = types
+          .filter((t: any) => t.amount > 0)
+          .map((t: any) => ({
+            id: String(t.id),
+            name: t.name,
+            price: t.amount,
+            group: t.supplier.name,
+            supplierId: t.supplier.id,
+          }));
+
+        if (mapped.length > 0) {
+          setMarketingOptions(mapped);
+        }
+      } catch (e) {
+        console.error("Failed to load marketing items", e);
+      }
+    }
+    loadMarketing();
   }, []);
 
   const updateHistory = () => {
@@ -163,7 +192,7 @@ export default function SAAFormPage() {
     updateHistory();
 
     try {
-      const result = await submitForm(formData);
+      const result = await submitForm(formData, marketingOptions);
       if (result.success) {
         setSuccessData({
           vendorName: result.vendorName,
@@ -252,7 +281,11 @@ export default function SAAFormPage() {
       );
     } else {
       return (
-        <MarketingSection formData={formData} updateFormData={updateFormData} />
+        <MarketingSection
+          formData={formData}
+          updateFormData={updateFormData}
+          items={marketingOptions}
+        />
       );
     }
   };
@@ -342,6 +375,7 @@ export default function SAAFormPage() {
         formData={formData}
         onConfirm={handleFinalSubmit}
         onCancel={() => setShowReview(false)}
+        items={marketingOptions}
       />
 
       <LoadingModal isOpen={isSubmitting} />
