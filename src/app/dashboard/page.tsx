@@ -257,8 +257,51 @@ export default function DashboardHub() {
           </Link>
         </motion.div>
 
+        {/* CopyPro - Active (Horizontal) */}
+        <motion.div variants={item} className="md:col-span-2 group relative">
+          <Link href="/dashboard/copypro" className="block h-full">
+            <div className="relative h-full bg-gradient-to-br from-violet-500/5 to-fuchsia-500/5 rounded-2xl p-8 overflow-hidden shadow-sm border border-violet-500/20 transition-all duration-300 hover:shadow-md hover:border-violet-500/30 hover:-translate-y-1 flex flex-col justify-between">
+              <div className="absolute top-0 right-0 p-4 opacity-5">
+                <PenTool className="w-32 h-32 text-violet-600" />
+              </div>
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col gap-5">
+                <div className="inline-flex items-center gap-2 self-start bg-violet-50 px-3 py-1.5 rounded-full border border-violet-100">
+                  <Sparkles className="w-3.5 h-3.5 text-violet-600" />
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-violet-700">
+                    AI Assistant
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h2 className="font-display text-2xl font-bold tracking-tight text-[#001F49]">
+                    CopyPro Assistant
+                  </h2>
+                  <p className="text-slate-500 text-base max-w-md leading-relaxed">
+                    Generate compelling listing descriptions in seconds using
+                    advanced AI.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 mt-6 pt-5 border-t border-violet-100 flex items-center justify-between group-hover:border-violet-200 transition-colors">
+                <span className="font-semibold text-base text-violet-700">
+                  Open CopyPro
+                </span>
+                <div className="w-9 h-9 rounded-full bg-violet-100 flex items-center justify-center group-hover:bg-violet-200 group-hover:text-violet-800 transition-all duration-300">
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+          </Link>
+        </motion.div>
+
         {/* Recent Activity - 2 cols */}
-        <motion.div variants={item} className="xl:col-span-2 relative">
+        <motion.div
+          variants={item}
+          className="md:col-span-2 xl:col-span-2 relative"
+        >
           <div className="h-full bg-white rounded-2xl p-6 border border-slate-200 shadow-sm transition-all hover:shadow-md flex flex-col relative">
             {/* Loading overlay */}
             {detailsLoading && (
@@ -357,35 +400,6 @@ export default function DashboardHub() {
                 </h3>
                 <p className="text-slate-500 leading-relaxed text-sm">
                   AI Sales Assistant for automated client communication.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-6">
-              <span className="inline-flex px-2.5 py-1 rounded-md bg-slate-100 text-slate-500 text-[10px] font-semibold uppercase tracking-wider">
-                Coming Soon
-              </span>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* CopyPro - Coming Soon */}
-        <motion.div variants={item} className="group relative">
-          <div className="h-full bg-white rounded-2xl p-6 border border-slate-200 shadow-sm transition-all duration-300 hover:shadow-md hover:border-violet-200 relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute -top-12 -right-12 opacity-[0.03]">
-              <PenTool className="w-36 h-36" />
-            </div>
-
-            <div className="space-y-4 relative z-10">
-              <div className="w-10 h-10 bg-violet-50 rounded-xl flex items-center justify-center text-violet-500">
-                <PenTool className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-display text-xl font-bold text-[#001F49] mb-1.5">
-                  CopyPro
-                </h3>
-                <p className="text-slate-500 leading-relaxed text-sm">
-                  Generate compelling listing descriptions in seconds.
                 </p>
               </div>
             </div>

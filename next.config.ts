@@ -35,11 +35,10 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    // @ts-expect-error - specific to Next.js 15+ turbopack workspace resolution
-    turbopack: {
-      // Resolve warning about multiple lockfiles by explicitly invalidating parent dirs
-      root: process.cwd(),
-    },
+    // turbopack: {
+    //   // Resolve warning about multiple lockfiles by explicitly invalidating parent dirs
+    //   root: process.cwd(),
+    // },
   },
 };
 
