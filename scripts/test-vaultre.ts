@@ -37,7 +37,7 @@ async function testVaultREAPI() {
     console.log(`✅ Connection successful!`);
     console.log(`   Total properties in VaultRE: ${data.totalItems}`);
     console.log(`   First 3 properties:`);
-    data.items.forEach((item: any, i: number) => {
+    data.items.forEach((item: { displayAddress?: string; address?: { displayAddress?: string }; id: string }, i: number) => {
       console.log(
         `   ${i + 1}. ${item.displayAddress || item.address?.displayAddress || "No address"} (ID: ${item.id})`,
       );

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, X, Loader2 } from "lucide-react";
+import { AlertTriangle, X } from "lucide-react";
 
 interface ConfirmationModalProps {
   isOpen: boolean;

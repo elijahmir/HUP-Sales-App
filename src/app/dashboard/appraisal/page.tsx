@@ -2,7 +2,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
 import { createClient } from "@/lib/supabase/client";
 import {
   Sparkles,
@@ -538,11 +537,10 @@ export default function AppraisalPage() {
 
             <motion.div
               layout
-              className={`flex flex-col space-y-5 ${
-                showIntro
+              className={`flex flex-col space-y-5 ${showIntro
                   ? "text-center items-center w-full max-w-2xl"
                   : "text-left items-start w-full lg:w-1/2 lg:max-w-xl"
-              }`}
+                }`}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
             >
               <StarBorder
@@ -667,7 +665,7 @@ export default function AppraisalPage() {
                   >
                     <div className="flex-1 relative mb-2 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center">
                       {fileObj.file.type === "application/pdf" ||
-                      fileObj.file.name.endsWith(".pdf") ? (
+                        fileObj.file.name.endsWith(".pdf") ? (
                         <FileText className="w-8 h-8 text-red-400" />
                       ) : (
                         <Image
@@ -745,11 +743,10 @@ export default function AppraisalPage() {
                 </h2>
                 <button
                   onClick={() => setShowPreview(!showPreview)}
-                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
-                    showPreview
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${showPreview
                       ? "bg-sky-50 text-sky-700 border border-sky-200"
                       : "text-slate-500 hover:bg-slate-100 border border-transparent hover:border-slate-200"
-                  }`}
+                    }`}
                   title={
                     showPreview
                       ? "Hide the original document"
@@ -790,26 +787,24 @@ export default function AppraisalPage() {
             {/* Content Area */}
             <div className="flex-1 overflow-hidden relative mt-4 min-h-0">
               <div
-                className={`h-full transition-all duration-300 ${
-                  showPreview
+                className={`h-full transition-all duration-300 ${showPreview
                     ? "flex flex-row gap-4"
                     : "w-full max-w-5xl mx-auto"
-                }`}
+                  }`}
               >
                 {/* Form Panel */}
                 <div
-                  className={`${
-                    showPreview ? "w-1/2" : "w-full"
-                  } h-full overflow-y-auto custom-scrollbar bg-slate-50 rounded-xl border border-slate-200`}
+                  className={`${showPreview ? "w-1/2" : "w-full"
+                    } h-full overflow-y-auto custom-scrollbar bg-slate-50 rounded-xl border border-slate-200`}
                 >
                   <div
                     style={
                       showPreview
                         ? {
-                            zoom: "0.65",
-                            width: "100%",
-                            transformOrigin: "top left",
-                          }
+                          zoom: "0.65",
+                          width: "100%",
+                          transformOrigin: "top left",
+                        }
                         : undefined
                     }
                   >

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { FileText, Plus, Trash2, AlertCircle } from "lucide-react";
-import type { FormData, AnnexureItem } from "@/lib/saa/types";
+import type { FormData } from "@/lib/saa/types";
 import { createEmptyAnnexure } from "@/lib/saa/types";
 
 interface AnnexureSectionProps {
@@ -28,6 +28,7 @@ export function AnnexureSection({
         annexureItems: emptyItems,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-focus new item when count increases

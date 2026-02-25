@@ -10,9 +10,9 @@ import {
 interface HistoryDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoad: (id: string) => void;
+  onLoad: (id: string, isOwner: boolean) => Promise<void>;
   entries: HistoryEntry[];
-  onUpdate: () => void;
+  onUpdate: () => Promise<void>;
 }
 
 export function HistoryDrawer({
@@ -25,16 +25,16 @@ export function HistoryDrawer({
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [confirmClearAll, setConfirmClearAll] = useState(false);
 
-  const handleDelete = (id: string) => {
-    deleteSubmission(id);
+  const handleDelete = async (id: string) => {
+    await deleteSubmission(id);
     setConfirmDelete(null);
-    onUpdate();
+    await onUpdate();
   };
 
-  const handleClearAll = () => {
-    clearAllHistory();
+  const handleClearAll = async () => {
+    await clearAllHistory();
     setConfirmClearAll(false);
-    onUpdate();
+    await onUpdate();
     onClose();
   };
 
@@ -69,9 +69,9 @@ export function HistoryDrawer({
           <div className="flex items-start gap-2">
             <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
             <p className="text-xs text-blue-800">
-              <strong>Privacy Notice:</strong> History is saved locally on your
-              device only. No client data is stored in the cloud or shared
-              externally. Clearing your browser data will erase this history.
+              <strong>Privacy Notice:</strong> History is saved securely to your cloud account
+              and connected to your user profile. Submissions can be accessed across
+              authorized devices.
             </p>
           </div>
         </div>
@@ -98,8 +98,16 @@ export function HistoryDrawer({
                       <p className="text-sm text-gray-600 mt-1">
                         {entry.propertyAddress}
                       </p>
-                      <p className="text-sm font-medium text-harcourts-blue mt-1">
+                      <p className="text-sm font-medium text-harcourts-blue mt-1 flex items-center gap-2">
                         ${entry.listingPrice}
+                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${entry.status === 'draft' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'}`}>
+                          {entry.status === 'draft' ? 'Draft' : 'Completed'}
+                        </span>
+                        {!entry.isOwner && (
+                          <span className="px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-800">
+                            Template
+                          </span>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -110,17 +118,19 @@ export function HistoryDrawer({
                     </span>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => onLoad(entry.id)}
+                        onClick={() => onLoad(entry.id, entry.isOwner)}
                         className="px-3 py-1.5 text-sm bg-harcourts-blue text-white rounded hover:bg-harcourts-blue-dark transition-colors"
                       >
-                        Load
+                        {entry.status === 'draft' ? 'Resume' : 'Load'}
                       </button>
-                      <button
-                        onClick={() => setConfirmDelete(entry.id)}
-                        className="px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded hover:bg-red-50 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      {entry.isOwner && (
+                        <button
+                          onClick={() => setConfirmDelete(entry.id)}
+                          className="px-3 py-1.5 text-sm border border-red-300 text-red-600 rounded hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

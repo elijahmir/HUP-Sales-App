@@ -16,9 +16,7 @@ import {
 } from "lucide-react";
 
 import {
-  DEFAULT_MODEL,
   AVAILABLE_MODELS,
-  type AIModel,
 } from "@/lib/model-config";
 
 export default function SettingsPage() {
@@ -27,12 +25,12 @@ export default function SettingsPage() {
     "gemini-3-flash-preview",
   );
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const supabase = createClient();
   const router = useRouter();
 
   useEffect(() => {
     checkAdminAndFetchSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function checkAdminAndFetchSettings() {
@@ -78,7 +76,6 @@ export default function SettingsPage() {
   }
 
   async function saveModelParams(modelId: string) {
-    setSaving(true);
     try {
       const { error } = await supabase.from("app_settings").upsert({
         key: "ai_model_config",
@@ -91,8 +88,6 @@ export default function SettingsPage() {
     } catch (err) {
       console.error("Failed to save model:", err);
       alert("Failed to update model settings.");
-    } finally {
-      setSaving(false);
     }
   }
 
@@ -188,10 +183,9 @@ export default function SettingsPage() {
               whileHover={{ y: -4 }}
               className={`
                 relative group rounded-2xl p-6 border-2 transition-all cursor-pointer bg-white
-                ${
-                  isActive
-                    ? "border-blue-500 shadow-xl shadow-blue-500/10 ring-4 ring-blue-500/5"
-                    : "border-slate-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-900/5"
+                ${isActive
+                  ? "border-blue-500 shadow-xl shadow-blue-500/10 ring-4 ring-blue-500/5"
+                  : "border-slate-100 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-900/5"
                 }
               `}
               onClick={() => saveModelParams(model.id)}

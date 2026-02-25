@@ -10,7 +10,6 @@ import {
   Loader2,
   Download,
   Trash2,
-  ImageIcon,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AnimatePresence, motion } from "framer-motion";
@@ -155,11 +154,10 @@ export function ImageMergerModal({ isOpen, onClose }: ImageMergerModalProps) {
           <div className="flex-1 overflow-y-auto p-6">
             <div
               {...getRootProps()}
-              className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${
-                isDragActive
+              className={`border-2 border-dashed rounded-xl p-8 text-center transition-colors cursor-pointer ${isDragActive
                   ? "border-[#00ADEF] bg-sky-50"
                   : "border-slate-200 hover:border-slate-300"
-              }`}
+                }`}
             >
               <input {...getInputProps()} />
               <div className="w-16 h-16 rounded-full bg-slate-50 mx-auto flex items-center justify-center mb-4 text-[#00ADEF]">

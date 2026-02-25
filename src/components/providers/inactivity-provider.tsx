@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlertTriangle, Clock, LogOut } from "lucide-react";
+import { Clock, LogOut } from "lucide-react";
 
 const INACTIVITY_TIMEOUT = 15 * 60 * 1000; // 15 minutes
 const WARNING_TIMEOUT = 14 * 60 * 1000; // 14 minutes (1 minute warning)
@@ -18,6 +18,7 @@ export function InactivityProvider({
   const [isWarningVisible, setIsWarningVisible] = useState(false);
   const [timeLeft, setTimeLeft] = useState(60); // Seconds left during warning
 
+  // eslint-disable-next-line react-hooks/purity
   const lastActivityRef = useRef<number>(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const warningIntervalRef = useRef<NodeJS.Timeout | null>(null);

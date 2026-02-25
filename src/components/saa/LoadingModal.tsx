@@ -38,6 +38,7 @@ export function LoadingModal({ isOpen }: LoadingModalProps) {
       <div className="relative z-10 flex flex-col items-center">
         {/* Loading GIF Container */}
         <div className="mb-8 rounded-2xl bg-white/10 backdrop-blur-sm p-6 shadow-2xl border border-white/20">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/the-form-logiGIF.gif"
             alt="Loading..."

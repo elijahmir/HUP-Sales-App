@@ -3,7 +3,6 @@ import {
   FileText,
   DollarSign,
   Calendar,
-  AlertCircle,
   Info,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,10 +32,6 @@ export function PropertySection({
       delete newErrors[field];
       setErrors(newErrors);
     }
-  };
-
-  const handleCheckboxChange = (field: keyof FormData, checked: boolean) => {
-    updateFormData({ [field]: checked });
   };
 
   const handlePeriodChange = (value: string) => {
@@ -77,9 +72,8 @@ export function PropertySection({
               id="propertyStreet"
               value={formData.propertyStreet}
               onChange={(e) => handleChange("propertyStreet", e.target.value)}
-              className={`input-field ${
-                errors.propertyStreet ? "border-red-500 focus:ring-red-500" : ""
-              }`}
+              className={`input-field ${errors.propertyStreet ? "border-red-500 focus:ring-red-500" : ""
+                }`}
               placeholder="123 Example Street"
             />
             {errors.propertyStreet && (
@@ -98,11 +92,10 @@ export function PropertySection({
                   e.target.value.replace(/[^0-9]/g, ""),
                 )
               }
-              className={`input-field ${
-                errors.propertyPostcode
+              className={`input-field ${errors.propertyPostcode
                   ? "border-red-500 focus:ring-red-500"
                   : ""
-              }`}
+                }`}
               placeholder="7315"
               maxLength={4}
             />
@@ -159,9 +152,8 @@ export function PropertySection({
               onChange={(e) =>
                 handleChange("ctVolume", e.target.value.replace(/[^0-9]/g, ""))
               }
-              className={`input-field ${
-                errors.ctVolume ? "border-red-500 focus:ring-red-500" : ""
-              }`}
+              className={`input-field ${errors.ctVolume ? "border-red-500 focus:ring-red-500" : ""
+                }`}
             />
             {errors.ctVolume && <p className="error-text">{errors.ctVolume}</p>}
           </div>
@@ -173,9 +165,8 @@ export function PropertySection({
               onChange={(e) =>
                 handleChange("folioNo", e.target.value.replace(/[^0-9]/g, ""))
               }
-              className={`input-field ${
-                errors.folioNo ? "border-red-500 focus:ring-red-500" : ""
-              }`}
+              className={`input-field ${errors.folioNo ? "border-red-500 focus:ring-red-500" : ""
+                }`}
             />
             {errors.folioNo && <p className="error-text">{errors.folioNo}</p>}
           </div>
@@ -187,9 +178,8 @@ export function PropertySection({
               onChange={(e) =>
                 handleChange("pid", e.target.value.replace(/[^0-9]/g, ""))
               }
-              className={`input-field ${
-                errors.pid ? "border-red-500 focus:ring-red-500" : ""
-              }`}
+              className={`input-field ${errors.pid ? "border-red-500 focus:ring-red-500" : ""
+                }`}
             />
             {errors.pid && <p className="error-text">{errors.pid}</p>}
           </div>
@@ -240,9 +230,8 @@ export function PropertySection({
               id="listingPrice"
               value={formData.listingPrice}
               onChange={(e) => handleChange("listingPrice", e.target.value)}
-              className={`input-field ${
-                errors.listingPrice ? "border-red-500 focus:ring-red-500" : ""
-              }`}
+              className={`input-field ${errors.listingPrice ? "border-red-500 focus:ring-red-500" : ""
+                }`}
               placeholder="e.g. $550,000 or Offers over $500,000"
             />
             {errors.listingPrice && (
@@ -263,11 +252,10 @@ export function PropertySection({
                   if (!formData.commissionValue)
                     handleChange("commissionValue", "2.5");
                 }}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  formData.commissionType === "percentage"
+                className={`px-4 py-2 text-sm font-medium transition-colors ${formData.commissionType === "percentage"
                     ? "bg-harcourts-blue text-white"
                     : "bg-white text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Percentage
               </button>
@@ -277,11 +265,10 @@ export function PropertySection({
                   handleChange("commissionType", "fixed");
                   handleChange("commissionValue", "");
                 }}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  formData.commissionType === "fixed"
+                className={`px-4 py-2 text-sm font-medium transition-colors ${formData.commissionType === "fixed"
                     ? "bg-harcourts-blue text-white"
                     : "bg-white text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 Fixed
               </button>
@@ -294,11 +281,10 @@ export function PropertySection({
                     "REIT Gross Scale of Commission",
                   );
                 }}
-                className={`px-4 py-2 text-sm font-medium transition-colors ${
-                  formData.commissionType === "reit"
+                className={`px-4 py-2 text-sm font-medium transition-colors ${formData.commissionType === "reit"
                     ? "bg-harcourts-blue text-white"
                     : "bg-white text-gray-700 hover:bg-gray-50"
-                }`}
+                  }`}
               >
                 REIT Scale
               </button>
@@ -331,17 +317,14 @@ export function PropertySection({
                     }
                   }}
                   disabled={formData.commissionType === "reit"}
-                  className={`input-field ${
-                    formData.commissionType !== "reit" ? "pl-8" : ""
-                  } ${
-                    formData.commissionType === "reit"
+                  className={`input-field ${formData.commissionType !== "reit" ? "pl-8" : ""
+                    } ${formData.commissionType === "reit"
                       ? "bg-gray-100 cursor-not-allowed"
                       : ""
-                  } ${
-                    errors.commissionValue
+                    } ${errors.commissionValue
                       ? "border-red-500 focus:ring-red-500"
                       : ""
-                  }`}
+                    }`}
                   placeholder={
                     formData.commissionType === "percentage" ? "2.5" : "15,000"
                   }
@@ -399,11 +382,10 @@ export function PropertySection({
                 });
                 setPeriodError("");
               }}
-              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-                formData.agencyPeriodType === "standard"
+              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${formData.agencyPeriodType === "standard"
                   ? "bg-harcourts-blue text-white"
                   : "bg-white text-gray-700 hover:bg-gray-50"
-              }`}
+                }`}
             >
               Standard
             </button>
@@ -416,11 +398,10 @@ export function PropertySection({
                 });
                 setPeriodError("");
               }}
-              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${
-                formData.agencyPeriodType === "development"
+              className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${formData.agencyPeriodType === "development"
                   ? "bg-harcourts-blue text-white"
                   : "bg-white text-gray-700 hover:bg-gray-50"
-              }`}
+                }`}
             >
               Development
             </button>
@@ -441,14 +422,12 @@ export function PropertySection({
               handlePeriodChange(val);
             }}
             disabled={formData.agencyPeriodType === "development"}
-            className={`input-field ${
-              (errors.soleAgencyPeriod || periodError) &&
-              formData.agencyPeriodType !== "development"
+            className={`input-field ${(errors.soleAgencyPeriod || periodError) &&
+                formData.agencyPeriodType !== "development"
                 ? "border-red-500 focus:ring-red-500"
                 : ""
-            } ${
-              formData.agencyPeriodType === "development" ? "bg-gray-100" : ""
-            }`}
+              } ${formData.agencyPeriodType === "development" ? "bg-gray-100" : ""
+              }`}
             placeholder="90"
           />
           <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">

@@ -93,6 +93,7 @@ export default function AppraisalLoading({
     if (isComplete) {
       if (isThinking) {
         // We were thinking, now we are done. Resume carousel.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setIsThinking(false);
         setHasCompletedThinking(true);
       }
@@ -181,7 +182,7 @@ export default function AppraisalLoading({
           loop={true}
           round={false}
           thinkingMode={isThinking} // Enable thinking mode to lock center & show content
-          thinkingContent={thinkingContent as any} // The content to inject
+          {...({ thinkingContent } as Record<string, unknown>)} // The content to inject
         />
       </div>
     </div>

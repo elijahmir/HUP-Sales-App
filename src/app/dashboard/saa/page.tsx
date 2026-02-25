@@ -1,10 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { FileText, RotateCcw, Save, Clock, ChevronLeft } from "lucide-react";
+import { RotateCcw, Save, Clock } from "lucide-react";
 import { toast } from "sonner";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { AgentSection } from "@/components/saa/AgentSection";
 import { PropertySection } from "@/components/saa/PropertySection";
 import { AnnexureSection } from "@/components/saa/AnnexureSection";
@@ -23,7 +21,6 @@ import {
   isValidProperty,
   isValidPricing,
   isValidVendor,
-  isValidMarketing,
   isValidAnnexure,
 } from "@/lib/saa/validation";
 import {
@@ -37,7 +34,6 @@ import { submitForm } from "@/lib/saa/api";
 import { MarketingItem } from "@/lib/saa/marketing";
 
 export default function SAAFormPage() {
-  const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string | undefined>>({});
@@ -49,6 +45,7 @@ export default function SAAFormPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [currentDraftId, setCurrentDraftId] = useState<string | undefined>(undefined);
 
   // Success Data
   const [successData, setSuccessData] = useState<{
@@ -60,7 +57,7 @@ export default function SAAFormPage() {
   const [historyEntries, setHistoryEntries] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
-    setHistoryEntries(getHistory());
+    getHistory().then(setHistoryEntries);
 
     async function loadMarketing() {
       try {
@@ -70,8 +67,8 @@ export default function SAAFormPage() {
         }
         const types = await response.json();
         const mapped: MarketingItem[] = types
-          .filter((t: any) => t.amount > 0)
-          .map((t: any) => ({
+          .filter((t: { amount: number }) => t.amount > 0)
+          .map((t: { id: string | number; name: string; amount: number; supplier: { name: string; id: string } }) => ({
             id: String(t.id),
             name: t.name,
             price: t.amount,
@@ -89,8 +86,8 @@ export default function SAAFormPage() {
     loadMarketing();
   }, []);
 
-  const updateHistory = () => {
-    setHistoryEntries(getHistory());
+  const updateHistory = async () => {
+    setHistoryEntries(await getHistory());
   };
 
   const updateFormData = (updates: Partial<FormData>) => {
@@ -99,18 +96,18 @@ export default function SAAFormPage() {
 
   const steps = formData.annexureA
     ? [
-        { id: 1, title: "Agent Details", shortTitle: "Agent" },
-        { id: 2, title: "Property Details", shortTitle: "Property" },
-        { id: 3, title: "Annexure A", shortTitle: "Annexure" },
-        { id: 4, title: "Vendor Details", shortTitle: "Vendor" },
-        { id: 5, title: "Marketing", shortTitle: "Marketing" },
-      ]
+      { id: 1, title: "Agent Details", shortTitle: "Agent" },
+      { id: 2, title: "Property Details", shortTitle: "Property" },
+      { id: 3, title: "Annexure A", shortTitle: "Annexure" },
+      { id: 4, title: "Vendor Details", shortTitle: "Vendor" },
+      { id: 5, title: "Marketing", shortTitle: "Marketing" },
+    ]
     : [
-        { id: 1, title: "Agent Details", shortTitle: "Agent" },
-        { id: 2, title: "Property Details", shortTitle: "Property" },
-        { id: 3, title: "Vendor Details", shortTitle: "Vendor" },
-        { id: 4, title: "Marketing", shortTitle: "Marketing" },
-      ];
+      { id: 1, title: "Agent Details", shortTitle: "Agent" },
+      { id: 2, title: "Property Details", shortTitle: "Property" },
+      { id: 3, title: "Vendor Details", shortTitle: "Vendor" },
+      { id: 4, title: "Marketing", shortTitle: "Marketing" },
+    ];
 
   // Validation
   const validateStep = (stepIndex: number): boolean => {
@@ -187,12 +184,14 @@ export default function SAAFormPage() {
     setShowReview(false);
     setIsSubmitting(true);
 
-    // Save locally
-    saveSubmission(formData);
-    updateHistory();
+    // Save locally to Supabase
+    await saveSubmission(formData, 'completed', currentDraftId);
+    setCurrentDraftId(undefined);
+    await updateHistory();
 
     try {
-      const result = await submitForm(formData, marketingOptions);
+      const allMarketingOptions = [...marketingOptions, ...(formData.customMarketingItems || [])];
+      const result = await submitForm(formData, allMarketingOptions);
       if (result.success) {
         setSuccessData({
           vendorName: result.vendorName,
@@ -214,18 +213,31 @@ export default function SAAFormPage() {
 
   const handleReset = () => {
     setFormData(initialFormData);
+    setCurrentDraftId(undefined);
     setCurrentStep(0);
     setErrors({});
     setConfirmReset(false);
     setShowSuccess(false);
   };
 
-  const handleLoadHistory = (id: string) => {
-    const loadedData = loadSubmission(id);
+  const handleLoadHistory = async (id: string) => {
+    const loadedData = await loadSubmission(id);
     if (loadedData) {
       setFormData(loadedData);
+      setCurrentDraftId(id);
       setCurrentStep(0);
       setShowHistory(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    const id = await saveSubmission(formData, 'draft', currentDraftId);
+    if (id) {
+      setCurrentDraftId(id);
+      toast.success("Draft saved securely to the cloud!");
+      await updateHistory();
+    } else {
+      toast.error("Failed to save draft.");
     }
   };
 
@@ -332,6 +344,14 @@ export default function SAAFormPage() {
               <span className="hidden sm:inline">History</span>
             </button>
             <button
+              onClick={handleSaveDraft}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-yellow-50 hover:text-yellow-600 hover:border-yellow-200 transition-colors shadow-sm"
+              title="Save Draft"
+            >
+              <Save className="w-4 h-4" />
+              <span className="hidden sm:inline">Save Draft</span>
+            </button>
+            <button
               onClick={() => setConfirmReset(true)}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-colors shadow-sm"
               title="Reset Form"
@@ -375,7 +395,7 @@ export default function SAAFormPage() {
         formData={formData}
         onConfirm={handleFinalSubmit}
         onCancel={() => setShowReview(false)}
-        items={marketingOptions}
+        items={[...marketingOptions, ...(formData.customMarketingItems || [])]}
       />
 
       <LoadingModal isOpen={isSubmitting} />

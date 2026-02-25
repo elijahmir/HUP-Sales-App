@@ -6,8 +6,6 @@
  * Deletion from VaultRE is strictly prohibited.
  */
 
-import { getAgentByName, VAULTRE_AGENTS } from "@/data/vaultre-agents";
-
 // Types
 export interface VaultREAddress {
   unitNumber?: string;
@@ -560,6 +558,7 @@ export async function searchSuburbs(
   const data = await response.json();
 
   // Map response to simplified format
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return (data.items || []).map((item: any) => ({
     id: item.id,
     name: item.name,

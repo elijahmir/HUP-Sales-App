@@ -3,7 +3,6 @@ import { formatCurrency, formatNumberWithCommas } from "./validation";
 import { createClient } from "@/lib/supabase/client";
 import {
   MarketingItem,
-  getMarketingGroups,
   calculateMarketingTotal,
   getMarketingListString,
 } from "./marketing";
@@ -368,50 +367,47 @@ export function buildPayload(
     ? toUpper(effectiveTrustName)
     : null;
 
-  // Determine if this is a non-individual entity (Trust or Company)
-  const isNonIndividual =
-    formData.vendorStructure === "Trust" ||
-    formData.vendorStructure === "Company";
+  // Remove unused variable isNonIndividual
 
   // Helper to compute company_name_acn value for reuse
   const companyNameAcnComputed: string | null =
     formData.companyName && formData.companyACN
       ? (() => {
-          const acn = formData.companyACN.replace(/[^0-9]/g, "");
-          const formattedAcn = acn.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
-          const baseStr = `${toUpper(formData.companyName)} (ACN ${formattedAcn})`;
-          return trustNameUpper
-            ? `${baseStr} AS TRUSTEE FOR ${trustNameUpper}`
-            : baseStr;
-        })()
+        const acn = formData.companyACN.replace(/[^0-9]/g, "");
+        const formattedAcn = acn.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
+        const baseStr = `${toUpper(formData.companyName)} (ACN ${formattedAcn})`;
+        return trustNameUpper
+          ? `${baseStr} AS TRUSTEE FOR ${trustNameUpper}`
+          : baseStr;
+      })()
       : null;
 
   // Helper to compute all_vendors_names_trust value for reuse
   const allVendorsNamesTrustComputed: string | null = trustNameUpper
     ? (() => {
-        const names = formData.vendors
-          .slice(0, formData.vendorCount)
-          .map((v) =>
-            toUpper(v.hasDifferentNameOnTitle ? v.nameOnTitle : v.fullName),
-          )
-          .filter(Boolean);
+      const names = formData.vendors
+        .slice(0, formData.vendorCount)
+        .map((v) =>
+          toUpper(v.hasDifferentNameOnTitle ? v.nameOnTitle : v.fullName),
+        )
+        .filter(Boolean);
 
-        if (names.length === 0) return null;
+      if (names.length === 0) return null;
 
-        let joinedNames = "";
-        if (names.length === 1) {
-          joinedNames = names[0];
-        } else if (names.length === 2) {
-          joinedNames = `${names[0]} AND ${names[1]}`;
-        } else {
-          const last = names.pop();
-          joinedNames = `${names.join(", ")} AND ${last}`;
-        }
+      let joinedNames = "";
+      if (names.length === 1) {
+        joinedNames = names[0];
+      } else if (names.length === 2) {
+        joinedNames = `${names[0]} AND ${names[1]}`;
+      } else {
+        const last = names.pop();
+        joinedNames = `${names.join(", ")} AND ${last}`;
+      }
 
-        const suffixText =
-          formData.vendorCount > 1 ? "AS TRUSTEES FOR" : "AS TRUSTEE FOR";
-        return `${joinedNames} ${suffixText} ${trustNameUpper}`;
-      })()
+      const suffixText =
+        formData.vendorCount > 1 ? "AS TRUSTEES FOR" : "AS TRUSTEE FOR";
+      return `${joinedNames} ${suffixText} ${trustNameUpper}`;
+    })()
     : null;
 
   // Helper to determine full_name_val for a given vendor index
@@ -609,37 +605,37 @@ export function buildPayload(
         ? null
         : formData.commissionType === "percentage"
           ? formatNumberWithCommas(
-              String(
-                calculateCommissionValue(
-                  formData.commissionType,
-                  formData.commissionValue,
-                  formData.listingPrice,
-                ) || 0,
-              ),
-            )
+            String(
+              calculateCommissionValue(
+                formData.commissionType,
+                formData.commissionValue,
+                formData.listingPrice,
+              ) || 0,
+            ),
+          )
           : formData.commissionValue,
     commission_value_in_words:
       formData.commissionType === "reit"
         ? null
         : dollarAmountToWords(
-            calculateCommissionValue(
-              formData.commissionType,
-              formData.commissionValue,
-              formData.listingPrice,
-            ) || 0,
-            false,
-          ),
+          calculateCommissionValue(
+            formData.commissionType,
+            formData.commissionValue,
+            formData.listingPrice,
+          ) || 0,
+          false,
+        ),
     commission_value_in_words_with_currency:
       formData.commissionType === "reit"
         ? null
         : dollarAmountToWords(
-            calculateCommissionValue(
-              formData.commissionType,
-              formData.commissionValue,
-              formData.listingPrice,
-            ) || 0,
-            true,
-          ),
+          calculateCommissionValue(
+            formData.commissionType,
+            formData.commissionValue,
+            formData.listingPrice,
+          ) || 0,
+          true,
+        ),
     gst_taxable: formData.gstTaxable ? "✔" : null,
     gst_non_taxable: !formData.gstTaxable ? "✔" : null,
     agency_period_type: formData.agencyPeriodType,
@@ -658,36 +654,36 @@ export function buildPayload(
     // Company fields - only for Company or Trust+Company
     company_name:
       formData.vendorStructure === "Company" ||
-      (formData.vendorStructure === "Trust" &&
-        formData.trusteeType === "company")
+        (formData.vendorStructure === "Trust" &&
+          formData.trusteeType === "company")
         ? formData.companyName
           ? toUpper(formData.companyName)
           : null
         : null,
     company_acn:
       formData.vendorStructure === "Company" ||
-      (formData.vendorStructure === "Trust" &&
-        formData.trusteeType === "company")
+        (formData.vendorStructure === "Trust" &&
+          formData.trusteeType === "company")
         ? formData.companyACN || null
         : null,
     company_name_acn:
       (formData.vendorStructure === "Company" ||
         (formData.vendorStructure === "Trust" &&
           formData.trusteeType === "company")) &&
-      formData.companyName &&
-      formData.companyACN
+        formData.companyName &&
+        formData.companyACN
         ? (() => {
-            // Format ACN as "123 456 789"
-            const acn = formData.companyACN.replace(/[^0-9]/g, "");
-            const formattedAcn = acn.replace(
-              /(\d{3})(\d{3})(\d{3})/,
-              "$1 $2 $3",
-            );
-            const baseStr = `${toUpper(formData.companyName)} (ACN ${formattedAcn})`;
-            return trustNameUpper
-              ? `${baseStr} AS TRUSTEE FOR ${trustNameUpper}`
-              : baseStr;
-          })()
+          // Format ACN as "123 456 789"
+          const acn = formData.companyACN.replace(/[^0-9]/g, "");
+          const formattedAcn = acn.replace(
+            /(\d{3})(\d{3})(\d{3})/,
+            "$1 $2 $3",
+          );
+          const baseStr = `${toUpper(formData.companyName)} (ACN ${formattedAcn})`;
+          return trustNameUpper
+            ? `${baseStr} AS TRUSTEE FOR ${trustNameUpper}`
+            : baseStr;
+        })()
         : null,
     all_vendors_names: formData.vendors
       .slice(0, formData.vendorCount)
@@ -779,194 +775,126 @@ export function buildPayload(
     vendor_1:
       formData.vendorCount >= 1
         ? {
-            full_name: formData.vendors[0].hasDifferentNameOnTitle
+          full_name: formData.vendors[0].hasDifferentNameOnTitle
+            ? toUpper(formData.vendors[0].nameOnTitle)
+            : toUpper(formData.vendors[0].fullName),
+          full_name_id: toUpper(formData.vendors[0].fullName),
+          full_name_trustee: trustNameUpper
+            ? `${formData.vendors[0].hasDifferentNameOnTitle
               ? toUpper(formData.vendors[0].nameOnTitle)
-              : toUpper(formData.vendors[0].fullName),
-            full_name_id: toUpper(formData.vendors[0].fullName),
-            full_name_trustee: trustNameUpper
-              ? `${
-                  formData.vendors[0].hasDifferentNameOnTitle
-                    ? toUpper(formData.vendors[0].nameOnTitle)
-                    : toUpper(formData.vendors[0].fullName)
-                } AS TRUSTEE FOR ${trustNameUpper}`
-              : null,
-            full_name_val: getFullNameVal(0),
-            email: isNonIndividual
-              ? null
-              : formData.vendors[0].email.toLowerCase(),
-            email_val: formData.vendors[0].email.toLowerCase(),
-            mobile: isNonIndividual ? null : formatVendorMobile(0),
-            mobile_countrycode: isNonIndividual
-              ? null
-              : formData.vendors[0].mobileCountryCode.replace("+", ""),
-            mobile_number: isNonIndividual
-              ? null
-              : formData.vendors[0].mobile.replace(/[\s-]/g, "") || null,
-            home_phone: isNonIndividual
-              ? null
-              : formData.vendors[0].homePhone
-                ? toUpper(formData.vendors[0].homePhone)
-                : null,
-            street: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[0].street),
-            suburb: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[0].suburb),
-            state: isNonIndividual ? null : toUpper(formData.vendors[0].state),
-            postcode: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[0].postcode),
-            address_full: isNonIndividual
-              ? null
-              : toUpper(
-                  `${formData.vendors[0].street}, ${formData.vendors[0].suburb}, ${formData.vendors[0].state} ${formData.vendors[0].postcode}`,
-                ),
-          }
+              : toUpper(formData.vendors[0].fullName)
+            } AS TRUSTEE FOR ${trustNameUpper}`
+            : null,
+          full_name_val: getFullNameVal(0),
+          email: formData.vendors[0].email.toLowerCase(),
+          email_val: formData.vendors[0].email.toLowerCase(),
+          mobile: formatVendorMobile(0),
+          mobile_countrycode: formData.vendors[0].mobileCountryCode.replace("+", ""),
+          mobile_number: formData.vendors[0].mobile.replace(/[\s-]/g, "") || null,
+          home_phone: formData.vendors[0].homePhone
+            ? toUpper(formData.vendors[0].homePhone)
+            : null,
+          street: toUpper(formData.vendors[0].street),
+          suburb: toUpper(formData.vendors[0].suburb),
+          state: toUpper(formData.vendors[0].state),
+          postcode: toUpper(formData.vendors[0].postcode),
+          address_full: toUpper(
+            `${formData.vendors[0].street}, ${formData.vendors[0].suburb}, ${formData.vendors[0].state} ${formData.vendors[0].postcode}`,
+          ),
+        }
         : createNullVendor(),
     vendor_2:
       formData.vendorCount >= 2
         ? {
-            full_name: formData.vendors[1].hasDifferentNameOnTitle
+          full_name: formData.vendors[1].hasDifferentNameOnTitle
+            ? toUpper(formData.vendors[1].nameOnTitle)
+            : toUpper(formData.vendors[1].fullName),
+          full_name_id: toUpper(formData.vendors[1].fullName),
+          full_name_trustee: trustNameUpper
+            ? `${formData.vendors[1].hasDifferentNameOnTitle
               ? toUpper(formData.vendors[1].nameOnTitle)
-              : toUpper(formData.vendors[1].fullName),
-            full_name_id: toUpper(formData.vendors[1].fullName),
-            full_name_trustee: trustNameUpper
-              ? `${
-                  formData.vendors[1].hasDifferentNameOnTitle
-                    ? toUpper(formData.vendors[1].nameOnTitle)
-                    : toUpper(formData.vendors[1].fullName)
-                } AS TRUSTEE FOR ${trustNameUpper}`
-              : null,
-            full_name_val: getFullNameVal(1),
-            email: isNonIndividual
-              ? null
-              : formData.vendors[1].email.toLowerCase(),
-            email_val: formData.vendors[1].email.toLowerCase(),
-            mobile: isNonIndividual ? null : formatVendorMobile(1),
-            mobile_countrycode: isNonIndividual
-              ? null
-              : formData.vendors[1].mobileCountryCode.replace("+", ""),
-            mobile_number: isNonIndividual
-              ? null
-              : formData.vendors[1].mobile.replace(/[\s-]/g, "") || null,
-            home_phone: isNonIndividual
-              ? null
-              : formData.vendors[1].homePhone
-                ? toUpper(formData.vendors[1].homePhone)
-                : null,
-            street: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[1].street),
-            suburb: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[1].suburb),
-            state: isNonIndividual ? null : toUpper(formData.vendors[1].state),
-            postcode: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[1].postcode),
-            address_full: isNonIndividual
-              ? null
-              : toUpper(
-                  `${formData.vendors[1].street}, ${formData.vendors[1].suburb}, ${formData.vendors[1].state} ${formData.vendors[1].postcode}`,
-                ),
-          }
+              : toUpper(formData.vendors[1].fullName)
+            } AS TRUSTEE FOR ${trustNameUpper}`
+            : null,
+          full_name_val: getFullNameVal(1),
+          email: formData.vendors[1].email.toLowerCase(),
+          email_val: formData.vendors[1].email.toLowerCase(),
+          mobile: formatVendorMobile(1),
+          mobile_countrycode: formData.vendors[1].mobileCountryCode.replace("+", ""),
+          mobile_number: formData.vendors[1].mobile.replace(/[\s-]/g, "") || null,
+          home_phone: formData.vendors[1].homePhone
+            ? toUpper(formData.vendors[1].homePhone)
+            : null,
+          street: toUpper(formData.vendors[1].street),
+          suburb: toUpper(formData.vendors[1].suburb),
+          state: toUpper(formData.vendors[1].state),
+          postcode: toUpper(formData.vendors[1].postcode),
+          address_full: toUpper(
+            `${formData.vendors[1].street}, ${formData.vendors[1].suburb}, ${formData.vendors[1].state} ${formData.vendors[1].postcode}`,
+          ),
+        }
         : createNullVendor(),
     vendor_3:
       formData.vendorCount >= 3
         ? {
-            full_name: formData.vendors[2].hasDifferentNameOnTitle
+          full_name: formData.vendors[2].hasDifferentNameOnTitle
+            ? toUpper(formData.vendors[2].nameOnTitle)
+            : toUpper(formData.vendors[2].fullName),
+          full_name_id: toUpper(formData.vendors[2].fullName),
+          full_name_trustee: trustNameUpper
+            ? `${formData.vendors[2].hasDifferentNameOnTitle
               ? toUpper(formData.vendors[2].nameOnTitle)
-              : toUpper(formData.vendors[2].fullName),
-            full_name_id: toUpper(formData.vendors[2].fullName),
-            full_name_trustee: trustNameUpper
-              ? `${
-                  formData.vendors[2].hasDifferentNameOnTitle
-                    ? toUpper(formData.vendors[2].nameOnTitle)
-                    : toUpper(formData.vendors[2].fullName)
-                } AS TRUSTEE FOR ${trustNameUpper}`
-              : null,
-            full_name_val: getFullNameVal(2),
-            email: isNonIndividual
-              ? null
-              : formData.vendors[2].email.toLowerCase(),
-            email_val: formData.vendors[2].email.toLowerCase(),
-            mobile: isNonIndividual ? null : formatVendorMobile(2),
-            mobile_countrycode: isNonIndividual
-              ? null
-              : formData.vendors[2].mobileCountryCode.replace("+", ""),
-            mobile_number: isNonIndividual
-              ? null
-              : formData.vendors[2].mobile.replace(/[\s-]/g, "") || null,
-            home_phone: isNonIndividual
-              ? null
-              : formData.vendors[2].homePhone
-                ? toUpper(formData.vendors[2].homePhone)
-                : null,
-            street: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[2].street),
-            suburb: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[2].suburb),
-            state: isNonIndividual ? null : toUpper(formData.vendors[2].state),
-            postcode: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[2].postcode),
-            address_full: isNonIndividual
-              ? null
-              : toUpper(
-                  `${formData.vendors[2].street}, ${formData.vendors[2].suburb}, ${formData.vendors[2].state} ${formData.vendors[2].postcode}`,
-                ),
-          }
+              : toUpper(formData.vendors[2].fullName)
+            } AS TRUSTEE FOR ${trustNameUpper}`
+            : null,
+          full_name_val: getFullNameVal(2),
+          email: formData.vendors[2].email.toLowerCase(),
+          email_val: formData.vendors[2].email.toLowerCase(),
+          mobile: formatVendorMobile(2),
+          mobile_countrycode: formData.vendors[2].mobileCountryCode.replace("+", ""),
+          mobile_number: formData.vendors[2].mobile.replace(/[\s-]/g, "") || null,
+          home_phone: formData.vendors[2].homePhone
+            ? toUpper(formData.vendors[2].homePhone)
+            : null,
+          street: toUpper(formData.vendors[2].street),
+          suburb: toUpper(formData.vendors[2].suburb),
+          state: toUpper(formData.vendors[2].state),
+          postcode: toUpper(formData.vendors[2].postcode),
+          address_full: toUpper(
+            `${formData.vendors[2].street}, ${formData.vendors[2].suburb}, ${formData.vendors[2].state} ${formData.vendors[2].postcode}`,
+          ),
+        }
         : createNullVendor(),
     vendor_4:
       formData.vendorCount >= 4
         ? {
-            full_name: formData.vendors[3].hasDifferentNameOnTitle
+          full_name: formData.vendors[3].hasDifferentNameOnTitle
+            ? toUpper(formData.vendors[3].nameOnTitle)
+            : toUpper(formData.vendors[3].fullName),
+          full_name_id: toUpper(formData.vendors[3].fullName),
+          full_name_trustee: trustNameUpper
+            ? `${formData.vendors[3].hasDifferentNameOnTitle
               ? toUpper(formData.vendors[3].nameOnTitle)
-              : toUpper(formData.vendors[3].fullName),
-            full_name_id: toUpper(formData.vendors[3].fullName),
-            full_name_trustee: trustNameUpper
-              ? `${
-                  formData.vendors[3].hasDifferentNameOnTitle
-                    ? toUpper(formData.vendors[3].nameOnTitle)
-                    : toUpper(formData.vendors[3].fullName)
-                } AS TRUSTEE FOR ${trustNameUpper}`
-              : null,
-            full_name_val: getFullNameVal(3),
-            email: isNonIndividual
-              ? null
-              : formData.vendors[3].email.toLowerCase(),
-            email_val: formData.vendors[3].email.toLowerCase(),
-            mobile: isNonIndividual ? null : formatVendorMobile(3),
-            mobile_countrycode: isNonIndividual
-              ? null
-              : formData.vendors[3].mobileCountryCode.replace("+", ""),
-            mobile_number: isNonIndividual
-              ? null
-              : formData.vendors[3].mobile.replace(/[\s-]/g, "") || null,
-            home_phone: isNonIndividual
-              ? null
-              : formData.vendors[3].homePhone
-                ? toUpper(formData.vendors[3].homePhone)
-                : null,
-            street: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[3].street),
-            suburb: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[3].suburb),
-            state: isNonIndividual ? null : toUpper(formData.vendors[3].state),
-            postcode: isNonIndividual
-              ? null
-              : toUpper(formData.vendors[3].postcode),
-            address_full: isNonIndividual
-              ? null
-              : toUpper(
-                  `${formData.vendors[3].street}, ${formData.vendors[3].suburb}, ${formData.vendors[3].state} ${formData.vendors[3].postcode}`,
-                ),
-          }
+              : toUpper(formData.vendors[3].fullName)
+            } AS TRUSTEE FOR ${trustNameUpper}`
+            : null,
+          full_name_val: getFullNameVal(3),
+          email: formData.vendors[3].email.toLowerCase(),
+          email_val: formData.vendors[3].email.toLowerCase(),
+          mobile: formatVendorMobile(3),
+          mobile_countrycode: formData.vendors[3].mobileCountryCode.replace("+", ""),
+          mobile_number: formData.vendors[3].mobile.replace(/[\s-]/g, "") || null,
+          home_phone: formData.vendors[3].homePhone
+            ? toUpper(formData.vendors[3].homePhone)
+            : null,
+          street: toUpper(formData.vendors[3].street),
+          suburb: toUpper(formData.vendors[3].suburb),
+          state: toUpper(formData.vendors[3].state),
+          postcode: toUpper(formData.vendors[3].postcode),
+          address_full: toUpper(
+            `${formData.vendors[3].street}, ${formData.vendors[3].suburb}, ${formData.vendors[3].state} ${formData.vendors[3].postcode}`,
+          ),
+        }
         : createNullVendor(),
 
     // Marketing
@@ -1105,7 +1033,6 @@ export async function submitForm(
       postcode: payload.property_postcode,
       status: "draft",
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       payload: payload as any, // Storing the full payload
       agent_name: payload.agent_name,
       vendor_name: payload.all_vendors_names,
@@ -1146,7 +1073,8 @@ export async function submitForm(
       throw new Error(`Webhook submission failed: ${response.statusText}`);
     }
 
-    const result = await response.json();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const result: any = await response.json();
     return {
       success: true,
       vendorName: payload.all_vendors_names,

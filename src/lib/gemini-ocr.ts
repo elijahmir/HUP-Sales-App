@@ -32,13 +32,13 @@ export interface ListingData {
   price?: {
     display_text?: string;
     method?:
-      | "OTO"
-      | "Offers To"
-      | "Tender"
-      | "Auction"
-      | "By Negotiation"
-      | "Fixed"
-      | "";
+    | "OTO"
+    | "Offers To"
+    | "Tender"
+    | "Auction"
+    | "By Negotiation"
+    | "Fixed"
+    | "";
     amount?: string;
     range_from?: string;
     range_to?: string;
@@ -569,6 +569,7 @@ const listingSchema: ResponseSchema = {
 export async function* extractListingDataStream(
   images: { base64: string; mimeType: string }[],
   modelId: string = "gemini-2.0-flash-thinking-exp-01-21",
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): AsyncGenerator<{ type: "thought" | "data"; content: any }, void, unknown> {
   // Use server-side key first, fallback to public
   const apiKey =
@@ -579,13 +580,14 @@ export async function* extractListingDataStream(
     modelId.includes("thinking") || modelId.includes("gemini-3");
 
   // Configure model with thinkingConfig enabled only if supported
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const generationConfig: any = {
     responseMimeType: "application/json",
     responseSchema: listingSchema,
   };
 
   if (isThinkingModel) {
-    // @ts-ignore - thinkingConfig is experimental
+    // thinkingConfig is experimental
     generationConfig.thinkingConfig = {
       includeThoughts: true,
     };
@@ -673,6 +675,7 @@ export async function* extractListingDataStream(
         const parts = candidates[0].content?.parts || [];
         for (const part of parts) {
           // Check for thought property (experimental)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           if ((part as any).thought) {
             yield { type: "thought", content: part.text };
           }

@@ -115,6 +115,7 @@ export default function Carousel({
     const startingPosition = loop ? 1 : 0;
     // Only reset if NOT in thinking mode, or if items length changed significantly
     if (!thinkingMode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPosition(startingPosition);
       x.set(-startingPosition * trackItemOffset);
     }
@@ -122,6 +123,7 @@ export default function Carousel({
 
   useEffect(() => {
     if (!loop && position > itemsForRender.length - 1) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPosition(Math.max(0, itemsForRender.length - 1));
     }
   }, [itemsForRender.length, loop, position]);
@@ -200,11 +202,11 @@ export default function Carousel({
     loop || thinkingMode
       ? {}
       : {
-          dragConstraints: {
-            left: -trackItemOffset * Math.max(itemsForRender.length - 1, 0),
-            right: 0,
-          },
-        };
+        dragConstraints: {
+          left: -trackItemOffset * Math.max(itemsForRender.length - 1, 0),
+          right: 0,
+        },
+      };
 
   const activeIndex =
     items.length === 0

@@ -1,99 +1,152 @@
+import { createClient } from "@/lib/supabase/client";
 import type { FormData } from "./types";
 
-const STORAGE_KEY = "soa_form_history";
-const MAX_ENTRIES = 20;
-const VERSION = 1;
-
 export interface HistoryEntry {
-  id: string;
-  version: number;
+  id: string; // The UUID from db
   timestamp: number;
+  status: 'draft' | 'completed';
+  userId: string;
+  isOwner: boolean;
   vendorName: string;
   propertyAddress: string;
   listingPrice: string;
   formData: FormData;
 }
 
-// Get all history entries
-export function getHistory(): HistoryEntry[] {
+export async function getHistory(): Promise<HistoryEntry[]> {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) return [];
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
 
-    const history = JSON.parse(stored) as HistoryEntry[];
+    const { data, error } = await supabase
+      .from("saa_submissions")
+      .select("*")
+      .or(`status.eq.completed,and(status.eq.draft,user_id.eq.${user.id})`)
+      .order("updated_at", { ascending: false });
 
-    // Filter by version (future-proofing for migrations)
-    return history.filter((entry) => entry.version === VERSION);
+    if (error) throw error;
+
+    return data.map((row) => ({
+      id: row.id,
+      timestamp: new Date(row.updated_at).getTime(),
+      status: row.status as 'draft' | 'completed',
+      userId: row.user_id,
+      isOwner: row.user_id === user.id,
+      vendorName: row.vendor_name || "Unknown Vendor",
+      propertyAddress: row.property_address || "Unknown Address",
+      listingPrice: row.listing_price || "",
+      formData: row.form_data as unknown as FormData,
+    }));
   } catch (error) {
-    console.error("Failed to load history:", error);
+    console.error("Failed to load history:", (error as { message?: string })?.message || JSON.stringify(error, null, 2) || error);
     return [];
   }
 }
 
-// Save submission to history
-export function saveSubmission(formData: FormData): void {
+export async function saveSubmission(
+  formData: FormData,
+  status: 'draft' | 'completed' = 'completed',
+  existingId?: string
+): Promise<string | null> {
   try {
-    const history = getHistory();
-
-    // Create new entry
-    const entry: HistoryEntry = {
-      id: Date.now().toString(),
-      version: VERSION,
-      timestamp: Date.now(),
-      vendorName: formData.vendors[0]?.fullName || "Unknown Vendor",
-      propertyAddress: `${formData.propertyStreet}, ${formData.propertySuburb} ${formData.propertyState} ${formData.propertyPostcode}`,
-      listingPrice: formData.listingPrice,
-      formData: formData,
-    };
-
-    // Add to beginning of array (newest first)
-    history.unshift(entry);
-
-    // Limit to MAX_ENTRIES
-    if (history.length > MAX_ENTRIES) {
-      history.splice(MAX_ENTRIES);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error("No user found");
+      return null;
     }
 
-    // Save to localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    const vendorName = formData.vendors[0]?.fullName || "Unknown Vendor";
+    const propertyAddress = `${formData.propertyStreet}, ${formData.propertySuburb} ${formData.propertyState} ${formData.propertyPostcode}`;
+
+    // Validate empty or undefined properties so it doesn't fail checking if required
+    const listingPrice = formData.listingPrice || "TBD";
+
+    const payload = {
+      user_id: user.id,
+      status,
+      form_data: formData as unknown as Record<string, unknown>, // Supabase jsonb
+      vendor_name: vendorName,
+      property_address: propertyAddress,
+      listing_price: listingPrice,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (existingId) {
+      // Update existing record
+      const { error } = await supabase
+        .from("saa_submissions")
+        .update(payload)
+        .eq("id", existingId);
+
+      if (error) throw error;
+      return existingId;
+    } else {
+      // Insert new record
+      const { data, error } = await supabase
+        .from("saa_submissions")
+        .insert(payload)
+        .select("id")
+        .single();
+
+      if (error) throw error;
+      return data.id;
+    }
   } catch (error) {
-    console.error("Failed to save submission to history:", error);
+    console.error("Failed to save submission to history:", (error as { message?: string })?.message || JSON.stringify(error, null, 2) || error);
+    return null;
   }
 }
 
-// Load specific submission
-export function loadSubmission(id: string): FormData | null {
+export async function loadSubmission(id: string): Promise<FormData | null> {
   try {
-    const history = getHistory();
-    const entry = history.find((e) => e.id === id);
-    return entry ? entry.formData : null;
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("saa_submissions")
+      .select("form_data")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+    return data.form_data as unknown as FormData;
   } catch (error) {
     console.error("Failed to load submission:", error);
     return null;
   }
 }
 
-// Delete specific entry
-export function deleteSubmission(id: string): void {
+export async function deleteSubmission(id: string): Promise<void> {
   try {
-    const history = getHistory();
-    const filtered = history.filter((e) => e.id !== id);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("saa_submissions")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
   } catch (error) {
     console.error("Failed to delete submission:", error);
   }
 }
 
-// Clear all history
-export function clearAllHistory(): void {
+export async function clearAllHistory(): Promise<void> {
   try {
-    localStorage.removeItem(STORAGE_KEY);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("saa_submissions")
+      .delete()
+      .eq("user_id", user.id);
+
+    if (error) throw error;
   } catch (error) {
-    console.error("Failed to clear history:", error);
+    console.error("Failed to clear history:", (error as { message?: string })?.message || JSON.stringify(error, null, 2) || error);
   }
 }
 
-// Get relative time string
 export function getRelativeTime(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;

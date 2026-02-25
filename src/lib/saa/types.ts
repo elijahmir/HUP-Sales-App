@@ -1,3 +1,5 @@
+import { MarketingItem } from "./marketing";
+
 export interface VendorInfo {
   fullName: string;
   email: string;
@@ -67,6 +69,7 @@ export interface FormData {
 
   // Marketing Section
   selectedMarketing: string[];
+  customMarketingItems: MarketingItem[];
 }
 
 export const initialFormData: FormData = {
@@ -130,6 +133,7 @@ export const initialFormData: FormData = {
   ],
 
   selectedMarketing: [],
+  customMarketingItems: [],
 };
 
 export function createEmptyVendor(): VendorInfo {

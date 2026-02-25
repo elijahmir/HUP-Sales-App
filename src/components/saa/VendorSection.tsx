@@ -6,7 +6,7 @@ import {
   AlertCircle,
   Copy,
 } from "lucide-react";
-import type { FormData, VendorInfo } from "@/lib/saa/types";
+import type { FormData } from "@/lib/saa/types";
 import { createEmptyVendor } from "@/lib/saa/types";
 import { SuburbAutocomplete } from "./SuburbAutocomplete";
 
@@ -23,7 +23,7 @@ export function VendorSection({
   errors,
   setErrors,
 }: VendorSectionProps) {
-  const updateVendor = (index: number, field: string, value: any) => {
+  const updateVendor = (index: number, field: string, value: string | boolean) => {
     const newVendors = [...formData.vendors];
     newVendors[index] = { ...newVendors[index], [field]: value };
     updateFormData({ vendors: newVendors });
@@ -89,11 +89,10 @@ export function VendorSection({
               {["Individual", "Company", "Trust"].map((type) => (
                 <label
                   key={type}
-                  className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${
-                    formData.vendorStructure === type
+                  className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${formData.vendorStructure === type
                       ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
                       : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <input
                     type="radio"
@@ -102,17 +101,16 @@ export function VendorSection({
                     checked={formData.vendorStructure === type}
                     onChange={(e) =>
                       updateFormData({
-                        vendorStructure: e.target.value as any,
+                        vendorStructure: e.target.value as FormData["vendorStructure"],
                       })
                     }
                     className="hidden"
                   />
                   <div
-                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                      formData.vendorStructure === type
+                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.vendorStructure === type
                         ? "border-harcourts-blue bg-harcourts-blue"
                         : "border-gray-300 bg-white"
-                    }`}
+                      }`}
                   >
                     {formData.vendorStructure === type && (
                       <div className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -134,9 +132,8 @@ export function VendorSection({
                   onChange={(e) =>
                     updateFormData({ trustName: e.target.value })
                   }
-                  className={`input-field ${
-                    errors.trustName ? "border-red-500" : ""
-                  }`}
+                  className={`input-field ${errors.trustName ? "border-red-500" : ""
+                    }`}
                   placeholder="The Family Trust"
                 />
                 {errors.trustName && (
@@ -153,11 +150,10 @@ export function VendorSection({
                   ].map((opt) => (
                     <label
                       key={opt.val}
-                      className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${
-                        formData.trusteeType === opt.val
+                      className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${formData.trusteeType === opt.val
                           ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
                           : "border-gray-200 text-gray-600 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       <input
                         type="radio"
@@ -166,7 +162,7 @@ export function VendorSection({
                         checked={formData.trusteeType === opt.val}
                         onChange={(e) =>
                           updateFormData({
-                            trusteeType: e.target.value as any,
+                            trusteeType: e.target.value as FormData["trusteeType"],
                             vendorCount:
                               e.target.value === "company"
                                 ? formData.hasMultipleDirectors
@@ -178,11 +174,10 @@ export function VendorSection({
                         className="hidden"
                       />
                       <div
-                        className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                          formData.trusteeType === opt.val
+                        className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.trusteeType === opt.val
                             ? "border-harcourts-blue bg-harcourts-blue"
                             : "border-gray-300 bg-white"
-                        }`}
+                          }`}
                       >
                         {formData.trusteeType === opt.val && (
                           <div className="w-1.5 h-1.5 rounded-full bg-white" />
@@ -199,102 +194,100 @@ export function VendorSection({
           {(formData.vendorStructure === "Company" ||
             (formData.vendorStructure === "Trust" &&
               formData.trusteeType === "company")) && (
-            <>
-              <div className="md:col-span-8">
-                <label className="field-label">Company Name</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Building2 className="h-4 w-4 text-gray-400" />
+              <>
+                <div className="md:col-span-8">
+                  <label className="field-label">Company Name</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Building2 className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      value={formData.companyName}
+                      onChange={(e) =>
+                        updateFormData({ companyName: e.target.value })
+                      }
+                      className={`input-field pl-10 ${errors.companyName ? "border-red-500" : ""
+                        }`}
+                      placeholder="Company Pty Ltd"
+                    />
                   </div>
-                  <input
-                    type="text"
-                    value={formData.companyName}
-                    onChange={(e) =>
-                      updateFormData({ companyName: e.target.value })
-                    }
-                    className={`input-field pl-10 ${
-                      errors.companyName ? "border-red-500" : ""
-                    }`}
-                    placeholder="Company Pty Ltd"
-                  />
+                  {errors.companyName && (
+                    <p className="error-text">{errors.companyName}</p>
+                  )}
                 </div>
-                {errors.companyName && (
-                  <p className="error-text">{errors.companyName}</p>
-                )}
-              </div>
 
-              <div className="md:col-span-4">
-                <label className="field-label">ACN</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Briefcase className="h-4 w-4 text-gray-400" />
+                <div className="md:col-span-4">
+                  <label className="field-label">ACN</label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Briefcase className="h-4 w-4 text-gray-400" />
+                    </div>
+                    <input
+                      type="text"
+                      value={formData.companyACN}
+                      onChange={(e) =>
+                        updateFormData({
+                          companyACN: e.target.value.replace(/[^0-9]/g, ""),
+                        })
+                      }
+                      className={`input-field pl-10 ${errors.companyACN ? "border-red-500" : ""
+                        }`}
+                      placeholder="000 000 000"
+                      maxLength={9}
+                    />
                   </div>
-                  <input
-                    type="text"
-                    value={formData.companyACN}
+                  {errors.companyACN && (
+                    <p className="error-text">{errors.companyACN}</p>
+                  )}
+                </div>
+
+                <div className="col-span-full md:col-span-8">
+                  <label className="field-label">
+                    Does the company have more than 1 Director?
+                  </label>
+                  <select
+                    value={formData.hasMultipleDirectors ? "yes" : "no"}
                     onChange={(e) =>
                       updateFormData({
-                        companyACN: e.target.value.replace(/[^0-9]/g, ""),
+                        hasMultipleDirectors: e.target.value === "yes",
+                        vendorCount: e.target.value === "yes" ? 2 : 1,
                       })
                     }
-                    className={`input-field pl-10 ${
-                      errors.companyACN ? "border-red-500" : ""
-                    }`}
-                    placeholder="000 000 000"
-                    maxLength={9}
-                  />
+                    className="input-field appearance-none bg-white"
+                  >
+                    <option value="no">No - Sole Director/Secretary</option>
+                    <option value="yes">Yes - Secretary + Director</option>
+                  </select>
                 </div>
-                {errors.companyACN && (
-                  <p className="error-text">{errors.companyACN}</p>
-                )}
-              </div>
-
-              <div className="col-span-full md:col-span-8">
-                <label className="field-label">
-                  Does the company have more than 1 Director?
-                </label>
-                <select
-                  value={formData.hasMultipleDirectors ? "yes" : "no"}
-                  onChange={(e) =>
-                    updateFormData({
-                      hasMultipleDirectors: e.target.value === "yes",
-                      vendorCount: e.target.value === "yes" ? 2 : 1,
-                    })
-                  }
-                  className="input-field appearance-none bg-white"
-                >
-                  <option value="no">No - Sole Director/Secretary</option>
-                  <option value="yes">Yes - Secretary + Director</option>
-                </select>
-              </div>
-            </>
-          )}
+              </>
+            )}
 
           {(formData.vendorStructure === "Individual" ||
             (formData.vendorStructure === "Trust" &&
               formData.trusteeType === "individual")) && (
-            <div className="md:col-span-4">
-              <label className="field-label">
-                Number of{" "}
-                {formData.vendorStructure === "Trust" ? "Trustees" : "Signers"}
-              </label>
-              <select
-                value={formData.vendorCount}
-                onChange={(e) => handleVendorCountChange(e.target.value)}
-                className="input-field appearance-none bg-white"
-              >
-                {[1, 2, 3, 4].map((num) => (
-                  <option key={num} value={num}>
-                    {num}{" "}
-                    {formData.vendorStructure === "Trust"
-                      ? "Trustee"
-                      : "Signer"}
-                    {num > 1 ? "s" : ""}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+              <div className="md:col-span-4">
+                <label className="field-label">
+                  Number of{" "}
+                  {formData.vendorStructure === "Trust" ? "Trustees" : "Signers"}
+                </label>
+                <select
+                  value={formData.vendorCount}
+                  onChange={(e) => handleVendorCountChange(e.target.value)}
+                  className="input-field appearance-none bg-white"
+                >
+                  {[1, 2, 3, 4].map((num) => (
+                    <option key={num} value={num}>
+                      {num}{" "}
+                      {formData.vendorStructure === "Trust"
+                        ? "Trustee"
+                        : "Signer"}
+                      {num > 1 ? "s" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
         </div>
 
         {/* ID Warning */}
@@ -332,11 +325,10 @@ export function VendorSection({
                       onChange={(e) =>
                         updateVendor(index, "fullName", e.target.value)
                       }
-                      className={`input-field pl-10 ${
-                        errors[`vendors[${index}].fullName`]
+                      className={`input-field pl-10 ${errors[`vendors[${index}].fullName`]
                           ? "border-red-500"
                           : ""
-                      }`}
+                        }`}
                       placeholder="John Doe"
                     />
                   </div>
@@ -395,9 +387,8 @@ export function VendorSection({
                     onChange={(e) =>
                       updateVendor(index, "email", e.target.value)
                     }
-                    className={`input-field ${
-                      errors[`vendors[${index}].email`] ? "border-red-500" : ""
-                    }`}
+                    className={`input-field ${errors[`vendors[${index}].email`] ? "border-red-500" : ""
+                      }`}
                     placeholder="john@example.com"
                   />
                   {errors[`vendors[${index}].email`] && (
@@ -430,11 +421,10 @@ export function VendorSection({
                           e.target.value.replace(/[^0-9]/g, ""),
                         )
                       }
-                      className={`input-field flex-1 ${
-                        errors[`vendors[${index}].mobile`]
+                      className={`input-field flex-1 ${errors[`vendors[${index}].mobile`]
                           ? "border-red-500"
                           : ""
-                      }`}
+                        }`}
                       placeholder={
                         formData.vendors[index].mobileCountryCode === "+63"
                           ? "9665971704"
@@ -513,10 +503,10 @@ export function VendorSection({
                         className={`input-field ${formData.vendors[index].sameAsProperty ? "bg-gray-50" : ""} ${
                           /* Error Logic */
                           !formData.vendors[index].sameAsProperty &&
-                          errors[`vendors[${index}].street`]
+                            errors[`vendors[${index}].street`]
                             ? "border-red-500"
                             : ""
-                        }`}
+                          }`}
                         readOnly={formData.vendors[index].sameAsProperty}
                       />
                       {/* Display Error if Manual Entry */}
@@ -548,9 +538,9 @@ export function VendorSection({
                               updateVendor(index, "postcode", suburb.postcode);
                               updateVendor(index, "state", suburb.state);
                             }}
-                            // We might need to pass error style to SuburbAutocomplete or wrap it?
-                            // SuburbAutocomplete usually exposes an input internally.
-                            // If we can't easily style it, we at least show the error message below.
+                          // We might need to pass error style to SuburbAutocomplete or wrap it?
+                          // SuburbAutocomplete usually exposes an input internally.
+                          // If we can't easily style it, we at least show the error message below.
                           />
                           {errors[`vendors[${index}].suburb`] && (
                             <p className="error-text mt-1">
@@ -572,12 +562,11 @@ export function VendorSection({
                             e.target.value.replace(/[^0-9]/g, ""),
                           )
                         }
-                        className={`input-field ${formData.vendors[index].sameAsProperty ? "bg-gray-50" : ""} ${
-                          !formData.vendors[index].sameAsProperty &&
-                          errors[`vendors[${index}].postcode`]
+                        className={`input-field ${formData.vendors[index].sameAsProperty ? "bg-gray-50" : ""} ${!formData.vendors[index].sameAsProperty &&
+                            errors[`vendors[${index}].postcode`]
                             ? "border-red-500"
                             : ""
-                        }`}
+                          }`}
                         readOnly={formData.vendors[index].sameAsProperty}
                         maxLength={4}
                       />
