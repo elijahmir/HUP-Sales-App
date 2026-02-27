@@ -1,0 +1,151 @@
+
+> hup-sales-app@0.1.0 lint
+> eslint
+
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/scripts/test-vaultre.ts
+  40:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/app/api/chatkit/session/route.ts
+  3:28  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/app/dashboard/appraisal/page.tsx
+  5:8  warning  'dynamic' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/app/dashboard/saa/page.tsx
+   4:10  warning  'FileText' is defined but never used          @typescript-eslint/no-unused-vars
+   4:44  warning  'ChevronLeft' is defined but never used       @typescript-eslint/no-unused-vars
+   6:8   warning  'Link' is defined but never used              @typescript-eslint/no-unused-vars
+  26:3   warning  'isValidMarketing' is defined but never used  @typescript-eslint/no-unused-vars
+  40:9   warning  'router' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  73:23  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  74:20  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/app/dashboard/settings/page.tsx
+  19:3   warning  'DEFAULT_MODEL' is defined but never used                                                                                      @typescript-eslint/no-unused-vars
+  21:8   warning  'AIModel' is defined but never used                                                                                            @typescript-eslint/no-unused-vars
+  30:10  warning  'saving' is assigned a value but never used                                                                                    @typescript-eslint/no-unused-vars
+  36:6   warning  React Hook useEffect has a missing dependency: 'checkAdminAndFetchSettings'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/Carousel.jsx
+  118:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  116 |     // Only reset if NOT in thinking mode, or if items length changed significantly
+  117 |     if (!thinkingMode) {
+> 118 |       setPosition(startingPosition);
+      |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  119 |       x.set(-startingPosition * trackItemOffset);
+  120 |     }
+  121 |   }, [items.length, loop, trackItemOffset, x, thinkingMode]);  react-hooks/set-state-in-effect
+  125:7  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  123 |   useEffect(() => {
+  124 |     if (!loop && position > itemsForRender.length - 1) {
+> 125 |       setPosition(Math.max(0, itemsForRender.length - 1));
+      |       ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  126 |     }
+  127 |   }, [itemsForRender.length, loop, position]);
+  128 |                                                                             react-hooks/set-state-in-effect
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/appraisal-loading.tsx
+   96:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/appraisal-loading.tsx:96:9
+  94 |       if (isThinking) {
+  95 |         // We were thinking, now we are done. Resume carousel.
+> 96 |         setIsThinking(false);
+     |         ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  97 |         setHasCompletedThinking(true);
+  98 |       }
+  99 |  react-hooks/set-state-in-effect
+  184:47  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/confirmation-modal.tsx
+  4:28  warning  'Loader2' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/front-sheet-form.tsx
+  242:6  warning  React Hook useEffect has missing dependencies: 'formData.address', 'formData.address_components', 'handleChange', and 'readOnly'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/providers/inactivity-provider.tsx
+   7:10  warning  'AlertTriangle' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  21:42  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/providers/inactivity-provider.tsx:21:42
+  19 |   const [timeLeft, setTimeLeft] = useState(60); // Seconds left during warning
+  20 |
+> 21 |   const lastActivityRef = useRef<number>(Date.now());
+     |                                          ^^^^^^^^^^ Cannot call impure function
+  22 |   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  23 |   const warningIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  24 |  react-hooks/purity
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/saa/AnnexureSection.tsx
+   3:25  warning  'AnnexureItem' is defined but never used                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  31:6   warning  React Hook useEffect has missing dependencies: 'formData.annexureCount', 'formData.annexureItems', and 'updateFormData'. Either include them or remove the dependency array. If 'updateFormData' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/saa/LoadingModal.tsx
+  41:11  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/saa/PropertySection.tsx
+   6:3  warning  'AlertCircle' is defined but never used                    @typescript-eslint/no-unused-vars
+  38:9  warning  'handleCheckboxChange' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/saa/VendorSection.tsx
+    9:25  warning  'VendorInfo' is defined but never used    @typescript-eslint/no-unused-vars
+   26:62  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:60  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  169:60  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/smart-listing-form.tsx
+   27:13  error    Unexpected any. Specify a different type                                                                                                                                              @typescript-eslint/no-explicit-any
+   28:39  error    Unexpected any. Specify a different type                                                                                                                                              @typescript-eslint/no-explicit-any
+   45:30  error    Unexpected any. Specify a different type                                                                                                                                              @typescript-eslint/no-explicit-any
+   52:30  error    Unexpected any. Specify a different type                                                                                                                                              @typescript-eslint/no-explicit-any
+   52:56  error    Unexpected any. Specify a different type                                                                                                                                              @typescript-eslint/no-explicit-any
+  263:46  error    Unexpected any. Specify a different type                                                                                                                                              @typescript-eslint/no-explicit-any
+  295:6   warning  React Hook useEffect has missing dependencies: 'formData.address', 'formData.address_components', 'handleChange', and 'readOnly'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  561:16  warning  React Hook useEffect has missing dependencies: 'formData.address', 'formData.address_components', 'handleChange', and 'readOnly'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  568:19  error    Unexpected any. Specify a different type                                                                                                                                              @typescript-eslint/no-explicit-any
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/components/tools/ImageMergerModal.tsx
+  13:3  warning  'ImageIcon' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/lib/gemini-ocr.ts
+  572:56  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  582:27  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  588:5   error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  676:24  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/lib/saa/api.ts
+  1035:27  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/lib/vaultre.ts
+    9:10  warning  'getAgentByName' is defined but never used  @typescript-eslint/no-unused-vars
+    9:26  warning  'VAULTRE_AGENTS' is defined but never used  @typescript-eslint/no-unused-vars
+  563:40  error    Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+
+/Users/elijahmirandilla/Developer/elijahmir/HUP-Sales-App/src/middleware.ts
+  17:71  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 50 problems (25 errors, 25 warnings)
+

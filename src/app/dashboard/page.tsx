@@ -14,6 +14,7 @@ import {
   Bot,
   PenTool,
   Settings,
+  BarChart3,
 } from "lucide-react";
 import AppraisalDetailsModal from "@/components/appraisal-details-modal";
 import type { ListingData } from "@/lib/gemini-ocr";
@@ -257,6 +258,63 @@ export default function DashboardHub() {
           </Link>
         </motion.div>
 
+        {/* Offer Form */}
+        <motion.div variants={item} className="md:col-span-2 group relative">
+          <Link href="/dashboard/offer" className="block h-full">
+            <div className="relative h-full bg-gradient-to-br from-amber-500/5 to-orange-500/5 rounded-2xl p-8 overflow-hidden shadow-sm border border-amber-500/20 transition-all duration-300 hover:shadow-md hover:border-amber-500/30 hover:-translate-y-1 flex flex-col justify-between">
+              <div className="absolute top-0 right-0 p-4 opacity-5">
+                <FileText className="w-32 h-32 text-amber-600" />
+              </div>
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col gap-5">
+                <div className="inline-flex items-center gap-2 self-start bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                    New Feature
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h2 className="font-display text-2xl font-bold tracking-tight text-[#001F49]">
+                    Offer Form
+                  </h2>
+                  <p className="text-slate-500 text-base max-w-md leading-relaxed">
+                    Submit property purchase offers with purchaser and solicitor
+                    details for contract preparation.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 mt-6 pt-5 border-t border-amber-100 flex items-center justify-between group-hover:border-amber-200 transition-colors">
+                <div className="flex items-center gap-4">
+                  <span className="font-semibold text-base text-amber-700">
+                    Create Offer
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-full bg-amber-100 flex items-center justify-center group-hover:bg-amber-200 group-hover:text-amber-800 transition-all duration-300">
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = "/dashboard/offers";
+                }}
+                className="relative z-20 mt-3 flex items-center gap-2 text-xs font-semibold text-amber-600 hover:text-amber-800 transition-colors cursor-pointer"
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                View Offers Dashboard →
+              </button>
+            </div>
+          </Link>
+        </motion.div>
+
         {/* CopyPro - Active (Horizontal) */}
         <motion.div variants={item} className="md:col-span-2 group relative">
           <Link href="/dashboard/copypro" className="block h-full">
@@ -361,18 +419,16 @@ export default function DashboardHub() {
                       </div>
                     </div>
                     <span
-                      className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                        appraisal.status === "completed"
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-amber-50 text-amber-600"
-                      }`}
+                      className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${appraisal.status === "completed"
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-amber-50 text-amber-600"
+                        }`}
                     >
                       <span
-                        className={`w-1 h-1 rounded-full ${
-                          appraisal.status === "completed"
-                            ? "bg-emerald-500"
-                            : "bg-amber-500"
-                        }`}
+                        className={`w-1 h-1 rounded-full ${appraisal.status === "completed"
+                          ? "bg-emerald-500"
+                          : "bg-amber-500"
+                          }`}
                       />
                       {appraisal.status}
                     </span>

@@ -16,6 +16,8 @@ interface FormStepperProps {
   isSubmitting: boolean;
   showNavigation?: boolean;
   showStepIndicators?: boolean;
+  /** When true, navigation buttons are NOT rendered inside the stepper. Use <FormNavigation /> separately. */
+  hideNavigation?: boolean;
 }
 
 export function FormStepper({
@@ -28,6 +30,7 @@ export function FormStepper({
   isSubmitting,
   showNavigation = true,
   showStepIndicators = true,
+  hideNavigation = false,
 }: FormStepperProps) {
   const goNext = () => {
     if (currentStep < steps.length - 1) {
@@ -59,13 +62,12 @@ export function FormStepper({
                 <span
                   className={`
                   text-xs font-medium mb-1 text-center hidden md:block
-                  ${
-                    index === currentStep
+                  ${index === currentStep
                       ? "text-harcourts-blue"
                       : index < currentStep
                         ? "text-green-600"
                         : "text-gray-400"
-                  }
+                    }
                 `}
                 >
                   {step.shortTitle}
@@ -81,13 +83,12 @@ export function FormStepper({
                   ${isCompactMode ? "w-8 h-8" : "w-8 h-8 md:w-10 md:h-10"} 
                   rounded-full flex items-center justify-center font-semibold text-sm
                   transition-all duration-200
-                  ${
-                    index < currentStep
+                  ${index < currentStep
                       ? "bg-green-500 text-white"
                       : index === currentStep
                         ? "bg-harcourts-blue text-white ring-4 ring-blue-100"
                         : "bg-gray-200 text-gray-500"
-                  }
+                    }
                 `}
                 >
                   {index < currentStep ? (
@@ -102,11 +103,10 @@ export function FormStepper({
                   <span
                     className={`
                     ml-2 text-sm font-medium hidden md:block
-                    ${
-                      index === currentStep
+                    ${index === currentStep
                         ? "text-harcourts-blue"
                         : "text-gray-500"
-                    }
+                      }
                   `}
                   >
                     {step.shortTitle}
@@ -118,11 +118,10 @@ export function FormStepper({
                   <div
                     className={`
                     h-0.5 transition-colors
-                    ${
-                      isCompactMode
+                    ${isCompactMode
                         ? "w-4 md:w-8 lg:w-12 mx-1 md:mx-2"
                         : "w-8 md:w-16 lg:w-24 mx-2 md:mx-4"
-                    }
+                      }
                     ${index < currentStep ? "bg-green-500" : "bg-gray-200"}
                   `}
                   />
@@ -145,76 +144,115 @@ export function FormStepper({
         </div>
       )}
 
-      {/* Navigation Buttons */}
-      {showNavigation && (
-        <div className="flex justify-between pt-4 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={goPrev}
-            disabled={currentStep === 0}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
-              ${
-                currentStep === 0
-                  ? "text-gray-300 cursor-not-allowed"
-                  : "text-gray-600 hover:bg-gray-100"
-              }
-            `}
-          >
-            <ChevronLeft className="w-5 h-5" />
-            <span className="hidden sm:inline">Previous</span>
-          </button>
+      {/* Inline Navigation Buttons (legacy — only when not hidden) */}
+      {showNavigation && !hideNavigation && (
+        <FormNavigation
+          currentStep={currentStep}
+          totalSteps={steps.length}
+          canProceed={canProceed}
+          isLastStep={isLastStep}
+          isSubmitting={isSubmitting}
+          onPrev={goPrev}
+          onNext={goNext}
+          onSubmit={onSubmit}
+        />
+      )}
+    </div>
+  );
+}
 
-          {isLastStep ? (
-            <button
-              type="button"
-              onClick={onSubmit}
-              disabled={!canProceed || isSubmitting}
-              className="btn-primary flex items-center gap-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <svg
-                    className="animate-spin h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Creating Agreement & Sending...
-                </>
-              ) : (
-                <>
-                  Generate Agreement
-                  <Check className="w-5 h-5" />
-                </>
-              )}
-            </button>
+// ─── Standalone Navigation Buttons ──────────────────────────────
+
+interface FormNavigationProps {
+  currentStep: number;
+  totalSteps: number;
+  canProceed: boolean;
+  isLastStep: boolean;
+  isSubmitting: boolean;
+  onPrev: () => void;
+  onNext: () => void;
+  onSubmit: () => void;
+  submitLabel?: string;
+  submittingLabel?: string;
+}
+
+export function FormNavigation({
+  currentStep,
+  canProceed,
+  isLastStep,
+  isSubmitting,
+  onPrev,
+  onNext,
+  onSubmit,
+  submitLabel = "Generate Agreement",
+  submittingLabel = "Creating Agreement & Sending...",
+}: FormNavigationProps) {
+  return (
+    <div className="flex justify-between pt-4 border-t border-gray-200">
+      <button
+        type="button"
+        onClick={onPrev}
+        disabled={currentStep === 0}
+        className={`
+          flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all
+          ${currentStep === 0
+            ? "text-gray-300 cursor-not-allowed"
+            : "text-gray-600 hover:bg-gray-100"
+          }
+        `}
+      >
+        <ChevronLeft className="w-5 h-5" />
+        <span className="hidden sm:inline">Previous</span>
+      </button>
+
+      {isLastStep ? (
+        <button
+          type="button"
+          onClick={onSubmit}
+          disabled={!canProceed || isSubmitting}
+          className="btn-primary flex items-center gap-2"
+        >
+          {isSubmitting ? (
+            <>
+              <svg
+                className="animate-spin h-5 w-5 text-white"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+              {submittingLabel}
+            </>
           ) : (
-            <button
-              type="button"
-              onClick={goNext}
-              disabled={!canProceed}
-              className="btn-primary flex items-center gap-2"
-            >
-              <span className="hidden sm:inline">Next</span>
-              <ChevronRight className="w-5 h-5" />
-            </button>
+            <>
+              {submitLabel}
+              <Check className="w-5 h-5" />
+            </>
           )}
-        </div>
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={!canProceed}
+          className="btn-primary flex items-center gap-2"
+        >
+          <span className="hidden sm:inline">Next</span>
+          <ChevronRight className="w-5 h-5" />
+        </button>
       )}
     </div>
   );

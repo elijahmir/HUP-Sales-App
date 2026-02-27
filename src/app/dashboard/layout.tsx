@@ -35,6 +35,8 @@ function getBreadcrumb(pathname: string): string | null {
   if (pathname.includes("/appraisal")) return "Front Sheet AI";
   if (pathname.includes("/saa")) return "Sole Agency Agreement";
   if (pathname.includes("/copypro")) return "CopyPro Assistant";
+  if (pathname.includes("/offers")) return "Offers Dashboard";
+  if (pathname.includes("/offer")) return "Offer Form";
   if (pathname.includes("/settings")) return "Settings";
   return null;
 }
@@ -111,11 +113,10 @@ export default function DashboardLayout({
                 <div className="flex items-center gap-1 sm:gap-2">
                   <Link
                     href="/dashboard"
-                    className={`p-2.5 rounded-xl transition-all duration-200 ${
-                      pathname === "/dashboard"
-                        ? "bg-sky-50 text-[#00ADEF]"
-                        : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
-                    }`}
+                    className={`p-2.5 rounded-xl transition-all duration-200 ${pathname === "/dashboard"
+                      ? "bg-sky-50 text-[#00ADEF]"
+                      : "text-slate-400 hover:text-slate-600 hover:bg-slate-50"
+                      }`}
                     title="Dashboard Home"
                     aria-label="Go to Dashboard Home"
                   >
