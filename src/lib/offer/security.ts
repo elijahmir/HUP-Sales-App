@@ -46,13 +46,17 @@ export function sanitizeFormData(data: OfferFormData): OfferFormData {
         solicitorFirm: sanitizeString(data.solicitorFirm),
         solicitorName: sanitizeString(data.solicitorName),
         solicitorEmail: sanitizeString(data.solicitorEmail),
-        solicitorMobileNumber: sanitizeString(data.solicitorMobileNumber, 20),
         offerPrice: sanitizeString(data.offerPrice, 20),
         depositAmount: sanitizeString(data.depositAmount, 20),
         bankLender: sanitizeString(data.bankLender),
         financeAmount: sanitizeString(data.financeAmount, 20),
         settlementPeriod: sanitizeString(data.settlementPeriod, 100),
         specialClauses: sanitizeString(data.specialClauses, 2000),
+        subjectToSaleAddress: sanitizeString(data.subjectToSaleAddress),
+        subjectToSalePrice: sanitizeString(data.subjectToSalePrice, 20),
+        subjectToSaleCompletionDate: sanitizeString(data.subjectToSaleCompletionDate, 100),
+        appendixFileName: sanitizeString(data.appendixFileName),
+        appendixFileBase64: data.appendixFileBase64, // Do not sanitize base64 directly to avoid truncation
         purchasers: data.purchasers.map((p) => ({
             ...p,
             fullName: sanitizeString(p.fullName),

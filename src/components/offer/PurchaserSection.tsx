@@ -51,6 +51,23 @@ export function PurchaserSection({
         });
     };
 
+    const handlePurchaserStructureChange = (structure: OfferFormData["purchaserStructure"]) => {
+        updateFormData({
+            purchaserStructure: structure,
+            // Automatically set to 1 if it was previously something else, 
+            // but for Company we rely on hasMultipleDirectors explicitly later.
+        });
+    };
+
+    const handleTrusteeTypeChange = (trusteeType: OfferFormData["trusteeType"]) => {
+        updateFormData({
+            trusteeType,
+            purchaserCount: trusteeType === "company"
+                ? (formData.hasMultipleDirectors ? 2 : 1)
+                : formData.purchaserCount,
+        });
+    };
+
     const structures: Array<{ value: OfferFormData["purchaserStructure"]; label: string }> = [
         { value: "Individual", label: "Individual" },
         { value: "Company", label: "Company" },
@@ -76,8 +93,8 @@ export function PurchaserSection({
                         <label
                             key={s.value}
                             className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${formData.purchaserStructure === s.value
-                                    ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
-                                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                                ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
+                                : "border-gray-200 text-gray-600 hover:bg-gray-50"
                                 }`}
                         >
                             <input
@@ -86,16 +103,14 @@ export function PurchaserSection({
                                 value={s.value}
                                 checked={formData.purchaserStructure === s.value}
                                 onChange={(e) =>
-                                    updateFormData({
-                                        purchaserStructure: e.target.value as OfferFormData["purchaserStructure"],
-                                    })
+                                    handlePurchaserStructureChange(e.target.value as OfferFormData["purchaserStructure"])
                                 }
                                 className="hidden"
                             />
                             <div
                                 className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.purchaserStructure === s.value
-                                        ? "border-harcourts-blue bg-harcourts-blue"
-                                        : "border-gray-300 bg-white"
+                                    ? "border-harcourts-blue bg-harcourts-blue"
+                                    : "border-gray-300 bg-white"
                                     }`}
                             >
                                 {formData.purchaserStructure === s.value && (
@@ -134,8 +149,8 @@ export function PurchaserSection({
                                 <label
                                     key={t}
                                     className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${formData.trusteeType === t
-                                            ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
-                                            : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                                        ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
+                                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
                                         }`}
                                 >
                                     <input
@@ -144,16 +159,14 @@ export function PurchaserSection({
                                         value={t}
                                         checked={formData.trusteeType === t}
                                         onChange={(e) =>
-                                            updateFormData({
-                                                trusteeType: e.target.value as OfferFormData["trusteeType"],
-                                            })
+                                            handleTrusteeTypeChange(e.target.value as OfferFormData["trusteeType"])
                                         }
                                         className="hidden"
                                     />
                                     <div
                                         className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.trusteeType === t
-                                                ? "border-harcourts-blue bg-harcourts-blue"
-                                                : "border-gray-300 bg-white"
+                                            ? "border-harcourts-blue bg-harcourts-blue"
+                                            : "border-gray-300 bg-white"
                                             }`}
                                     >
                                         {formData.trusteeType === t && (
@@ -216,43 +229,72 @@ export function PurchaserSection({
                                 </p>
                             )}
                         </div>
+
+                        <div className="md:col-span-2">
+                            <label className="field-label block mb-2">
+                                Does the company have more than 1 Director?
+                            </label>
+                            <select
+                                value={formData.hasMultipleDirectors ? "yes" : "no"}
+                                onChange={(e) => {
+                                    const isMultiple = e.target.value === "yes";
+                                    const newCount = isMultiple ? 2 : 1;
+
+                                    const updatedPurchasers = [...formData.purchasers];
+                                    while (updatedPurchasers.length < newCount) {
+                                        updatedPurchasers.push(createEmptyPurchaser());
+                                    }
+
+                                    updateFormData({
+                                        hasMultipleDirectors: isMultiple,
+                                        purchaserCount: newCount,
+                                        purchasers: updatedPurchasers,
+                                    });
+                                }}
+                                className="input-field appearance-none bg-white font-medium"
+                            >
+                                <option value="no">No - Sole Director/Secretary</option>
+                                <option value="yes">Yes - Secretary + Director</option>
+                            </select>
+                        </div>
                     </div>
                 )}
 
             {/* Purchaser Count */}
-            <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl border border-gray-200">
-                <span className="text-sm font-medium text-gray-700">
-                    Number of{" "}
-                    {formData.purchaserStructure === "Trust"
-                        ? formData.trusteeType === "individual"
-                            ? "Trustees"
-                            : "Directors"
-                        : formData.purchaserStructure === "Company"
-                            ? "Directors"
-                            : "Purchasers"}
-                </span>
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        onClick={() => handlePurchaserCountChange(-1)}
-                        disabled={formData.purchaserCount <= 1}
-                        className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                    >
-                        <UserMinus className="w-4 h-4" />
-                    </button>
-                    <span className="w-8 text-center font-bold text-harcourts-navy">
-                        {formData.purchaserCount}
-                    </span>
-                    <button
-                        type="button"
-                        onClick={() => handlePurchaserCountChange(1)}
-                        disabled={formData.purchaserCount >= 4}
-                        className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                    >
-                        <UserPlus className="w-4 h-4" />
-                    </button>
-                </div>
-            </div>
+            {(formData.purchaserStructure === "Individual" ||
+                (formData.purchaserStructure === "Trust" && formData.trusteeType === "individual")) && (
+                    <div className="flex items-center justify-between py-3 px-4 bg-gray-50 rounded-xl border border-gray-200 animate-fade-in-up">
+                        <span className="text-sm font-medium text-gray-700">
+                            Number of{" "}
+                            {formData.purchaserStructure === "Trust"
+                                ? "Trustees"
+                                : "Purchasers"}
+                        </span>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => handlePurchaserCountChange(-1)}
+                                disabled={formData.purchaserCount <= 1}
+                                className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                <UserMinus className="w-4 h-4" />
+                            </button>
+                            <span className="w-8 text-center font-bold text-harcourts-navy">
+                                {formData.purchaserCount}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => handlePurchaserCountChange(1)}
+                                disabled={formData.purchaserCount >= 4}
+                                className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                            >
+                                <UserPlus className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+            {/* Purchaser Details */}
 
             {/* Purchaser Details */}
             <div className="space-y-4">
@@ -436,6 +478,6 @@ export function PurchaserSection({
                     </div>
                 ))}
             </div>
-        </div>
+        </div >
     );
 }

@@ -367,7 +367,7 @@ export default function OfferFormPage() {
 
         setIsSubmitting(true);
         try {
-            const result = await submitOffer(formData);
+            const result = await submitOffer(formData, existingId);
             if (result.success) {
                 // Update existing draft to completed (don't create a new record)
                 if (existingId) {
@@ -489,10 +489,7 @@ export default function OfferFormPage() {
                     <div className="text-sm text-amber-800">
                         <p className="font-semibold mb-1">How this works</p>
                         <p className="text-amber-600 leading-relaxed">
-                            Complete the offer details below and submit. The information will
-                            be sent to the office for contract preparation. We encourage
-                            purchasers to present their{" "}
-                            <strong>best and final offer</strong> to strengthen their position.
+                            Complete the offer details below and submit. The information will be sent to the office for contract preparation.
                         </p>
                     </div>
                 </div>

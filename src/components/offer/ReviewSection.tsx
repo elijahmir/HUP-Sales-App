@@ -182,10 +182,6 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
                 <Row label="Firm" value={formData.solicitorFirm} />
                 <Row label="Name" value={formData.solicitorName} />
                 <Row label="Email" value={formData.solicitorEmail} />
-                <Row
-                    label="Mobile"
-                    value={`${formData.solicitorMobileCountryCode} ${formData.solicitorMobileNumber}`}
-                />
             </ReviewCard>
 
             {/* Offer */}
@@ -206,6 +202,17 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
                     <BoolRow label="Building Inspection" value={formData.buildingInspection} />
                     <BoolRow label="Cooling Off Period" value={formData.coolingOffPeriod} />
                     <Row label="Settlement Period" value={formData.settlementPeriod} />
+                    <BoolRow label="Subject to Sale" value={formData.subjectToSale} />
+                    {formData.subjectToSale && (
+                        <div className="mt-1 mb-2 pt-1 pl-4 border-l-2 border-violet-100 space-y-1">
+                            <Row label="Property Address" value={formData.subjectToSaleAddress} />
+                            <Row label="Max Asking Price" value={formData.subjectToSalePrice ? `$${formData.subjectToSalePrice}` : ""} />
+                            <BoolRow label="Under Contract" value={formData.subjectToSaleUnderContract} />
+                            {formData.subjectToSaleUnderContract && (
+                                <Row label="Completion Date" value={formData.subjectToSaleCompletionDate} />
+                            )}
+                        </div>
+                    )}
                     {formData.specialClauses && (
                         <div className="mt-2 pt-2 border-t border-gray-100">
                             <span className="text-gray-500 text-xs block mb-1">Special Clauses</span>
@@ -213,6 +220,9 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
                                 {formData.specialClauses}
                             </p>
                         </div>
+                    )}
+                    {formData.appendixFileName && (
+                        <Row label="Appendices" value={formData.appendixFileName} />
                     )}
                 </div>
             </ReviewCard>

@@ -22,34 +22,14 @@ import {
     Download,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { X, CheckCircle2 } from "lucide-react";
+import type { OfferFormData } from "@/lib/offer/types";
 
 // Types
 interface OfferRow {
     id: string;
     status: string;
-    form_data: {
-        propertyId: string | null;
-        propertyAddress: string;
-        propertySuburb: string;
-        propertyState: string;
-        propertyPostcode: string;
-        propertyBed: number | null;
-        propertyBath: number | null;
-        propertyGarages: number | null;
-        propertyMainImage: string;
-        purchaserStructure: string;
-        purchaserCount: number;
-        purchasers: { fullName: string; email: string }[];
-        companyName?: string;
-        trustName?: string;
-        offerPrice: string;
-        depositAmount: string;
-        financeRequired: boolean;
-        bankLender?: string;
-        financeAmount?: string;
-        settlementPeriod?: string;
-        specialClauses?: string;
-    };
+    form_data: OfferFormData;
     purchaser_name: string;
     property_address: string;
     offer_price: string;
@@ -135,10 +115,12 @@ function PropertyOfferCard({
     group,
     isExpanded,
     onToggle,
+    onOfferClick,
 }: {
     group: PropertyGroup;
     isExpanded: boolean;
     onToggle: () => void;
+    onOfferClick: (offer: OfferRow) => void;
 }) {
     return (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -238,9 +220,10 @@ function PropertyOfferCard({
                             const isHighest = idx === 0;
                             const fd = offer.form_data;
                             return (
-                                <div
+                                <button
                                     key={offer.id}
-                                    className={`px-5 py-3 grid grid-cols-12 gap-2 items-center text-sm border-t border-gray-50 hover:bg-blue-50/30 transition-colors ${isHighest ? "bg-emerald-50/30" : ""
+                                    onClick={() => onOfferClick(offer)}
+                                    className={`w-full text-left px-5 py-3 grid grid-cols-12 gap-2 items-center text-sm border-t border-gray-50 hover:bg-blue-50/50 transition-colors cursor-pointer ${isHighest ? "bg-emerald-50/30" : ""
                                         }`}
                                 >
                                     <div className="col-span-3 flex items-center gap-2">
@@ -287,11 +270,209 @@ function PropertyOfferCard({
                                             {timeAgo(offer.created_at)}
                                         </span>
                                     </div>
-                                </div>
+                                </button>
                             );
                         })}
                 </div>
             )}
+        </div>
+    );
+}
+
+// Offer Details Modal
+function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose: () => void }) {
+    if (!offer) return null;
+    const fd = offer.form_data;
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-fade-in">
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
+                    <div>
+                        <h2 className="text-xl font-bold text-[#001F49]">
+                            Offer from {offer.purchaser_name}
+                        </h2>
+                        <p className="text-sm text-gray-500 mt-1">
+                            Submitted on {new Date(offer.created_at).toLocaleString()}
+                        </p>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 overflow-y-auto overflow-x-hidden space-y-8 flex-1">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Left Column */}
+                        <div className="space-y-8">
+                            {/* Property Details */}
+                            <section>
+                                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Purchaser Structure</h3>
+                                <div className="space-y-3 text-sm">
+                                    <div className="grid grid-cols-3 text-gray-500">
+                                        <span className="col-span-1 border-r border-gray-100">Structure</span>
+                                        <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.purchaserStructure}</span>
+                                    </div>
+                                    {fd.companyName && (
+                                        <div className="grid grid-cols-3 text-gray-500">
+                                            <span className="col-span-1 border-r border-gray-100">Company</span>
+                                            <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.companyName} {fd.companyACN && `ACN: ${fd.companyACN}`}</span>
+                                        </div>
+                                    )}
+                                    {fd.trustName && (
+                                        <div className="grid grid-cols-3 text-gray-500">
+                                            <span className="col-span-1 border-r border-gray-100">Trust</span>
+                                            <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.trustName}</span>
+                                        </div>
+                                    )}
+                                    <div className="mt-4">
+                                        <p className="text-xs text-gray-500 font-medium mb-2 uppercase">Individuals</p>
+                                        <div className="space-y-2">
+                                            {fd.purchasers.map((p, i) => (
+                                                <div key={i} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                                    <p className="font-semibold text-gray-900">{p.fullName}</p>
+                                                    <p className="text-xs text-gray-500">{p.email} • {p.mobileCountryCode} {p.mobileNumber}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">{[p.street, p.suburb, p.state, p.postcode].filter(Boolean).join(", ")}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section>
+                                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Solicitor Details</h3>
+                                <div className="space-y-3 text-sm">
+                                    <div className="grid grid-cols-3 text-gray-500">
+                                        <span className="col-span-1 border-r border-gray-100">Firm</span>
+                                        <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.solicitorFirm}</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 text-gray-500">
+                                        <span className="col-span-1 border-r border-gray-100">Name</span>
+                                        <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.solicitorName}</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 text-gray-500">
+                                        <span className="col-span-1 border-r border-gray-100">Email</span>
+                                        <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.solicitorEmail}</span>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+
+                        {/* Right Column */}
+                        <div className="space-y-8">
+                            <section>
+                                <h3 className="text-sm font-bold text-emerald-600 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Offer Details</h3>
+                                <div className="space-y-3 text-sm bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
+                                    <div className="grid grid-cols-3 text-gray-600">
+                                        <span className="col-span-1">Offer Price</span>
+                                        <span className="col-span-2 font-bold text-emerald-700 text-lg">${fd.offerPrice}</span>
+                                    </div>
+                                    <div className="grid grid-cols-3 text-gray-600">
+                                        <span className="col-span-1">Deposit</span>
+                                        <span className="col-span-2 font-bold text-gray-900">${fd.depositAmount}</span>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section>
+                                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Conditions</h3>
+                                <div className="space-y-4 text-sm">
+                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            {fd.financeRequired ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <X className="w-4 h-4 text-gray-300" />}
+                                            <span className="font-semibold text-gray-900">Finance Required</span>
+                                        </div>
+                                        {fd.financeRequired && (
+                                            <div className="ml-6 space-y-1 text-xs text-gray-500">
+                                                <p>Lender: <span className="font-medium text-gray-900">{fd.bankLender}</span></p>
+                                                <p>Amount: <span className="font-medium text-gray-900">${fd.financeAmount}</span></p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-center gap-2">
+                                            {fd.buildingInspection ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <X className="w-4 h-4 text-gray-300" />}
+                                            <span className="text-gray-900">Building Inspection</span>
+                                        </div>
+                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 flex items-center gap-2">
+                                            {fd.coolingOffPeriod ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <X className="w-4 h-4 text-gray-300" />}
+                                            <span className="text-gray-900">Cooling Off Period</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                        <p className="text-xs text-gray-500 mb-1">Settlement Period</p>
+                                        <p className="font-medium text-gray-900">{fd.settlementPeriod}</p>
+                                    </div>
+
+                                    <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            {fd.subjectToSale ? <CheckCircle2 className="w-4 h-4 text-emerald-500" /> : <X className="w-4 h-4 text-gray-300" />}
+                                            <span className="font-semibold text-gray-900">Subject to Sale</span>
+                                        </div>
+                                        {fd.subjectToSale && (
+                                            <div className="ml-6 space-y-1 text-xs text-gray-500">
+                                                <p>Address: <span className="font-medium text-gray-900">{fd.subjectToSaleAddress}</span></p>
+                                                <p>Price: <span className="font-medium text-gray-900">${fd.subjectToSalePrice}</span></p>
+                                                <p>Under Contract: <span className="font-medium text-gray-900">{fd.subjectToSaleUnderContract ? "Yes" : "No"}</span></p>
+                                                {fd.subjectToSaleUnderContract && (
+                                                    <p>Completion Date: <span className="font-medium text-gray-900">{fd.subjectToSaleCompletionDate}</span></p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {fd.specialClauses && (
+                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                            <p className="text-xs text-gray-500 mb-1">Special Clauses</p>
+                                            <p className="text-sm text-gray-900 whitespace-pre-wrap">{fd.specialClauses}</p>
+                                        </div>
+                                    )}
+
+                                    {fd.appendixFileName && (
+                                        <div className="bg-orange-50 p-3 rounded-lg border border-orange-100 flex items-center justify-between gap-3 overflow-hidden">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-xs text-orange-600 mb-1">Appendix Document</p>
+                                                <p className="font-medium text-orange-900 truncate">{fd.appendixFileName}</p>
+                                            </div>
+                                            {fd.appendixFileBase64 && (
+                                                <a
+                                                    href={fd.appendixFileBase64}
+                                                    download={fd.appendixFileName}
+                                                    className="px-3 py-1.5 bg-orange-100 text-orange-700 text-xs font-semibold rounded hover:bg-orange-200 transition-colors whitespace-nowrap flex-shrink-0"
+                                                >
+                                                    Download
+                                                </a>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end">
+                    <button
+                        onClick={onClose}
+                        className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                        Close Details
+                    </button>
+                </div>
+            </motion.div>
         </div>
     );
 }
@@ -303,6 +484,7 @@ export default function OffersDashboardPage() {
     const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
     const [suburbFilter, setSuburbFilter] = useState("All");
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedOffer, setSelectedOffer] = useState<OfferRow | null>(null);
 
     const fetchOffers = useCallback(async () => {
         setLoading(true);
@@ -551,6 +733,7 @@ export default function OffersDashboardPage() {
                             onToggle={() =>
                                 setExpandedIdx(expandedIdx === idx ? null : idx)
                             }
+                            onOfferClick={setSelectedOffer}
                         />
                     ))}
                 </div>
@@ -571,6 +754,8 @@ export default function OffersDashboardPage() {
                     <DollarSign className="w-3 h-3" /> Prices in AUD
                 </span>
             </div>
+
+            <OfferDetailsModal offer={selectedOffer} onClose={() => setSelectedOffer(null)} />
         </div>
     );
 }

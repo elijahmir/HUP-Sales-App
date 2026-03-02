@@ -1,5 +1,14 @@
 # What's New
 
+## 🚀 OFFERS SYSTEM UPGRADES (March 2026)
+
+- **Smart Solicitor Auto-Fill**: Selecting a solicitor firm now dynamically split-fills the exact firm and agent names—no more double typing!
+- **Smarter Conditional Dates**: The "Subject to Sale" expected completion date is now a native, user-friendly calendar date picker.
+- **Flawless Offer Syncing**: Squashed a pesky duplicate-entry bug! Submitting an offer directly from a dashboard draft now flawlessly updates the record without creating clones.
+- **Frictionless Appendix Downloads**: Those long appendix filenames in the Offer Details will no longer break the modal UI, and they are now one-click functional download buttons.
+- **Perfected Automations**: Re-mapped the Purchaser payload structure under-the-hood to securely match Vendor payloads for bulletproof n8n automations.
+- **Refined Copy**: Softened the instructional banner wording to remove the aggressive push for a "best and final" offer.
+
 ## 🤖 SUPERCHARGED AI OCR (Feb 2026)
 
 The app now runs on **Google Gemini 2.0 Flash**, delivering human-level handwriting recognition:

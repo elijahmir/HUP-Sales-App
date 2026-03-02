@@ -130,11 +130,6 @@ export function validateSolicitorStep(formData: OfferFormData): ValidationErrors
     } else if (!isValidEmail(formData.solicitorEmail)) {
         errors.solicitorEmail = "Invalid email address";
     }
-    if (!formData.solicitorMobileNumber.trim()) {
-        errors.solicitorMobileNumber = "Solicitor mobile is required";
-    } else if (!isValidMobile(formData.solicitorMobileNumber)) {
-        errors.solicitorMobileNumber = "Invalid mobile number";
-    }
 
     return errors;
 }
@@ -163,6 +158,18 @@ export function validateOfferStep(formData: OfferFormData): ValidationErrors {
 
     if (!formData.settlementPeriod.trim()) {
         errors.settlementPeriod = "Settlement period is required";
+    }
+
+    if (formData.subjectToSale) {
+        if (!formData.subjectToSaleAddress.trim()) {
+            errors.subjectToSaleAddress = "Property address is required";
+        }
+        if (!formData.subjectToSalePrice.trim()) {
+            errors.subjectToSalePrice = "Maximum asking price is required";
+        }
+        if (formData.subjectToSaleUnderContract && !formData.subjectToSaleCompletionDate.trim()) {
+            errors.subjectToSaleCompletionDate = "Completion date is required when under contract";
+        }
     }
 
     return errors;

@@ -1,9 +1,7 @@
 "use client";
 
-import { COUNTRY_CODES } from "@/lib/offer/types";
 import type { OfferFormData } from "@/lib/offer/types";
-import { AlertCircle, Scale, Phone } from "lucide-react";
-import { CustomDropdown } from "@/components/offer/CustomDropdown";
+import { AlertCircle, Scale } from "lucide-react";
 
 interface SolicitorSectionProps {
     formData: OfferFormData;
@@ -11,6 +9,15 @@ interface SolicitorSectionProps {
     errors: Record<string, string>;
     setErrors: (errors: Record<string, string>) => void;
 }
+
+const SUGGESTED_SOLICITORS = [
+    { firm: "Graham Woodhouse Conveyancing", name: "Graham Woodhouse" },
+    { firm: "Glynn Williams Legal", name: "Glynn Williams" },
+    { firm: "Blackwood Beattie Legal", name: "Andrea Blackwood Beattie" },
+    { firm: "Debbie Hutton Conveyancing", name: "Debbie Hutton" },
+    { firm: "Jason Dolbel Solicitor", name: "Jason Dolbel" },
+    { firm: "Simmons Wolfhagen", name: "Katie Notley" },
+];
 
 export function SolicitorSection({
     formData,
@@ -27,6 +34,22 @@ export function SolicitorSection({
         }
     };
 
+    const handleFirmChange = (value: string) => {
+        const match = SUGGESTED_SOLICITORS.find(s => `${s.firm} - ${s.name}` === value);
+        if (match) {
+            updateFormData({
+                solicitorFirm: match.firm,
+                solicitorName: match.name
+            });
+            const newErrors = { ...errors };
+            delete newErrors.solicitorFirm;
+            delete newErrors.solicitorName;
+            setErrors(newErrors);
+        } else {
+            handleChange("solicitorFirm", value);
+        }
+    };
+
     return (
         <div className="space-y-6 animate-fade-in">
             {/* Section Header */}
@@ -38,8 +61,8 @@ export function SolicitorSection({
                     <h3 className="text-lg font-bold text-harcourts-navy">
                         Solicitor / Conveyancer Details
                     </h3>
-                    <p className="text-sm text-gray-500">
-                        Details of the purchaser&apos;s legal representative
+                    <p className="text-sm text-gray-500 mt-1">
+                        We advise using a Tasmanian-based solicitor or conveyancer to represent you in this transaction. If you are unsure of who to use, utilise the drop down list to select a local firm.
                     </p>
                 </div>
             </div>
@@ -50,11 +73,17 @@ export function SolicitorSection({
                     <label className="field-label">Solicitor / Conveyancer Firm</label>
                     <input
                         type="text"
+                        list="solicitorFirms"
                         value={formData.solicitorFirm}
-                        onChange={(e) => handleChange("solicitorFirm", e.target.value)}
+                        onChange={(e) => handleFirmChange(e.target.value)}
                         className={`input-field ${errors.solicitorFirm ? "border-red-500" : ""}`}
-                        placeholder="Law Firm Name"
+                        placeholder="Select from list or type Law Firm Name"
                     />
+                    <datalist id="solicitorFirms">
+                        {SUGGESTED_SOLICITORS.map((s, idx) => (
+                            <option key={idx} value={`${s.firm} - ${s.name}`} />
+                        ))}
+                    </datalist>
                     {errors.solicitorFirm && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" /> {errors.solicitorFirm}
@@ -92,40 +121,6 @@ export function SolicitorSection({
                     {errors.solicitorEmail && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" /> {errors.solicitorEmail}
-                        </p>
-                    )}
-                </div>
-
-                {/* Solicitor Mobile */}
-                <div className="md:col-span-2">
-                    <label className="field-label">Solicitor Mobile Number</label>
-                    <div className="flex gap-2 max-w-md">
-                        <CustomDropdown
-                            value={formData.solicitorMobileCountryCode}
-                            options={COUNTRY_CODES.map((cc) => ({
-                                value: cc.dial,
-                                label: `${cc.dial} ${cc.code}`,
-                            }))}
-                            onChange={(val) =>
-                                handleChange("solicitorMobileCountryCode", val)
-                            }
-                            icon={<Phone className="w-3.5 h-3.5" />}
-                            width="w-32"
-                            placeholder="+61"
-                        />
-                        <input
-                            type="tel"
-                            value={formData.solicitorMobileNumber}
-                            onChange={(e) =>
-                                handleChange("solicitorMobileNumber", e.target.value)
-                            }
-                            className={`input-field flex-1 ${errors.solicitorMobileNumber ? "border-red-500" : ""}`}
-                            placeholder="412 345 678"
-                        />
-                    </div>
-                    {errors.solicitorMobileNumber && (
-                        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                            <AlertCircle className="w-3 h-3" /> {errors.solicitorMobileNumber}
                         </p>
                     )}
                 </div>

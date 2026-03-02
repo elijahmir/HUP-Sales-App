@@ -8,19 +8,24 @@ import type { OfferFormData } from "./types";
 const OFFER_WEBHOOK_URL = process.env.N8N_OFFER_WEBHOOK_URL || "https://hup.app.n8n.cloud/webhook/hup-offer-form";
 
 // ============================================
-// Purchaser Payload Shape
+// Purchaser Payload Shape (matches VendorPayload)
 // ============================================
 interface PurchaserPayload {
-    full_name: string;
-    email: string;
-    mobile_countrycode: string;
-    mobile_number: string;
-    mobile_full: string;
-    street: string;
-    suburb: string;
-    state: string;
-    postcode: string;
-    address_full: string;
+    full_name: string | null;
+    full_name_id: string | null;
+    full_name_trustee: string | null;
+    full_name_val: string | null;
+    email: string | null;
+    email_val: string | null;
+    mobile: string | null;
+    mobile_countrycode: string | null;
+    mobile_number: string | null;
+    home_phone: string | null;
+    street: string | null;
+    suburb: string | null;
+    state: string | null;
+    postcode: string | null;
+    address_full: string | null;
 }
 
 // ============================================
@@ -52,6 +57,7 @@ export interface OfferSubmissionPayload {
     company_name_acn: string | null;
     all_purchasers_names: string;
     all_purchasers_names_trust: string | null;
+    all_purchasers_first_names: string;
     all_purchasers_email: string;
     purchaser_1: PurchaserPayload;
     purchaser_2: PurchaserPayload;
@@ -62,9 +68,6 @@ export interface OfferSubmissionPayload {
     solicitor_firm: string;
     solicitor_name: string;
     solicitor_email: string;
-    solicitor_mobile_countrycode: string;
-    solicitor_mobile_number: string;
-    solicitor_mobile_full: string;
 
     // Offer details
     offer_price: string;
@@ -81,23 +84,39 @@ export interface OfferSubmissionPayload {
     cooling_off_period_text: string;
     settlement_period: string;
     special_clauses: string;
+    subject_to_sale: boolean;
+    subject_to_sale_text: string;
+    subject_to_sale_address: string;
+    subject_to_sale_price: string;
+    subject_to_sale_under_contract: boolean;
+    subject_to_sale_under_contract_text: string;
+    subject_to_sale_completion_date: string;
+
+    // Appendices
+    appendix_file_name: string;
+    appendix_file_base64: string;
 }
 
 // ============================================
 // Helper: Build empty purchaser payload
 // ============================================
-function emptyPurchaserPayload(): PurchaserPayload {
+function createNullPurchaser(): PurchaserPayload {
     return {
-        full_name: "",
-        email: "",
-        mobile_countrycode: "",
-        mobile_number: "",
-        mobile_full: "",
-        street: "",
-        suburb: "",
-        state: "",
-        postcode: "",
-        address_full: "",
+        full_name: null,
+        full_name_id: null,
+        full_name_trustee: null,
+        full_name_val: null,
+        email: null,
+        email_val: null,
+        mobile: null,
+        mobile_countrycode: null,
+        mobile_number: null,
+        home_phone: null,
+        street: null,
+        suburb: null,
+        state: null,
+        postcode: null,
+        address_full: null,
     };
 }
 
@@ -105,80 +124,118 @@ function emptyPurchaserPayload(): PurchaserPayload {
 // Build Payload
 // ============================================
 export function buildOfferPayload(formData: OfferFormData): OfferSubmissionPayload {
-    // Build purchaser payloads
-    const purchaserPayloads: PurchaserPayload[] = [];
-    for (let i = 0; i < 4; i++) {
-        const p = formData.purchasers[i];
-        if (p && i < formData.purchaserCount) {
-            purchaserPayloads.push({
-                full_name: p.fullName.trim(),
-                email: p.email.trim(),
-                mobile_countrycode: p.mobileCountryCode,
-                mobile_number: p.mobileNumber.trim(),
-                mobile_full: `${p.mobileCountryCode}${p.mobileNumber.trim()}`,
-                street: p.street.trim(),
-                suburb: p.suburb.trim(),
-                state: p.state.trim(),
-                postcode: p.postcode.trim(),
-                address_full: [p.street, p.suburb, p.state, p.postcode]
+    const toUpper = (value: string): string => value.toUpperCase();
+
+    const formatPurchaserMobile = (index: number): string | null => {
+        const p = formData.purchasers[index];
+        if (!p || !p.mobileNumber) return null;
+        const cleaned = p.mobileNumber.replace(/[\s-]/g, "");
+        return `${p.mobileCountryCode || ""} ${cleaned}`.trim();
+    };
+
+    // Trust Name Logic
+    let effectiveTrustName: string | null = null;
+    if (formData.purchaserStructure === "Trust") {
+        let rawTrustName = formData.trustName.trim();
+        if (!rawTrustName.toUpperCase().endsWith("TRUST")) {
+            rawTrustName = `${rawTrustName} TRUST`;
+        }
+        effectiveTrustName = rawTrustName;
+    }
+    const trustNameUpper = effectiveTrustName ? toUpper(effectiveTrustName) : null;
+
+    // Company Name ACN Computed
+    const companyNameAcnComputed: string | null =
+        formData.companyName && formData.companyACN
+            ? (() => {
+                const acn = formData.companyACN.replace(/[^0-9]/g, "");
+                const formattedAcn = acn.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
+                const baseStr = `${toUpper(formData.companyName)} (ACN ${formattedAcn})`;
+                return trustNameUpper
+                    ? `${baseStr} AS TRUSTEE FOR ${trustNameUpper}`
+                    : baseStr;
+            })()
+            : null;
+
+    // All Purchasers Names Trust Computed
+    const allPurchasersNamesTrustComputed: string | null = trustNameUpper
+        ? (() => {
+            const names = formData.purchasers
+                .slice(0, formData.purchaserCount)
+                .map((p) => toUpper(p.fullName))
+                .filter(Boolean);
+
+            if (names.length === 0) return null;
+
+            let joinedNames = "";
+            if (names.length === 1) {
+                joinedNames = names[0];
+            } else if (names.length === 2) {
+                joinedNames = `${names[0]} AND ${names[1]}`;
+            } else {
+                const last = names.pop();
+                joinedNames = `${names.join(", ")} AND ${last}`;
+            }
+
+            const suffixText = formData.purchaserCount > 1 ? "AS TRUSTEES FOR" : "AS TRUSTEE FOR";
+            return `${joinedNames} ${suffixText} ${trustNameUpper}`;
+        })()
+        : null;
+
+    // Get Full Name Val
+    const getFullNameVal = (index: number): string | null => {
+        if (formData.purchaserStructure === "Individual") {
+            const p = formData.purchasers[index];
+            return p ? toUpper(p.fullName) : null;
+        } else if (index === 0) {
+            if (formData.purchaserStructure === "Trust" && formData.trusteeType === "individual") {
+                return allPurchasersNamesTrustComputed;
+            } else {
+                return companyNameAcnComputed;
+            }
+        }
+        return null;
+    };
+
+    // Purchaser Payloads
+    const getPurchaserPayload = (index: number): PurchaserPayload => {
+        if (index >= formData.purchaserCount) return createNullPurchaser();
+        const p = formData.purchasers[index];
+        return {
+            full_name: toUpper(p.fullName),
+            full_name_id: toUpper(p.fullName),
+            full_name_trustee: trustNameUpper
+                ? `${toUpper(p.fullName)} AS TRUSTEE FOR ${trustNameUpper}`
+                : null,
+            full_name_val: getFullNameVal(index),
+            email: p.email.toLowerCase(),
+            email_val: p.email.toLowerCase(),
+            mobile: formatPurchaserMobile(index),
+            mobile_countrycode: p.mobileCountryCode.replace("+", ""),
+            mobile_number: p.mobileNumber.replace(/[\s-]/g, "") || null,
+            home_phone: null, // Purchaser form doesn't have home_phone yet
+            street: toUpper(p.street),
+            suburb: toUpper(p.suburb),
+            state: toUpper(p.state),
+            postcode: toUpper(p.postcode),
+            address_full: toUpper(
+                [p.street, p.suburb, p.state, p.postcode]
                     .map((s) => s.trim())
                     .filter(Boolean)
-                    .join(", "),
-            });
-        } else {
-            purchaserPayloads.push(emptyPurchaserPayload());
-        }
-    }
-
-    // All purchaser names
-    const allNames = purchaserPayloads
-        .filter((p) => p.full_name)
-        .map((p) => p.full_name)
-        .join(" & ");
-
-    const allEmails = purchaserPayloads
-        .filter((p) => p.email)
-        .map((p) => p.email)
-        .join(", ");
-
-    // Purchaser type/subtype logic
-    const purchaserType = formData.purchaserStructure;
-    let purchaserSubtype: string | null = null;
-    if (formData.purchaserStructure === "Trust") {
-        purchaserSubtype = formData.trusteeType;
-    }
-
-    // Company name + ACN formatted
-    let companyNameAcn: string | null = null;
-    if (formData.companyName && formData.companyACN) {
-        companyNameAcn = `${formData.companyName} (ACN ${formData.companyACN})`;
-    } else if (formData.companyName) {
-        companyNameAcn = formData.companyName;
-    }
-
-    // Trust names
-    let allPurchasersNamesTrust: string | null = null;
-    if (formData.purchaserStructure === "Trust") {
-        const names = purchaserPayloads
-            .filter((p) => p.full_name)
-            .map((p) => p.full_name)
-            .join(" & ");
-        if (formData.trusteeType === "company") {
-            allPurchasersNamesTrust = `${companyNameAcn || formData.companyName} as Trustee for the ${formData.trustName}`;
-        } else {
-            allPurchasersNamesTrust = `${names} as Trustee(s) for the ${formData.trustName}`;
-        }
-    }
+                    .join(", ")
+            ),
+        };
+    };
 
     return {
         // Property
         property_id: formData.propertyId,
-        property_address_full: formData.propertyAddress,
-        property_street: formData.propertyStreet,
-        property_suburb: formData.propertySuburb,
-        property_state: formData.propertyState,
-        property_postcode: formData.propertyPostcode,
-        property_status: formData.propertyStatus,
+        property_address_full: toUpper(formData.propertyAddress),
+        property_street: toUpper(formData.propertyStreet),
+        property_suburb: toUpper(formData.propertySuburb),
+        property_state: toUpper(formData.propertyState),
+        property_postcode: toUpper(formData.propertyPostcode),
+        property_status: toUpper(formData.propertyStatus),
         property_bed: formData.propertyBed,
         property_bath: formData.propertyBath,
         property_garages: formData.propertyGarages,
@@ -186,37 +243,111 @@ export function buildOfferPayload(formData: OfferFormData): OfferSubmissionPaylo
         property_contact_staff: formData.propertyContactStaff,
 
         // Purchaser
-        purchaser_structure: formData.purchaserStructure,
-        purchaser_type: purchaserType,
-        purchaser_subtype: purchaserSubtype,
+        purchaser_structure: toUpper(formData.purchaserStructure),
+        purchaser_type: toUpper(formData.purchaserStructure),
+        purchaser_subtype: formData.purchaserStructure === "Trust" ? toUpper(formData.trusteeType) : null,
         purchaser_count: formData.purchaserCount,
-        trust_name: formData.purchaserStructure === "Trust" ? formData.trustName : null,
+        trust_name: formData.purchaserStructure === "Trust" ? trustNameUpper : null,
         company_name:
             formData.purchaserStructure === "Company" ||
                 (formData.purchaserStructure === "Trust" && formData.trusteeType === "company")
                 ? formData.companyName
+                    ? toUpper(formData.companyName)
+                    : null
                 : null,
         company_acn:
             formData.purchaserStructure === "Company" ||
                 (formData.purchaserStructure === "Trust" && formData.trusteeType === "company")
-                ? formData.companyACN
+                ? formData.companyACN || null
                 : null,
-        company_name_acn: companyNameAcn,
-        all_purchasers_names: allNames,
-        all_purchasers_names_trust: allPurchasersNamesTrust,
-        all_purchasers_email: allEmails,
-        purchaser_1: purchaserPayloads[0],
-        purchaser_2: purchaserPayloads[1],
-        purchaser_3: purchaserPayloads[2],
-        purchaser_4: purchaserPayloads[3],
+        company_name_acn:
+            (formData.purchaserStructure === "Company" ||
+                (formData.purchaserStructure === "Trust" && formData.trusteeType === "company")) &&
+                formData.companyName &&
+                formData.companyACN
+                ? (() => {
+                    const acn = formData.companyACN.replace(/[^0-9]/g, "");
+                    const formattedAcn = acn.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3");
+                    const baseStr = `${toUpper(formData.companyName)} (ACN ${formattedAcn})`;
+                    return trustNameUpper
+                        ? `${baseStr} AS TRUSTEE FOR ${trustNameUpper}`
+                        : baseStr;
+                })()
+                : null,
+        all_purchasers_names: formData.purchasers
+            .slice(0, formData.purchaserCount)
+            .map((p) => toUpper(p.fullName))
+            .filter(Boolean)
+            .join(", "),
+        all_purchasers_names_trust: (() => {
+            const names = formData.purchasers
+                .slice(0, formData.purchaserCount)
+                .map((p) => toUpper(p.fullName))
+                .filter(Boolean);
+
+            if (names.length === 0) return null;
+
+            if (formData.purchaserStructure === "Individual") {
+                return names.join(", ");
+            }
+
+            if (formData.purchaserStructure === "Trust" && trustNameUpper) {
+                let joinedNames = "";
+                if (names.length === 1) {
+                    joinedNames = names[0];
+                } else if (names.length === 2) {
+                    joinedNames = `${names[0]} AND ${names[1]}`;
+                } else {
+                    const namesCopy = [...names];
+                    const last = namesCopy.pop();
+                    joinedNames = `${namesCopy.join(", ")} AND ${last}`;
+                }
+                const suffixText = formData.purchaserCount > 1 ? "AS TRUSTEES FOR" : "AS TRUSTEE FOR";
+                return `${joinedNames} ${suffixText} ${trustNameUpper}`;
+            }
+
+            if (formData.purchaserStructure === "Company") {
+                if (!formData.hasMultipleDirectors) {
+                    return `DIRECTOR/SECRETARY: ${names[0] || ""}`;
+                } else {
+                    const director = names[0] || "";
+                    const secretary = names[1] || "";
+                    return `DIRECTOR: ${director}     SECRETARY: ${secretary}`;
+                }
+            }
+
+            return names.join(", ");
+        })(),
+        all_purchasers_first_names: (() => {
+            const toTitleCase = (str: string) => str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+            const firstNames = formData.purchasers
+                .slice(0, formData.purchaserCount)
+                .map((p) => {
+                    const firstWord = p.fullName.trim().split(" ")[0];
+                    return toTitleCase(firstWord);
+                })
+                .filter(Boolean);
+
+            if (firstNames.length === 0) return "";
+            if (firstNames.length === 1) return firstNames[0];
+            if (firstNames.length === 2) return `${firstNames[0]} and ${firstNames[1]}`;
+            const last = firstNames.pop();
+            return `${firstNames.join(", ")}, and ${last}`;
+        })(),
+        all_purchasers_email: formData.purchasers
+            .slice(0, formData.purchaserCount)
+            .map((p) => p.email.toLowerCase())
+            .filter(Boolean)
+            .join(";"),
+        purchaser_1: getPurchaserPayload(0),
+        purchaser_2: getPurchaserPayload(1),
+        purchaser_3: getPurchaserPayload(2),
+        purchaser_4: getPurchaserPayload(3),
 
         // Solicitor
-        solicitor_firm: formData.solicitorFirm.trim(),
-        solicitor_name: formData.solicitorName.trim(),
-        solicitor_email: formData.solicitorEmail.trim(),
-        solicitor_mobile_countrycode: formData.solicitorMobileCountryCode,
-        solicitor_mobile_number: formData.solicitorMobileNumber.trim(),
-        solicitor_mobile_full: `${formData.solicitorMobileCountryCode}${formData.solicitorMobileNumber.trim()}`,
+        solicitor_firm: toUpper(formData.solicitorFirm.trim()),
+        solicitor_name: toUpper(formData.solicitorName.trim()),
+        solicitor_email: formData.solicitorEmail.trim().toLowerCase(),
 
         // Offer
         offer_price: formData.offerPrice.trim(),
@@ -225,14 +356,23 @@ export function buildOfferPayload(formData: OfferFormData): OfferSubmissionPaylo
         // Conditions
         finance_required: formData.financeRequired,
         finance_required_text: formData.financeRequired ? "Yes" : "No",
-        bank_lender: formData.bankLender.trim(),
+        bank_lender: toUpper(formData.bankLender.trim()),
         finance_amount: formData.financeAmount.trim(),
         building_inspection: formData.buildingInspection,
         building_inspection_text: formData.buildingInspection ? "Yes" : "No",
         cooling_off_period: formData.coolingOffPeriod,
         cooling_off_period_text: formData.coolingOffPeriod ? "Yes" : "No",
-        settlement_period: formData.settlementPeriod.trim(),
+        settlement_period: toUpper(formData.settlementPeriod.trim()),
         special_clauses: formData.specialClauses.trim(),
+        subject_to_sale: formData.subjectToSale,
+        subject_to_sale_text: formData.subjectToSale ? "Yes" : "No",
+        subject_to_sale_address: toUpper(formData.subjectToSaleAddress.trim()),
+        subject_to_sale_price: formData.subjectToSalePrice.trim(),
+        subject_to_sale_under_contract: formData.subjectToSaleUnderContract,
+        subject_to_sale_under_contract_text: formData.subjectToSaleUnderContract ? "Yes" : "No",
+        subject_to_sale_completion_date: toUpper(formData.subjectToSaleCompletionDate.trim()),
+        appendix_file_name: formData.appendixFileName,
+        appendix_file_base64: formData.appendixFileBase64,
     };
 }
 
@@ -240,7 +380,8 @@ export function buildOfferPayload(formData: OfferFormData): OfferSubmissionPaylo
 // Submit to n8n (client-side via API route)
 // ============================================
 export async function submitOffer(
-    formData: OfferFormData
+    formData: OfferFormData,
+    existingId?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
         const payload = buildOfferPayload(formData);
@@ -248,7 +389,7 @@ export async function submitOffer(
         const response = await fetch("/api/offer/submit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ formData, payload }),
+            body: JSON.stringify({ formData, payload, existingId }),
         });
 
         if (!response.ok) {

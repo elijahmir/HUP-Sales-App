@@ -135,6 +135,7 @@ export interface OfferFormData {
     trustName: string;
     companyName: string;
     companyACN: string;
+    hasMultipleDirectors: boolean;
     purchaserCount: 1 | 2 | 3 | 4;
     purchasers: PurchaserInfo[];
 
@@ -142,8 +143,6 @@ export interface OfferFormData {
     solicitorFirm: string;
     solicitorName: string;
     solicitorEmail: string;
-    solicitorMobileCountryCode: string;
-    solicitorMobileNumber: string;
 
     // Offer Details
     offerPrice: string;
@@ -157,6 +156,15 @@ export interface OfferFormData {
     coolingOffPeriod: boolean;
     settlementPeriod: string;
     specialClauses: string;
+    subjectToSale: boolean;
+    subjectToSaleAddress: string;
+    subjectToSalePrice: string;
+    subjectToSaleUnderContract: boolean;
+    subjectToSaleCompletionDate: string;
+
+    // Appendices
+    appendixFileName: string;
+    appendixFileBase64: string;
 }
 
 // ============================================
@@ -196,6 +204,7 @@ export const initialOfferFormData: OfferFormData = {
     trustName: "",
     companyName: "",
     companyACN: "",
+    hasMultipleDirectors: false,
     purchaserCount: 1,
     purchasers: [createEmptyPurchaser()],
 
@@ -203,8 +212,6 @@ export const initialOfferFormData: OfferFormData = {
     solicitorFirm: "",
     solicitorName: "",
     solicitorEmail: "",
-    solicitorMobileCountryCode: "+61",
-    solicitorMobileNumber: "",
 
     // Offer Details
     offerPrice: "",
@@ -218,4 +225,13 @@ export const initialOfferFormData: OfferFormData = {
     coolingOffPeriod: false,
     settlementPeriod: "",
     specialClauses: "",
+    subjectToSale: false,
+    subjectToSaleAddress: "",
+    subjectToSalePrice: "",
+    subjectToSaleUnderContract: false,
+    subjectToSaleCompletionDate: "",
+
+    // Appendices
+    appendixFileName: "",
+    appendixFileBase64: "",
 };

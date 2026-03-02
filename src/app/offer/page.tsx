@@ -173,10 +173,7 @@ export default function PublicOfferPage() {
                     <div className="text-sm text-amber-800">
                         <p className="font-semibold mb-1">How this works</p>
                         <p className="text-amber-600 leading-relaxed">
-                            Complete the offer details and submit. The information will be
-                            securely sent to our office for contract preparation. We encourage
-                            you to present your{" "}
-                            <strong>best and final offer</strong> to strengthen your position.
+                            Complete the offer details below and submit. The information will be sent to the office for contract preparation.
                         </p>
                     </div>
                 </div>
