@@ -2,7 +2,7 @@
 
 import { COUNTRY_CODES, createEmptyPurchaser } from "@/lib/offer/types";
 import type { OfferFormData, PurchaserInfo } from "@/lib/offer/types";
-import { AlertCircle, Info, UserPlus, UserMinus, Phone } from "lucide-react";
+import { AlertCircle, Info, UserPlus, UserMinus, Phone, Building2, Briefcase } from "lucide-react";
 import { CustomDropdown } from "@/components/offer/CustomDropdown";
 
 interface PurchaserSectionProps {
@@ -71,22 +71,39 @@ export function PurchaserSection({
             {/* Purchaser Structure */}
             <div>
                 <label className="field-label mb-3 block">Purchaser Type</label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="flex flex-wrap gap-4">
                     {structures.map((s) => (
-                        <button
+                        <label
                             key={s.value}
-                            type="button"
-                            onClick={() => updateFormData({ purchaserStructure: s.value })}
-                            className={`
-                py-3 px-4 rounded-xl text-sm font-semibold transition-all duration-200 border-2
-                ${formData.purchaserStructure === s.value
-                                    ? "border-harcourts-blue bg-harcourts-blue/5 text-harcourts-blue"
-                                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-                                }
-              `}
+                            className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${formData.purchaserStructure === s.value
+                                    ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
+                                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                                }`}
                         >
-                            {s.label}
-                        </button>
+                            <input
+                                type="radio"
+                                name="purchaserStructure"
+                                value={s.value}
+                                checked={formData.purchaserStructure === s.value}
+                                onChange={(e) =>
+                                    updateFormData({
+                                        purchaserStructure: e.target.value as OfferFormData["purchaserStructure"],
+                                    })
+                                }
+                                className="hidden"
+                            />
+                            <div
+                                className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.purchaserStructure === s.value
+                                        ? "border-harcourts-blue bg-harcourts-blue"
+                                        : "border-gray-300 bg-white"
+                                    }`}
+                            >
+                                {formData.purchaserStructure === s.value && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                )}
+                            </div>
+                            <span className="text-sm font-medium">{s.label}</span>
+                        </label>
                     ))}
                 </div>
             </div>
@@ -112,22 +129,41 @@ export function PurchaserSection({
 
                     <div>
                         <label className="field-label mb-2 block">Trustee Type</label>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="flex gap-4">
                             {(["individual", "company"] as const).map((t) => (
-                                <button
+                                <label
                                     key={t}
-                                    type="button"
-                                    onClick={() => updateFormData({ trusteeType: t })}
-                                    className={`
-                    py-2.5 px-4 rounded-lg text-sm font-medium transition-all border
-                    ${formData.trusteeType === t
-                                            ? "border-amber-400 bg-amber-50 text-amber-700"
-                                            : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
-                                        }
-                  `}
+                                    className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${formData.trusteeType === t
+                                            ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
+                                            : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                                        }`}
                                 >
-                                    {t === "individual" ? "Individual Trustee" : "Company Trustee"}
-                                </button>
+                                    <input
+                                        type="radio"
+                                        name="trusteeType"
+                                        value={t}
+                                        checked={formData.trusteeType === t}
+                                        onChange={(e) =>
+                                            updateFormData({
+                                                trusteeType: e.target.value as OfferFormData["trusteeType"],
+                                            })
+                                        }
+                                        className="hidden"
+                                    />
+                                    <div
+                                        className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.trusteeType === t
+                                                ? "border-harcourts-blue bg-harcourts-blue"
+                                                : "border-gray-300 bg-white"
+                                            }`}
+                                    >
+                                        {formData.trusteeType === t && (
+                                            <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                        )}
+                                    </div>
+                                    <span className="text-sm font-medium">
+                                        {t === "individual" ? "Individual Trustee" : "Corporate Trustee"}
+                                    </span>
+                                </label>
                             ))}
                         </div>
                     </div>
@@ -141,13 +177,18 @@ export function PurchaserSection({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-fade-in">
                         <div>
                             <label className="field-label">Company Name</label>
-                            <input
-                                type="text"
-                                value={formData.companyName}
-                                onChange={(e) => updateFormData({ companyName: e.target.value })}
-                                className={`input-field ${errors.companyName ? "border-red-500" : ""}`}
-                                placeholder="Company Pty Ltd"
-                            />
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Building2 className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={formData.companyName}
+                                    onChange={(e) => updateFormData({ companyName: e.target.value })}
+                                    className={`input-field pl-10 ${errors.companyName ? "border-red-500" : ""}`}
+                                    placeholder="Company Pty Ltd"
+                                />
+                            </div>
                             {errors.companyName && (
                                 <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                                     <AlertCircle className="w-3 h-3" /> {errors.companyName}
@@ -156,14 +197,19 @@ export function PurchaserSection({
                         </div>
                         <div>
                             <label className="field-label">ACN (9 digits)</label>
-                            <input
-                                type="text"
-                                value={formData.companyACN}
-                                onChange={(e) => updateFormData({ companyACN: e.target.value })}
-                                className={`input-field ${errors.companyACN ? "border-red-500" : ""}`}
-                                placeholder="123 456 789"
-                                maxLength={11}
-                            />
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Briefcase className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={formData.companyACN}
+                                    onChange={(e) => updateFormData({ companyACN: e.target.value })}
+                                    className={`input-field pl-10 ${errors.companyACN ? "border-red-500" : ""}`}
+                                    placeholder="123 456 789"
+                                    maxLength={11}
+                                />
+                            </div>
                             {errors.companyACN && (
                                 <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                                     <AlertCircle className="w-3 h-3" /> {errors.companyACN}
