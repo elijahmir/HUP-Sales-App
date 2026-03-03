@@ -348,7 +348,7 @@ export function OfferDetailsSection({
                     <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 mt-2">
                         <Info className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
                         <p className="text-xs text-gray-500">
-                            Generally <strong>30 days</strong> after satisfaction of all other clauses. Subject to sale clause?
+                            Generally <strong>30 days</strong> after satisfaction of all other clauses.
                         </p>
                     </div>
                 </div>
