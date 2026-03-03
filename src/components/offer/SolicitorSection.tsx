@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useRef, useEffect } from "react";
 import type { OfferFormData } from "@/lib/offer/types";
-import { AlertCircle, Scale } from "lucide-react";
+import { AlertCircle, Scale, ChevronDown } from "lucide-react";
 
 interface SolicitorSectionProps {
     formData: OfferFormData;
@@ -25,6 +26,18 @@ export function SolicitorSection({
     errors,
     setErrors,
 }: SolicitorSectionProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
     const handleChange = (field: keyof OfferFormData, value: string) => {
         updateFormData({ [field]: value });
         if (errors[field]) {
@@ -47,10 +60,18 @@ export function SolicitorSection({
             delete newErrors.solicitorName;
             if (newErrors.solicitorEmail) delete newErrors.solicitorEmail;
             setErrors(newErrors);
+            setIsOpen(false);
         } else {
             handleChange("solicitorFirm", value);
         }
     };
+
+    const isExactMatch = SUGGESTED_SOLICITORS.some(s => `${s.firm} - ${s.name}` === formData.solicitorFirm);
+    const filteredOptions = isExactMatch
+        ? SUGGESTED_SOLICITORS
+        : SUGGESTED_SOLICITORS.filter(s =>
+            `${s.firm} - ${s.name}`.toLowerCase().includes(formData.solicitorFirm.toLowerCase())
+        );
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -71,21 +92,59 @@ export function SolicitorSection({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Solicitor Firm */}
-                <div className="md:col-span-2">
+                <div className="md:col-span-2 relative" ref={wrapperRef}>
                     <label className="field-label">Solicitor / Conveyancer Firm</label>
-                    <input
-                        type="text"
-                        list="solicitorFirms"
-                        value={formData.solicitorFirm}
-                        onChange={(e) => handleFirmChange(e.target.value)}
-                        className={`input-field ${errors.solicitorFirm ? "border-red-500" : ""}`}
-                        placeholder="Select from list or type Law Firm Name"
-                    />
-                    <datalist id="solicitorFirms">
-                        {SUGGESTED_SOLICITORS.map((s, idx) => (
-                            <option key={idx} value={`${s.firm} - ${s.name}`} />
-                        ))}
-                    </datalist>
+                    <div className="relative">
+                        <input
+                            type="text"
+                            value={formData.solicitorFirm}
+                            onChange={(e) => {
+                                handleFirmChange(e.target.value);
+                                setIsOpen(true);
+                            }}
+                            onFocus={() => setIsOpen(true)}
+                            className={`input-field pr-10 ${errors.solicitorFirm ? "border-red-500" : ""}`}
+                            placeholder="Select from list or type Law Firm Name"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                        </button>
+                    </div>
+
+                    {isOpen && (
+                        <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-white border-gray-200 rounded-xl shadow-xl border overflow-hidden animate-fade-in">
+                            <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                                {filteredOptions.length > 0 ? (
+                                    filteredOptions.map((s, idx) => {
+                                        const optionValue = `${s.firm} - ${s.name}`;
+                                        return (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => handleFirmChange(optionValue)}
+                                                className="w-full text-left px-4 py-3 text-sm font-medium text-harcourts-navy hover:bg-harcourts-blue/10 hover:text-harcourts-blue transition-colors"
+                                            >
+                                                {optionValue}
+                                            </button>
+                                        );
+                                    })
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsOpen(false)}
+                                        className="w-full text-left px-4 py-3 text-sm font-medium text-gray-500 hover:bg-harcourts-blue/10 hover:text-harcourts-blue transition-colors"
+                                    >
+                                        Use custom firm: <span className="text-harcourts-navy font-bold">{formData.solicitorFirm}</span>
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {errors.solicitorFirm && (
                         <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                             <AlertCircle className="w-3 h-3" /> {errors.solicitorFirm}

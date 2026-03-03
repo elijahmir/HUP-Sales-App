@@ -220,7 +220,7 @@ export default function PublicOfferPage() {
             )}
 
             {/* Step Content */}
-            <motion.div className="mt-8" initial={false}>
+            <motion.div className="mt-8 relative z-50" initial={false}>
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={currentStep}
@@ -228,8 +228,9 @@ export default function PublicOfferPage() {
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: -20 }}
                         transition={{ duration: 0.2 }}
+                        className="relative z-50"
                     >
-                        <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 shadow-sm">
+                        <div className="bg-white rounded-2xl border border-gray-200 p-6 md:p-8 shadow-sm relative z-50">
                             {currentStep === 0 && (
                                 <PropertySelector
                                     formData={formData}
@@ -273,7 +274,7 @@ export default function PublicOfferPage() {
             </motion.div>
 
             {/* Bottom Navigation */}
-            <div className="mt-6">
+            <div className="mt-6 relative z-10">
                 <FormNavigation
                     currentStep={currentStep}
                     totalSteps={STEPS.length}
