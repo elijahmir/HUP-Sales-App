@@ -127,8 +127,11 @@ export function validateSolicitorStep(formData: OfferFormData): ValidationErrors
     }
     if (!formData.solicitorEmail.trim()) {
         errors.solicitorEmail = "Solicitor email is required";
-    } else if (!isValidEmail(formData.solicitorEmail)) {
-        errors.solicitorEmail = "Invalid email address";
+    } else {
+        const emails = formData.solicitorEmail.split(',').map(e => e.trim()).filter(Boolean);
+        if (emails.length === 0 || emails.some(e => !isValidEmail(e))) {
+            errors.solicitorEmail = "Invalid email address format";
+        }
     }
 
     return errors;

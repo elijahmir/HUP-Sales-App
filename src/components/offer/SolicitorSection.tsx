@@ -11,12 +11,12 @@ interface SolicitorSectionProps {
 }
 
 const SUGGESTED_SOLICITORS = [
-    { firm: "Graham Woodhouse Conveyancing", name: "Graham Woodhouse" },
-    { firm: "Glynn Williams Legal", name: "Glynn Williams" },
-    { firm: "Blackwood Beattie Legal", name: "Andrea Blackwood Beattie" },
-    { firm: "Debbie Hutton Conveyancing", name: "Debbie Hutton" },
-    { firm: "Jason Dolbel Solicitor", name: "Jason Dolbel" },
-    { firm: "Simmons Wolfhagen", name: "Katie Notley" },
+    { firm: "Graham Woodhouse Conveyancing", name: "Graham Woodhouse", email: "email@gwcmail.com.au" },
+    { firm: "Glynn Williams Legal", name: "Glynn Williams", email: "debbie@glynnwilliams.com.au" },
+    { firm: "Blackwood Beattie Legal", name: "Andrea Blackwood Beattie", email: "andrea@blackwoodbeattielegal.com.au" },
+    { firm: "Debbie Hutton Conveyancing", name: "Debbie Hutton", email: "office@debbiehuttonconveyancing.com.au" },
+    { firm: "Jason Dolbel Solicitor", name: "Jason Dolbel", email: "office@jdsolicitor.com.au" },
+    { firm: "Simmons Wolfhagen Lawyers", name: "Katie Notley", email: "reception@simwolf.com.au, georgia.maroney@simwolf.com.au" },
 ];
 
 export function SolicitorSection({
@@ -39,11 +39,13 @@ export function SolicitorSection({
         if (match) {
             updateFormData({
                 solicitorFirm: match.firm,
-                solicitorName: match.name
+                solicitorName: match.name,
+                solicitorEmail: match.email
             });
             const newErrors = { ...errors };
             delete newErrors.solicitorFirm;
             delete newErrors.solicitorName;
+            if (newErrors.solicitorEmail) delete newErrors.solicitorEmail;
             setErrors(newErrors);
         } else {
             handleChange("solicitorFirm", value);
