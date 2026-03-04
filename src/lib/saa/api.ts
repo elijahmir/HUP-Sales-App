@@ -321,9 +321,65 @@ function createNullVendor(): VendorPayload {
 }
 
 export function buildPayload(
-  formData: FormData,
+  rawFormData: FormData,
   availableMarketingItems?: MarketingItem[],
 ): SubmissionPayload {
+  // Deep clone formData to prevent mutating UI state
+  const formData = {
+    ...rawFormData,
+    vendors: [...rawFormData.vendors],
+    annexureItems: [...rawFormData.annexureItems],
+  };
+
+  // Pre-process Power of Attorney
+  if (formData.vendorStructure === "Power of Attorney") {
+    formData.annexureA = true;
+
+    const getPronoun = (title: string, type: "subject" | "possessive") => {
+      const t = title.toLowerCase();
+      if (t === "mr") return type === "subject" ? "he" : "his";
+      if (["mrs", "ms", "miss"].includes(t))
+        return type === "subject" ? "she" : "her";
+      return type === "subject" ? "they" : "their";
+    };
+
+    const toTitleCase = (str: string) =>
+      str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
+    const vendorNameRaw = formData.vendors[0].hasDifferentNameOnTitle
+      ? formData.vendors[0].nameOnTitle
+      : formData.vendors[0].fullName;
+    const vendorName = toTitleCase(vendorNameRaw);
+
+    const attorneyName = toTitleCase(formData.attorneyName);
+    const poaNumber = formData.poaNumber;
+
+    const vendorPossessive = getPronoun(formData.vendorPoaTitle, "possessive");
+    const attorneySubject = getPronoun(formData.attorneyTitle, "subject");
+
+    const clauseText = `Signed by ${vendorName} by ${vendorPossessive} Attorney ${attorneyName} under Power of Attorney ${poaNumber} and the said ${attorneyName} declares that ${attorneySubject} has received no Notice of Revocation of the Power of Attorney.`;
+
+    // Check if SIGNING CLAUSE already exists (auto-populated by UI)
+    const existingIndex = formData.annexureItems.findIndex(
+      (item) => item.item === "SIGNING CLAUSE",
+    );
+
+    if (existingIndex >= 0) {
+      // Update existing clause with final values
+      formData.annexureItems[existingIndex] = {
+        item: "SIGNING CLAUSE",
+        description: clauseText,
+      };
+    } else {
+      // Inject clause at the beginning
+      formData.annexureItems = [
+        { item: "SIGNING CLAUSE", description: clauseText },
+        ...formData.annexureItems,
+      ];
+    }
+    formData.annexureCount = formData.annexureItems.length;
+  }
+
   // Helper to uppercase string fields except emails
   const toUpper = (value: string): string => value.toUpperCase();
 
@@ -413,8 +469,11 @@ export function buildPayload(
   // Helper to determine full_name_val for a given vendor index
   const getFullNameVal = (vendorIndex: number): string | null => {
     // Only Vendor 1 (index 0) gets a value for non-Individual types
-    if (formData.vendorStructure === "Individual") {
-      // For individuals, each vendor gets their own full_name as val
+    if (
+      formData.vendorStructure === "Individual" ||
+      formData.vendorStructure === "Power of Attorney"
+    ) {
+      // For individuals/POA, each vendor gets their own full_name as val
       const v = formData.vendors[vendorIndex];
       return v.hasDifferentNameOnTitle
         ? toUpper(v.nameOnTitle)
@@ -469,110 +528,37 @@ export function buildPayload(
     listing_no: toUpper(formData.listingNo),
     annexure_a: formData.annexureA,
     annexure_count: formData.annexureA ? formData.annexureCount : 0,
-    annex_item_1:
-      formData.annexureA && formData.annexureCount >= 1
-        ? `1. ${formData.annexureItems[0].item}`
-        : null,
-    annex_des_1:
-      formData.annexureA && formData.annexureCount >= 1
-        ? formData.annexureItems[0].description
-        : null,
-    annex_item_2:
-      formData.annexureA && formData.annexureCount >= 2
-        ? `2. ${formData.annexureItems[1].item}`
-        : null,
-    annex_des_2:
-      formData.annexureA && formData.annexureCount >= 2
-        ? formData.annexureItems[1].description
-        : null,
-    annex_item_3:
-      formData.annexureA && formData.annexureCount >= 3
-        ? `3. ${formData.annexureItems[2].item}`
-        : null,
-    annex_des_3:
-      formData.annexureA && formData.annexureCount >= 3
-        ? formData.annexureItems[2].description
-        : null,
-    annex_item_4:
-      formData.annexureA && formData.annexureCount >= 4
-        ? `4. ${formData.annexureItems[3].item}`
-        : null,
-    annex_des_4:
-      formData.annexureA && formData.annexureCount >= 4
-        ? formData.annexureItems[3].description
-        : null,
-    annex_item_5:
-      formData.annexureA && formData.annexureCount >= 5
-        ? `5. ${formData.annexureItems[4].item}`
-        : null,
-    annex_des_5:
-      formData.annexureA && formData.annexureCount >= 5
-        ? formData.annexureItems[4].description
-        : null,
-    annex_item_6:
-      formData.annexureA && formData.annexureCount >= 6
-        ? `6. ${formData.annexureItems[5].item}`
-        : null,
-    annex_des_6:
-      formData.annexureA && formData.annexureCount >= 6
-        ? formData.annexureItems[5].description
-        : null,
-    annex_item_7:
-      formData.annexureA && formData.annexureCount >= 7
-        ? `7. ${formData.annexureItems[6].item}`
-        : null,
-    annex_des_7:
-      formData.annexureA && formData.annexureCount >= 7
-        ? formData.annexureItems[6].description
-        : null,
-    annex_item_8:
-      formData.annexureA && formData.annexureCount >= 8
-        ? `8. ${formData.annexureItems[7].item}`
-        : null,
-    annex_des_8:
-      formData.annexureA && formData.annexureCount >= 8
-        ? formData.annexureItems[7].description
-        : null,
-    annex_item_9:
-      formData.annexureA && formData.annexureCount >= 9
-        ? `9. ${formData.annexureItems[8].item}`
-        : null,
-    annex_des_9:
-      formData.annexureA && formData.annexureCount >= 9
-        ? formData.annexureItems[8].description
-        : null,
-    annex_item_10:
-      formData.annexureA && formData.annexureCount >= 10
-        ? `10. ${formData.annexureItems[9].item}`
-        : null,
-    annex_des_10:
-      formData.annexureA && formData.annexureCount >= 10
-        ? formData.annexureItems[9].description
-        : null,
-    annex_item_11:
-      formData.annexureA && formData.annexureCount >= 11
-        ? `11. ${formData.annexureItems[10].item}`
-        : null,
-    annex_des_11:
-      formData.annexureA && formData.annexureCount >= 11
-        ? formData.annexureItems[10].description
-        : null,
-    annex_item_12:
-      formData.annexureA && formData.annexureCount >= 12
-        ? `12. ${formData.annexureItems[11].item}`
-        : null,
-    annex_des_12:
-      formData.annexureA && formData.annexureCount >= 12
-        ? formData.annexureItems[11].description
-        : null,
-    annex_item_13:
-      formData.annexureA && formData.annexureCount >= 13
-        ? `13. ${formData.annexureItems[12].item}`
-        : null,
-    annex_des_13:
-      formData.annexureA && formData.annexureCount >= 13
-        ? formData.annexureItems[12].description
-        : null,
+
+    // Helper: only output annex item/description if it actually has content
+    ...(() => {
+      const getItem = (i: number) => {
+        if (!formData.annexureA || formData.annexureCount < i + 1) return null;
+        const entry = formData.annexureItems[i];
+        if (!entry || !entry.item?.trim()) return null;
+        return `${i + 1}. ${entry.item}`;
+      };
+      const getDesc = (i: number) => {
+        if (!formData.annexureA || formData.annexureCount < i + 1) return null;
+        const entry = formData.annexureItems[i];
+        if (!entry || !entry.item?.trim()) return null;
+        return entry.description || null;
+      };
+      return {
+        annex_item_1: getItem(0), annex_des_1: getDesc(0),
+        annex_item_2: getItem(1), annex_des_2: getDesc(1),
+        annex_item_3: getItem(2), annex_des_3: getDesc(2),
+        annex_item_4: getItem(3), annex_des_4: getDesc(3),
+        annex_item_5: getItem(4), annex_des_5: getDesc(4),
+        annex_item_6: getItem(5), annex_des_6: getDesc(5),
+        annex_item_7: getItem(6), annex_des_7: getDesc(6),
+        annex_item_8: getItem(7), annex_des_8: getDesc(7),
+        annex_item_9: getItem(8), annex_des_9: getDesc(8),
+        annex_item_10: getItem(9), annex_des_10: getDesc(9),
+        annex_item_11: getItem(10), annex_des_11: getDesc(10),
+        annex_item_12: getItem(11), annex_des_12: getDesc(11),
+        annex_item_13: getItem(12), annex_des_13: getDesc(12),
+      };
+    })(),
     listing_price: toUpper(formData.listingPrice),
     listing_price_in_words: (() => {
       const numericValue = parseFloat(
@@ -703,7 +689,10 @@ export function buildPayload(
       if (names.length === 0) return null;
 
       // Individual: Same as all_vendors_names
-      if (formData.vendorStructure === "Individual") {
+      if (
+        formData.vendorStructure === "Individual" ||
+        formData.vendorStructure === "Power of Attorney"
+      ) {
         return names.join(", ");
       }
 
@@ -775,10 +764,16 @@ export function buildPayload(
     vendor_1:
       formData.vendorCount >= 1
         ? {
-          full_name: formData.vendors[0].hasDifferentNameOnTitle
-            ? toUpper(formData.vendors[0].nameOnTitle)
-            : toUpper(formData.vendors[0].fullName),
-          full_name_id: toUpper(formData.vendors[0].fullName),
+          full_name:
+            formData.vendorStructure === "Power of Attorney"
+              ? toUpper(formData.attorneyName)
+              : formData.vendors[0].hasDifferentNameOnTitle
+                ? toUpper(formData.vendors[0].nameOnTitle)
+                : toUpper(formData.vendors[0].fullName),
+          full_name_id:
+            formData.vendorStructure === "Power of Attorney"
+              ? toUpper(formData.attorneyName)
+              : toUpper(formData.vendors[0].fullName),
           full_name_trustee: trustNameUpper
             ? `${formData.vendors[0].hasDifferentNameOnTitle
               ? toUpper(formData.vendors[0].nameOnTitle)
@@ -787,10 +782,16 @@ export function buildPayload(
             : null,
           full_name_val: getFullNameVal(0),
           email: formData.vendors[0].email.toLowerCase(),
-          email_val: formData.vendors[0].email.toLowerCase(),
+          email_val: formData.vendorStructure === "Power of Attorney"
+            ? formData.attorneyEmail.toLowerCase()
+            : formData.vendors[0].email.toLowerCase(),
           mobile: formatVendorMobile(0),
-          mobile_countrycode: formData.vendors[0].mobileCountryCode.replace("+", ""),
-          mobile_number: formData.vendors[0].mobile.replace(/[\s-]/g, "") || null,
+          mobile_countrycode: formData.vendorStructure === "Power of Attorney"
+            ? formData.attorneyMobileCountryCode.replace("+", "")
+            : formData.vendors[0].mobileCountryCode.replace("+", ""),
+          mobile_number: formData.vendorStructure === "Power of Attorney"
+            ? formData.attorneyMobile.replace(/[\s-]/g, "") || null
+            : formData.vendors[0].mobile.replace(/[\s-]/g, "") || null,
           home_phone: formData.vendors[0].homePhone
             ? toUpper(formData.vendors[0].homePhone)
             : null,
@@ -1077,7 +1078,9 @@ export async function submitForm(
     const result: any = await response.json();
     return {
       success: true,
-      vendorName: payload.all_vendors_names,
+      vendorName: formData.vendorStructure === "Power of Attorney"
+        ? formData.attorneyName.toUpperCase()
+        : payload.all_vendors_names,
       docusignUrl: result.docusign_url,
     };
   } catch (error) {

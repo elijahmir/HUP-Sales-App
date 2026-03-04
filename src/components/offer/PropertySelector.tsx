@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Search, MapPin, Bed, Bath, Car, Loader2, Home, AlertCircle } from "lucide-react";
-import type { OfferProperty } from "@/lib/offer/types";
+import type { OfferProperty, ContactStaffInfo } from "@/lib/offer/types";
 import type { OfferFormData } from "@/lib/offer/types";
 import { CustomDropdown } from "@/components/offer/CustomDropdown";
 
@@ -66,7 +66,7 @@ export function PropertySelector({
             propertyBath: property.bath || null,
             propertyGarages: property.garages || null,
             propertyMainImage: property.mainImageUrl || "",
-            propertyContactStaff: property.contactStaff?.toString() || "",
+            propertyContactStaff: property.contactStaff || [],
         });
     };
 
@@ -83,7 +83,7 @@ export function PropertySelector({
             propertyBath: null,
             propertyGarages: null,
             propertyMainImage: "",
-            propertyContactStaff: "",
+            propertyContactStaff: [],
         });
     };
 
@@ -166,6 +166,54 @@ export function PropertySelector({
                                         </div>
                                     )}
                                 </div>
+
+                                {/* Agents */}
+                                {formData.propertyContactStaff && formData.propertyContactStaff.length > 0 && (
+                                    <div className="mt-5 pt-5 border-t border-gray-100">
+                                        <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                                            Property Agents
+                                        </h4>
+                                        <div className="flex flex-wrap gap-4">
+                                            {formData.propertyContactStaff.map((staff: ContactStaffInfo, idx: number) => (
+                                                <div key={staff.id} className="flex items-center gap-3 bg-gray-50 rounded-xl p-2.5 pr-4 border border-gray-100">
+                                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-harcourts-blue/20 to-harcourts-navy/20 flex-shrink-0 overflow-hidden border border-gray-200">
+                                                        {staff.photoUrl ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img
+                                                                src={staff.photoUrl}
+                                                                alt={`${staff.firstName} ${staff.lastName}`}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    // Default fallback
+                                                                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${staff.firstName}+${staff.lastName}&background=0B2A4A&color=fff`;
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-harcourts-navy font-bold text-sm">
+                                                                {staff.firstName?.charAt(0)}{staff.lastName?.charAt(0)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <p className="text-sm font-bold text-gray-900">
+                                                                {staff.firstName} {staff.lastName}
+                                                            </p>
+                                                            {idx === 0 && (
+                                                                <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-700 text-[9px] font-bold uppercase tracking-wider">
+                                                                    Primary
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="text-xs text-gray-500 truncate max-w-[140px]">
+                                                            {staff.position || "Sales Consultant"}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <button
@@ -298,6 +346,42 @@ export function PropertySelector({
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Agent Avatars (Right Side) */}
+                                    {property.contactStaff && property.contactStaff.length > 0 && (
+                                        <div className="flex items-center flex-shrink-0 pl-2 ml-auto">
+                                            <div className="flex -space-x-2">
+                                                {property.contactStaff.slice(0, 2).map((staff, idx) => (
+                                                    <div
+                                                        key={staff.id}
+                                                        className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 overflow-hidden ring-1 ring-gray-100 shadow-sm"
+                                                        title={`${staff.firstName} ${staff.lastName} - ${staff.position || "Agent"}`}
+                                                    >
+                                                        {staff.photoUrl ? (
+                                                            // eslint-disable-next-line @next/next/no-img-element
+                                                            <img
+                                                                src={staff.photoUrl}
+                                                                alt={`${staff.firstName} ${staff.lastName}`}
+                                                                className="w-full h-full object-cover"
+                                                                onError={(e) => {
+                                                                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${staff.firstName}+${staff.lastName}&background=0B2A4A&color=fff`;
+                                                                }}
+                                                            />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-gray-500 font-medium text-[10px] bg-gray-50">
+                                                                {staff.firstName?.charAt(0)}{staff.lastName?.charAt(0)}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                                {property.contactStaff.length > 2 && (
+                                                    <div className="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-[10px] font-medium text-gray-500 ring-1 ring-gray-100 shadow-sm">
+                                                        +{property.contactStaff.length - 2}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </button>
                         ))

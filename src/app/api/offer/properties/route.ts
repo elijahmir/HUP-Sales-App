@@ -79,12 +79,22 @@ export async function GET(request: NextRequest) {
                 mainImageUrl = item.mainPhoto.url || item.mainPhoto.thumbnailUrl || "";
             }
 
-            // Contact staff names
-            const contactStaffNames = (item.contactStaff || [])
+            // Contact staff details
+            const mappedStaff = (item.contactStaff || [])
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                .map((s: any) => `${s.firstName || ""} ${s.lastName || ""}`.trim())
-                .filter(Boolean)
-                .join(", ");
+                .map((s: any) => {
+                    // Find a mobile number if it exists
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const mobileObj = s.phoneNumbers?.find((p: any) => p.typeCode === "M" || p.type === "Mobile");
+                    return {
+                        id: s.id,
+                        firstName: s.firstName || "",
+                        lastName: s.lastName || "",
+                        position: s.position || s.role || "",
+                        photoUrl: s.photo?.thumb_360 || s.photo?.original || "",
+                        mobile: mobileObj?.number || "",
+                    };
+                });
 
             return {
                 id: item.id,
@@ -102,7 +112,7 @@ export async function GET(request: NextRequest) {
                 searchPrice: item.searchPrice || null,
                 priceText: item.priceText || null,
                 mainImageUrl,
-                contactStaff: contactStaffNames,
+                contactStaff: mappedStaff,
             };
         });
 

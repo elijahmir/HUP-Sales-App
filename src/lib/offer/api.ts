@@ -240,7 +240,7 @@ export function buildOfferPayload(formData: OfferFormData): OfferSubmissionPaylo
         property_bath: formData.propertyBath,
         property_garages: formData.propertyGarages,
         property_main_image: formData.propertyMainImage,
-        property_contact_staff: formData.propertyContactStaff,
+        property_contact_staff: JSON.stringify(formData.propertyContactStaff),
 
         // Purchaser
         purchaser_structure: toUpper(formData.purchaserStructure),

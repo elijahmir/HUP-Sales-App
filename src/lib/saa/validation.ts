@@ -207,6 +207,32 @@ export function isValidVendor(formData: FormData): ValidationResult {
     }
   }
 
+  if (formData.vendorStructure === "Power of Attorney") {
+    if (!isRequired(formData.vendorPoaTitle))
+      errors.vendorPoaTitle = "Vendor Title (Mr/Ms/etc) is required";
+    if (!isRequired(formData.attorneyTitle))
+      errors.attorneyTitle = "Attorney Title (Mr/Ms/etc) is required";
+    if (!isRequired(formData.attorneyName))
+      errors.attorneyName = "Attorney full name is required";
+    if (!isRequired(formData.attorneyEmail)) {
+      errors.attorneyEmail = "Attorney Email is required";
+    } else if (!isValidEmail(formData.attorneyEmail)) {
+      errors.attorneyEmail = "Invalid email format";
+    }
+    if (!isRequired(formData.attorneyMobile)) {
+      errors.attorneyMobile = "Attorney Mobile is required";
+    } else if (
+      !isValidMobile(formData.attorneyMobile, formData.attorneyMobileCountryCode)
+    ) {
+      errors.attorneyMobile =
+        formData.attorneyMobileCountryCode === "+63"
+          ? "Invalid Philippine mobile (10 digits)"
+          : "Invalid Australian mobile (9 digits)";
+    }
+    if (!isRequired(formData.poaNumber))
+      errors.poaNumber = "Power of Attorney Number is required";
+  }
+
   for (let i = 0; i < count; i++) {
     const vendor = formData.vendors[i];
     const prefix = `vendors[${i}]`;

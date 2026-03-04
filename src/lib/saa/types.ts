@@ -57,7 +57,7 @@ export interface FormData {
   soleAgencyPeriod: string;
 
   // Vendor Section
-  vendorStructure: "Individual" | "Company" | "Trust";
+  vendorStructure: "Individual" | "Company" | "Trust" | "Power of Attorney";
   trusteeType: "individual" | "company";
   trustName: string;
   companyName: string;
@@ -70,6 +70,15 @@ export interface FormData {
   // Marketing Section
   selectedMarketing: string[];
   customMarketingItems: MarketingItem[];
+
+  // Power of Attorney specifics
+  vendorPoaTitle: "Mr" | "Mrs" | "Ms" | "Miss" | "Dr" | "Other" | "";
+  attorneyTitle: "Mr" | "Mrs" | "Ms" | "Miss" | "Dr" | "Other" | "";
+  attorneyName: string;
+  attorneyEmail: string;
+  attorneyMobileCountryCode: string;
+  attorneyMobile: string;
+  poaNumber: string;
 }
 
 export const initialFormData: FormData = {
@@ -134,6 +143,13 @@ export const initialFormData: FormData = {
 
   selectedMarketing: [],
   customMarketingItems: [],
+  vendorPoaTitle: "",
+  attorneyTitle: "",
+  attorneyName: "",
+  attorneyEmail: "",
+  attorneyMobileCountryCode: "+61",
+  attorneyMobile: "",
+  poaNumber: "",
 };
 
 export function createEmptyVendor(): VendorInfo {

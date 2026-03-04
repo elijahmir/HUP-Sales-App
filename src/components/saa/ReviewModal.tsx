@@ -101,15 +101,25 @@ export function ReviewModal({
               </div>
             </div>
 
-            {/* Annexure A Section (only if enabled) */}
-            {formData.annexureA && (
+            {/* Annexure A Section (only if enabled or POA) */}
+            {(formData.annexureA || formData.vendorStructure === "Power of Attorney") && (
               <div className="space-y-3 normal-case">
                 <h3 className="flex items-center gap-2 text-lg font-semibold text-harcourts-navy uppercase">
                   <FileText className="w-5 h-5" />
                   Annexure A Items
                 </h3>
                 <div className="space-y-3 p-4 bg-gray-50 rounded-lg">
-                  {Array.from({ length: formData.annexureCount }).map(
+                  {formData.vendorStructure === "Power of Attorney" && (
+                    <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                      <p className="text-xs text-blue-600 mb-1 uppercase font-medium">
+                        Auto-Generated — Signing Clause
+                      </p>
+                      <p className="text-sm text-blue-800">
+                        A signing clause will be automatically included based on vendor and attorney details.
+                      </p>
+                    </div>
+                  )}
+                  {formData.annexureA && Array.from({ length: formData.annexureCount }).map(
                     (_, index) => (
                       <div
                         key={index}

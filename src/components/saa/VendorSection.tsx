@@ -5,6 +5,8 @@ import {
   Briefcase,
   AlertCircle,
   Copy,
+  Mail,
+  Phone,
 } from "lucide-react";
 import type { FormData } from "@/lib/saa/types";
 import { createEmptyVendor } from "@/lib/saa/types";
@@ -60,6 +62,10 @@ export function VendorSection({
     updateFormData({ vendors: newVendors });
   };
 
+  const handlePoaTitleChange = (field: "vendorPoaTitle" | "attorneyTitle", value: string) => {
+    updateFormData({ [field]: value as FormData["vendorPoaTitle"] });
+  };
+
   const handleVendorCountChange = (value: string) => {
     const count = parseInt(value, 10) as 1 | 2 | 3 | 4;
     const currentVendors = [...formData.vendors];
@@ -90,8 +96,8 @@ export function VendorSection({
                 <label
                   key={type}
                   className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${formData.vendorStructure === type
-                      ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
-                      : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                    ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
+                    : "border-gray-200 text-gray-600 hover:bg-gray-50"
                     }`}
                 >
                   <input
@@ -99,17 +105,19 @@ export function VendorSection({
                     name="vendorStructure"
                     value={type}
                     checked={formData.vendorStructure === type}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       updateFormData({
                         vendorStructure: e.target.value as FormData["vendorStructure"],
-                      })
-                    }
+                        // If Power of Attorney is selected, force 1 vendor
+                        ...(e.target.value === "Power of Attorney" ? { vendorCount: 1 as const } : {}),
+                      });
+                    }}
                     className="hidden"
                   />
                   <div
                     className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.vendorStructure === type
-                        ? "border-harcourts-blue bg-harcourts-blue"
-                        : "border-gray-300 bg-white"
+                      ? "border-harcourts-blue bg-harcourts-blue"
+                      : "border-gray-300 bg-white"
                       }`}
                   >
                     {formData.vendorStructure === type && (
@@ -151,8 +159,8 @@ export function VendorSection({
                     <label
                       key={opt.val}
                       className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${formData.trusteeType === opt.val
-                          ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
-                          : "border-gray-200 text-gray-600 hover:bg-gray-50"
+                        ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
+                        : "border-gray-200 text-gray-600 hover:bg-gray-50"
                         }`}
                     >
                       <input
@@ -175,8 +183,8 @@ export function VendorSection({
                       />
                       <div
                         className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.trusteeType === opt.val
-                            ? "border-harcourts-blue bg-harcourts-blue"
-                            : "border-gray-300 bg-white"
+                          ? "border-harcourts-blue bg-harcourts-blue"
+                          : "border-gray-300 bg-white"
                           }`}
                       >
                         {formData.trusteeType === opt.val && (
@@ -263,6 +271,139 @@ export function VendorSection({
               </>
             )}
 
+          {formData.vendorStructure === "Power of Attorney" && (
+            <>
+              <div className="md:col-span-12 p-5 bg-blue-50/50 rounded-xl border border-blue-100 flex gap-4">
+                <AlertCircle className="w-5 h-5 text-harcourts-blue flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-gray-700">
+                  <p className="font-semibold text-harcourts-navy mb-1">Power of Attorney Workflow</p>
+                  <p>
+                    Please enter the Vendor&apos;s details below in the &quot;Full Name&quot; and address section.
+                    Then, enter the <strong>Attorney&apos;s</strong> Name, Title, and POA Number. The Attorney&apos;s email and mobile should be provided in the contact section below so they can sign the agreement.
+                  </p>
+                </div>
+              </div>
+
+              <div className="md:col-span-6">
+                <label className="field-label text-harcourts-blue">Attorney Title (Signee)</label>
+                <select
+                  value={formData.attorneyTitle}
+                  onChange={(e) => handlePoaTitleChange("attorneyTitle", e.target.value)}
+                  className={`input-field appearance-none bg-white ${errors.attorneyTitle ? "border-red-500" : ""}`}
+                >
+                  <option value="" disabled>Select Title</option>
+                  <option value="Mr">Mr</option>
+                  <option value="Mrs">Mrs</option>
+                  <option value="Ms">Ms</option>
+                  <option value="Miss">Miss</option>
+                  <option value="Dr">Dr</option>
+                  <option value="Other">Other</option>
+                </select>
+                {errors.attorneyTitle && <p className="error-text">{errors.attorneyTitle}</p>}
+              </div>
+
+              <div className="md:col-span-6">
+                <label className="field-label text-harcourts-blue">Vendor Title (Client)</label>
+                <select
+                  value={formData.vendorPoaTitle}
+                  onChange={(e) => handlePoaTitleChange("vendorPoaTitle", e.target.value)}
+                  className={`input-field appearance-none bg-white ${errors.vendorPoaTitle ? "border-red-500" : ""}`}
+                >
+                  <option value="" disabled>Select Title</option>
+                  <option value="Mr">Mr</option>
+                  <option value="Mrs">Mrs</option>
+                  <option value="Ms">Ms</option>
+                  <option value="Miss">Miss</option>
+                  <option value="Dr">Dr</option>
+                  <option value="Other">Other</option>
+                </select>
+                {errors.vendorPoaTitle && <p className="error-text">{errors.vendorPoaTitle}</p>}
+              </div>
+
+              <div className="md:col-span-8">
+                <label className="field-label text-harcourts-blue">Attorney Name (Full Legal Name)</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-4 w-4 text-harcourts-blue/60" />
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.attorneyName}
+                    onChange={(e) => updateFormData({ attorneyName: e.target.value })}
+                    className={`input-field pl-10 ${errors.attorneyName ? "border-red-500" : ""}`}
+                    placeholder="Attorney's Full Name"
+                  />
+                </div>
+                {errors.attorneyName && <p className="error-text">{errors.attorneyName}</p>}
+              </div>
+
+              <div className="md:col-span-4">
+                <label className="field-label text-harcourts-blue">Power of Attorney #</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Briefcase className="h-4 w-4 text-harcourts-blue/60" />
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.poaNumber}
+                    onChange={(e) => updateFormData({ poaNumber: e.target.value })}
+                    className={`input-field pl-10 ${errors.poaNumber ? "border-red-500" : ""}`}
+                    placeholder="e.g. 71/8075"
+                  />
+                </div>
+                {errors.poaNumber && <p className="error-text">{errors.poaNumber}</p>}
+              </div>
+
+              <div className="md:col-span-6">
+                <label className="field-label text-harcourts-blue">Attorney Email Address</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-4 w-4 text-harcourts-blue/60" />
+                  </div>
+                  <input
+                    type="email"
+                    value={formData.attorneyEmail}
+                    onChange={(e) => updateFormData({ attorneyEmail: e.target.value })}
+                    className={`input-field pl-10 ${errors.attorneyEmail ? "border-red-500" : ""}`}
+                    placeholder="attorney@example.com"
+                  />
+                </div>
+                {errors.attorneyEmail && <p className="error-text">{errors.attorneyEmail}</p>}
+              </div>
+
+              <div className="md:col-span-6">
+                <label className="field-label text-harcourts-blue">Attorney Mobile Number</label>
+                <div className="flex gap-2">
+                  <select
+                    value={formData.attorneyMobileCountryCode}
+                    onChange={(e) => updateFormData({ attorneyMobileCountryCode: e.target.value })}
+                    className="input-field w-[120px] flex-shrink-0 appearance-none bg-blue-50/50 text-harcourts-blue border-harcourts-blue/30"
+                  >
+                    <option value="+61">+61 AU</option>
+                    <option value="+63">+63 PH</option>
+                  </select>
+                  <input
+                    type="tel"
+                    value={formData.attorneyMobile}
+                    onChange={(e) => updateFormData({ attorneyMobile: e.target.value.replace(/[^0-9]/g, "") })}
+                    className={`input-field flex-1 ${errors.attorneyMobile ? "border-red-500" : ""}`}
+                    placeholder={
+                      formData.attorneyMobileCountryCode === "+63"
+                        ? "9665971704"
+                        : "418213931"
+                    }
+                    maxLength={
+                      formData.attorneyMobileCountryCode === "+63"
+                        ? 10
+                        : 9
+                    }
+                  />
+                </div>
+                {errors.attorneyMobile && <p className="error-text">{errors.attorneyMobile}</p>}
+              </div>
+            </>
+          )}
+
           {(formData.vendorStructure === "Individual" ||
             (formData.vendorStructure === "Trust" &&
               formData.trusteeType === "individual")) && (
@@ -314,7 +455,9 @@ export function VendorSection({
 
               <div className="ml-12 grid grid-cols-1 md:grid-cols-12 gap-6">
                 <div className="col-span-full md:col-span-6">
-                  <label className="field-label">Full Name (Legal Name)</label>
+                  <label className="field-label">
+                    {formData.vendorStructure === "Power of Attorney" ? "Vendor Full Name" : "Full Name (Legal Name)"}
+                  </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <User className="h-4 w-4 text-gray-400" />
@@ -326,8 +469,8 @@ export function VendorSection({
                         updateVendor(index, "fullName", e.target.value)
                       }
                       className={`input-field pl-10 ${errors[`vendors[${index}].fullName`]
-                          ? "border-red-500"
-                          : ""
+                        ? "border-red-500"
+                        : ""
                         }`}
                       placeholder="John Doe"
                     />
@@ -422,8 +565,8 @@ export function VendorSection({
                         )
                       }
                       className={`input-field flex-1 ${errors[`vendors[${index}].mobile`]
-                          ? "border-red-500"
-                          : ""
+                        ? "border-red-500"
+                        : ""
                         }`}
                       placeholder={
                         formData.vendors[index].mobileCountryCode === "+63"
@@ -563,9 +706,9 @@ export function VendorSection({
                           )
                         }
                         className={`input-field ${formData.vendors[index].sameAsProperty ? "bg-gray-50" : ""} ${!formData.vendors[index].sameAsProperty &&
-                            errors[`vendors[${index}].postcode`]
-                            ? "border-red-500"
-                            : ""
+                          errors[`vendors[${index}].postcode`]
+                          ? "border-red-500"
+                          : ""
                           }`}
                         readOnly={formData.vendors[index].sameAsProperty}
                         maxLength={4}

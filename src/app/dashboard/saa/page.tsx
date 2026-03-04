@@ -94,6 +94,61 @@ export default function SAAFormPage() {
     setFormData((prev) => ({ ...prev, ...updates }));
   };
 
+  // Auto-enable Annexure A when POA is selected (without jumping)
+  useEffect(() => {
+    if (formData.vendorStructure === "Power of Attorney" && !formData.annexureA) {
+      setFormData((prev) => ({ ...prev, annexureA: true, annexureCount: 1 }));
+      // Bump currentStep so we stay on Vendor (Annexure inserts at index 2)
+      setCurrentStep((prev) => (prev >= 2 ? prev + 1 : prev));
+    }
+  }, [formData.vendorStructure, formData.annexureA]);
+
+  // Auto-populate SIGNING CLAUSE for POA as user types
+  useEffect(() => {
+    if (formData.vendorStructure !== "Power of Attorney") return;
+
+    const toTitleCase = (str: string) =>
+      str.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
+
+    const getPronoun = (title: string, type: "possessive" | "subject") => {
+      const t = title.toLowerCase();
+      if (t === "mr") return type === "subject" ? "he" : "his";
+      if (["mrs", "ms", "miss"].includes(t)) return type === "subject" ? "she" : "her";
+      return type === "subject" ? "they" : "their";
+    };
+
+    const vendorNameRaw = formData.vendors[0]?.hasDifferentNameOnTitle
+      ? formData.vendors[0]?.nameOnTitle
+      : formData.vendors[0]?.fullName;
+    const vendorName = toTitleCase(vendorNameRaw || "___");
+    const attorneyName = toTitleCase(formData.attorneyName || "___");
+    const poaNumber = formData.poaNumber || "___";
+    const vendorPossessive = getPronoun(formData.vendorPoaTitle, "possessive");
+    const attorneySubject = getPronoun(formData.attorneyTitle, "subject");
+
+    const clauseText = `Signed by ${vendorName} by ${vendorPossessive} Attorney ${attorneyName} under Power of Attorney ${poaNumber} and the said ${attorneyName} declares that ${attorneySubject} has received no Notice of Revocation of the Power of Attorney.`;
+
+    setFormData((prev) => ({
+      ...prev,
+      annexureItems: [
+        { item: "SIGNING CLAUSE", description: clauseText },
+        // Keep any additional user-added items beyond index 0
+        ...prev.annexureItems.filter((_, i) => i > 0 && prev.annexureItems[i]?.item !== "SIGNING CLAUSE"),
+      ],
+      annexureCount: 1,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    formData.vendorStructure,
+    formData.vendors[0]?.fullName,
+    formData.vendors[0]?.nameOnTitle,
+    formData.vendors[0]?.hasDifferentNameOnTitle,
+    formData.attorneyName,
+    formData.poaNumber,
+    formData.vendorPoaTitle,
+    formData.attorneyTitle,
+  ]);
+
   const steps = formData.annexureA
     ? [
       { id: 1, title: "Agent Details", shortTitle: "Agent" },

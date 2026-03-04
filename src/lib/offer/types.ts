@@ -78,6 +78,15 @@ export const COUNTRY_CODES: CountryCode[] = [
 // ============================================
 // Property from VaultRE
 // ============================================
+export interface ContactStaffInfo {
+    id: number;
+    firstName?: string;
+    lastName?: string;
+    position?: string;
+    photoUrl?: string;
+    mobile?: string;
+}
+
 export interface OfferProperty {
     id: number;
     displayAddress: string;
@@ -94,7 +103,7 @@ export interface OfferProperty {
     searchPrice?: number;
     priceText?: string;
     mainImageUrl?: string;
-    contactStaff?: { id: number; firstName?: string; lastName?: string }[];
+    contactStaff?: ContactStaffInfo[];
 }
 
 // ============================================
@@ -127,7 +136,7 @@ export interface OfferFormData {
     propertyBath: number | null;
     propertyGarages: number | null;
     propertyMainImage: string;
-    propertyContactStaff: string;
+    propertyContactStaff: ContactStaffInfo[];
 
     // Purchaser Section
     purchaserStructure: "Individual" | "Company" | "Trust";
@@ -196,7 +205,7 @@ export const initialOfferFormData: OfferFormData = {
     propertyBath: null,
     propertyGarages: null,
     propertyMainImage: "",
-    propertyContactStaff: "",
+    propertyContactStaff: [],
 
     // Purchaser
     purchaserStructure: "Individual",
