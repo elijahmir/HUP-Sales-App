@@ -92,7 +92,7 @@ export function VendorSection({
           <div className="col-span-full">
             <label className="field-label block mb-3">Ownership Type</label>
             <div className="flex flex-wrap gap-4">
-              {["Individual", "Company", "Trust"].map((type) => (
+              {["Individual", "Company", "Trust", "Power of Attorney"].map((type) => (
                 <label
                   key={type}
                   className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${formData.vendorStructure === type
