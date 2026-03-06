@@ -372,9 +372,13 @@ export function PurchaserSection({
                                     <input
                                         type="tel"
                                         value={formData.purchasers[index]?.mobileNumber || ""}
-                                        onChange={(e) =>
-                                            updatePurchaser(index, "mobileNumber", e.target.value)
-                                        }
+                                        onChange={(e) => {
+                                            const val = e.target.value.replace(/\D/g, "");
+                                            const maxLen = formData.purchasers[index]?.mobileCountryCode === "+61" ? 9 : 15;
+                                            if (val.length <= maxLen) {
+                                                updatePurchaser(index, "mobileNumber", val);
+                                            }
+                                        }}
                                         className={`input-field flex-1 ${errors[`purchaser_${index}_mobileNumber`] ? "border-red-500" : ""}`}
                                         placeholder="412 345 678"
                                     />

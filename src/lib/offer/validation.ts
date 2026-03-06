@@ -93,6 +93,8 @@ export function validatePurchaserStep(formData: OfferFormData): ValidationErrors
         }
         if (!p.mobileNumber.trim()) {
             errors[`${prefix}_mobileNumber`] = "Mobile number is required";
+        } else if (p.mobileCountryCode === "+61" && p.mobileNumber.replace(/\s/g, "").length !== 9) {
+            errors[`${prefix}_mobileNumber`] = "Australian mobile numbers must be 9 digits";
         } else if (!isValidMobile(p.mobileNumber)) {
             errors[`${prefix}_mobileNumber`] = "Invalid mobile number";
         }
