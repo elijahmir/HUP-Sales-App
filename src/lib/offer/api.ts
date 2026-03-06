@@ -44,7 +44,7 @@ export interface OfferSubmissionPayload {
     property_bath: number | null;
     property_garages: number | null;
     property_main_image: string;
-    property_contact_staff: string;
+    property_contact_staff: string | null;
 
     // Purchaser structure
     purchaser_structure: string;
@@ -240,7 +240,9 @@ export function buildOfferPayload(formData: OfferFormData): OfferSubmissionPaylo
         property_bath: formData.propertyBath,
         property_garages: formData.propertyGarages,
         property_main_image: formData.propertyMainImage,
-        property_contact_staff: JSON.stringify(formData.propertyContactStaff),
+        property_contact_staff: formData.propertyContactStaff?.length > 0
+            ? `${formData.propertyContactStaff[0].firstName} ${formData.propertyContactStaff[0].lastName}`.trim()
+            : null,
 
         // Purchaser
         purchaser_structure: toUpper(formData.purchaserStructure),

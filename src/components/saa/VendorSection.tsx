@@ -279,13 +279,13 @@ export function VendorSection({
                   <p className="font-semibold text-harcourts-navy mb-1">Power of Attorney Workflow</p>
                   <p>
                     Please enter the Vendor&apos;s details below in the &quot;Full Name&quot; and address section.
-                    Then, enter the <strong>Attorney&apos;s</strong> Name, Title, and POA Number. The Attorney&apos;s email and mobile should be provided in the contact section below so they can sign the agreement.
+                    Then, enter the <strong>Power of Attorney&apos;s</strong> Name, Title, and POA Number. The Power of Attorney&apos;s email and mobile should be provided in the contact section below so they can sign the agreement.
                   </p>
                 </div>
               </div>
 
               <div className="md:col-span-6">
-                <label className="field-label text-harcourts-blue">Attorney Title (Signee)</label>
+                <label className="field-label text-harcourts-blue">Power of Attorney Title (Signee)</label>
                 <select
                   value={formData.attorneyTitle}
                   onChange={(e) => handlePoaTitleChange("attorneyTitle", e.target.value)}
@@ -321,7 +321,7 @@ export function VendorSection({
               </div>
 
               <div className="md:col-span-8">
-                <label className="field-label text-harcourts-blue">Attorney Name (Full Legal Name)</label>
+                <label className="field-label text-harcourts-blue">Power of Attorney Name (Full Legal Name)</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <User className="h-4 w-4 text-harcourts-blue/60" />
@@ -355,7 +355,7 @@ export function VendorSection({
               </div>
 
               <div className="md:col-span-6">
-                <label className="field-label text-harcourts-blue">Attorney Email Address</label>
+                <label className="field-label text-harcourts-blue">Power of Attorney Email Address</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <Mail className="h-4 w-4 text-harcourts-blue/60" />
@@ -372,7 +372,7 @@ export function VendorSection({
               </div>
 
               <div className="md:col-span-6">
-                <label className="field-label text-harcourts-blue">Attorney Mobile Number</label>
+                <label className="field-label text-harcourts-blue">Power of Attorney Mobile Number</label>
                 <div className="flex gap-2">
                   <select
                     value={formData.attorneyMobileCountryCode}
