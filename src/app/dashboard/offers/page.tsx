@@ -607,23 +607,56 @@ export default function OffersDashboardPage() {
     // Delete handler — uses server-side API to bypass RLS
     const handleDeleteOffer = async () => {
         if (!deleteTarget) return;
+        const targetId = deleteTarget.id;
+        const targetAddress = deleteTarget.property_address;
         setDeleting(true);
+
         try {
             const res = await fetch("/api/offer/delete", {
                 method: "DELETE",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: deleteTarget.id }),
+                body: JSON.stringify({ id: targetId }),
             });
             if (!res.ok) {
                 const data = await res.json();
                 console.error("Error deleting offer:", data.error);
+                setDeleteTarget(null);
+                setDeleting(false);
+                return;
             }
         } catch (err) {
             console.error("Error deleting offer:", err);
+            setDeleteTarget(null);
+            setDeleting(false);
+            return;
         }
+
+        // Optimistically remove the offer from local state (no full re-fetch)
+        setGroups((prev) => {
+            const updated: PropertyGroup[] = [];
+            for (const group of prev) {
+                if (group.propertyAddress !== targetAddress) {
+                    updated.push(group);
+                    continue;
+                }
+                // Remove the deleted offer from this group
+                const remaining = group.offers.filter((o) => o.id !== targetId);
+                if (remaining.length === 0) continue; // Remove entire group if empty
+                const prices = remaining.map((o) => parsePrice(o.offer_price));
+                updated.push({
+                    ...group,
+                    offers: remaining,
+                    totalOffers: remaining.length,
+                    highestOffer: Math.max(...prices),
+                    lowestOffer: Math.min(...prices),
+                    avgOffer: Math.round(prices.reduce((a, b) => a + b, 0) / prices.length),
+                });
+            }
+            return updated;
+        });
+
         setDeleteTarget(null);
         setDeleting(false);
-        await fetchOffers();
     };
 
     // Download Report handler
