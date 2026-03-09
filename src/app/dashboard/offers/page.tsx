@@ -20,10 +20,14 @@ import {
     BarChart3,
     Trophy,
     Download,
+    Trash2,
+    FileText,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { X, CheckCircle2 } from "lucide-react";
-import type { OfferFormData } from "@/lib/offer/types";
+import type { OfferFormData, ContactStaffInfo } from "@/lib/offer/types";
+import { generateVendorOfferReport } from "@/lib/offer/VendorOfferReport";
+import type { ReportData, OfferData, AgentInfo } from "@/lib/offer/VendorOfferReport";
 
 // Types
 interface OfferRow {
@@ -52,6 +56,7 @@ interface PropertyGroup {
     avgOffer: number;
     totalOffers: number;
     latestDate: string;
+    agents?: ContactStaffInfo[];
 }
 
 
@@ -116,11 +121,15 @@ function PropertyOfferCard({
     isExpanded,
     onToggle,
     onOfferClick,
+    onDeleteOffer,
+    onDownloadReport,
 }: {
     group: PropertyGroup;
     isExpanded: boolean;
     onToggle: () => void;
     onOfferClick: (offer: OfferRow) => void;
+    onDeleteOffer: (offer: OfferRow) => void;
+    onDownloadReport: (group: PropertyGroup) => void;
 }) {
     return (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -174,6 +183,20 @@ function PropertyOfferCard({
                                 </span>
                             )}
                         </div>
+
+                        {/* Agent Avatars */}
+                        {Array.isArray(group.agents) && group.agents.length > 0 && (
+                            <div className="flex items-center gap-1.5 mt-2.5">
+                                {group.agents.slice(0, 2).map((agent, i) => (
+                                    agent?.photoUrl ? (
+                                        <div key={i} className="w-6 h-6 rounded-full overflow-hidden border border-gray-200 bg-gray-50 flex-shrink-0">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={agent.photoUrl} alt="Agent" className="w-full h-full object-cover" />
+                                        </div>
+                                    ) : null
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     {/* Stats */}
@@ -206,13 +229,24 @@ function PropertyOfferCard({
             {/* Expanded Offers */}
             {isExpanded && (
                 <div className="border-t border-gray-100">
+                    {/* Action Bar */}
+                    <div className="px-5 py-2.5 bg-white/80 flex items-center justify-end gap-2 border-b border-gray-100">
+                        <button
+                            onClick={() => onDownloadReport(group)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors"
+                        >
+                            <FileText className="w-3.5 h-3.5" />
+                            Download Report
+                        </button>
+                    </div>
                     <div className="px-5 py-3 bg-gray-50 text-xs font-semibold text-gray-500 grid grid-cols-12 gap-2">
                         <span className="col-span-3">Purchaser</span>
                         <span className="col-span-2">Structure</span>
                         <span className="col-span-2 text-right">Offer Price</span>
-                        <span className="col-span-2 text-right">Deposit</span>
+                        <span className="col-span-1 text-right">Deposit</span>
                         <span className="col-span-1 text-center">Finance</span>
                         <span className="col-span-2 text-right">Submitted</span>
+                        <span className="col-span-1 text-right">Actions</span>
                     </div>
                     {group.offers
                         .sort((a, b) => parsePrice(b.offer_price) - parsePrice(a.offer_price))
@@ -220,13 +254,14 @@ function PropertyOfferCard({
                             const isHighest = idx === 0;
                             const fd = offer.form_data;
                             return (
-                                <button
+                                <div
                                     key={offer.id}
-                                    onClick={() => onOfferClick(offer)}
-                                    className={`w-full text-left px-5 py-3 grid grid-cols-12 gap-2 items-center text-sm border-t border-gray-50 hover:bg-blue-50/50 transition-colors cursor-pointer ${isHighest ? "bg-emerald-50/30" : ""
-                                        }`}
+                                    className={`w-full text-left px-5 py-3 grid grid-cols-12 gap-2 items-center text-sm border-t border-gray-50 hover:bg-blue-50/50 transition-colors ${isHighest ? "bg-emerald-50/30" : ""}`}
                                 >
-                                    <div className="col-span-3 flex items-center gap-2">
+                                    <button
+                                        onClick={() => onOfferClick(offer)}
+                                        className="col-span-3 flex items-center gap-2 cursor-pointer text-left"
+                                    >
                                         {isHighest && (
                                             <Trophy className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
                                         )}
@@ -238,29 +273,23 @@ function PropertyOfferCard({
                                                 {fd.purchasers[0]?.email || offer.submitter_email || "—"}
                                             </p>
                                         </div>
-                                    </div>
+                                    </button>
                                     <div className="col-span-2">
                                         <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600">
                                             {fd.purchaserStructure}
                                         </span>
                                     </div>
                                     <div className="col-span-2 text-right">
-                                        <span
-                                            className={`font-bold ${isHighest ? "text-emerald-600" : "text-gray-700"
-                                                }`}
-                                        >
+                                        <span className={`font-bold ${isHighest ? "text-emerald-600" : "text-gray-700"}`}>
                                             ${fd.offerPrice}
                                         </span>
                                     </div>
-                                    <div className="col-span-2 text-right text-gray-500">
+                                    <div className="col-span-1 text-right text-gray-500">
                                         ${fd.depositAmount || "—"}
                                     </div>
                                     <div className="col-span-1 text-center">
                                         <span
-                                            className={`inline-block w-2 h-2 rounded-full ${fd.financeRequired
-                                                ? "bg-amber-400"
-                                                : "bg-emerald-400"
-                                                }`}
+                                            className={`inline-block w-2 h-2 rounded-full ${fd.financeRequired ? "bg-amber-400" : "bg-emerald-400"}`}
                                             title={fd.financeRequired ? "Finance required" : "No finance"}
                                         />
                                     </div>
@@ -270,7 +299,19 @@ function PropertyOfferCard({
                                             {timeAgo(offer.created_at)}
                                         </span>
                                     </div>
-                                </button>
+                                    <div className="col-span-1 text-right">
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onDeleteOffer(offer);
+                                            }}
+                                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                            title="Remove offer"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                </div>
                             );
                         })}
                 </div>
@@ -485,6 +526,8 @@ export default function OffersDashboardPage() {
     const [suburbFilter, setSuburbFilter] = useState("All");
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedOffer, setSelectedOffer] = useState<OfferRow | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<OfferRow | null>(null);
+    const [deleting, setDeleting] = useState(false);
 
     const fetchOffers = useCallback(async () => {
         setLoading(true);
@@ -523,6 +566,7 @@ export default function OffersDashboardPage() {
                     avgOffer: 0,
                     totalOffers: 0,
                     latestDate: row.created_at,
+                    agents: Array.isArray(fd.propertyContactStaff) ? fd.propertyContactStaff : [],
                 });
             }
 
@@ -559,6 +603,78 @@ export default function OffersDashboardPage() {
         };
         load();
     }, [fetchOffers]);
+
+    // Delete handler — uses server-side API to bypass RLS
+    const handleDeleteOffer = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
+        try {
+            const res = await fetch("/api/offer/delete", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: deleteTarget.id }),
+            });
+            if (!res.ok) {
+                const data = await res.json();
+                console.error("Error deleting offer:", data.error);
+            }
+        } catch (err) {
+            console.error("Error deleting offer:", err);
+        }
+        setDeleteTarget(null);
+        setDeleting(false);
+        await fetchOffers();
+    };
+
+    // Download Report handler
+    const handleDownloadReport = async (group: PropertyGroup) => {
+        const fd = group.offers[0]?.form_data;
+        const agents: AgentInfo[] = (fd?.propertyContactStaff || []).slice(0, 2).map((s) => ({
+            firstName: s.firstName,
+            lastName: s.lastName,
+            position: s.position,
+            photoUrl: s.photoUrl,
+            mobile: s.mobile,
+        }));
+
+        const offers: OfferData[] = group.offers.map((o) => {
+            const fd = o.form_data || {};
+            const firstPurchaser = fd.purchasers?.[0] || {};
+            return {
+                purchaserName: o.purchaser_name,
+                purchaserEmail: firstPurchaser.email || "",
+                structure: fd.purchaserStructure || "Individual",
+                offerPrice: parsePrice(o.offer_price),
+                deposit: parsePrice(fd.depositAmount || "0"),
+                financeRequired: fd.financeRequired,
+                settlementPeriod: fd.settlementPeriod,
+                coolingOffPeriod: fd.coolingOffPeriod,
+                buildingInspection: fd.buildingInspection,
+                subjectToSale: fd.subjectToSale,
+                specialClauses: fd.specialClauses,
+                bankLender: fd.bankLender,
+                financeAmount: fd.financeAmount,
+                createdAt: o.created_at,
+            };
+        });
+
+        const reportData: ReportData = {
+            propertyAddress: group.propertyAddress,
+            propertySuburb: group.propertySuburb,
+            propertyState: group.propertyState,
+            propertyImage: group.propertyImage,
+            bed: group.bed,
+            bath: group.bath,
+            garages: group.garages,
+            totalOffers: group.totalOffers,
+            highestOffer: group.highestOffer,
+            avgOffer: group.avgOffer,
+            agents,
+            offers,
+        };
+
+        await generateVendorOfferReport(reportData);
+    };
 
     // Filter
     const filtered = groups.filter((g) => {
@@ -734,6 +850,8 @@ export default function OffersDashboardPage() {
                                 setExpandedIdx(expandedIdx === idx ? null : idx)
                             }
                             onOfferClick={setSelectedOffer}
+                            onDeleteOffer={setDeleteTarget}
+                            onDownloadReport={handleDownloadReport}
                         />
                     ))}
                 </div>
@@ -756,6 +874,47 @@ export default function OffersDashboardPage() {
             </div>
 
             <OfferDetailsModal offer={selectedOffer} onClose={() => setSelectedOffer(null)} />
+
+            {/* Delete Confirmation Modal */}
+            {deleteTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-fade-in">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6"
+                    >
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+                                <Trash2 className="w-5 h-5 text-red-500" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900">Remove Offer</h3>
+                                <p className="text-sm text-gray-500">This action cannot be undone.</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-6">
+                            Are you sure you want to remove the offer from <strong>{deleteTarget.purchaser_name}</strong> for <strong>${deleteTarget.offer_price}</strong>?
+                        </p>
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setDeleteTarget(null)}
+                                disabled={deleting}
+                                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDeleteOffer}
+                                disabled={deleting}
+                                className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg hover:bg-red-600 transition-colors text-sm disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                Remove
+                            </button>
+                        </div>
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 }
