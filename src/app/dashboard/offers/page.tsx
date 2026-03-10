@@ -159,7 +159,7 @@ function PropertyOfferCard({
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                             <h3 className="font-bold text-[#001F49] truncate text-sm uppercase">
-                                {group.propertyAddress}
+                                {group.propertyAddress.replace(/,/g, "")}
                             </h3>
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-400">
@@ -382,7 +382,7 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                                 <div key={i} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
                                                     <p className="font-semibold text-gray-900">{p.fullName}</p>
                                                     <p className="text-xs text-gray-500">{p.email} • {p.mobileCountryCode} {p.mobileNumber}</p>
-                                                    <p className="text-xs text-gray-500 mt-1">{[p.street, p.suburb, p.state, p.postcode].filter(Boolean).join(" ")}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">{[p.street, p.suburb, p.state, p.postcode].filter(Boolean).join(" ").replace(/,/g, "")}</p>
                                                 </div>
                                             ))}
                                         </div>
@@ -692,7 +692,7 @@ export default function OffersDashboardPage() {
         });
 
         const reportData: ReportData = {
-            propertyAddress: group.propertyAddress,
+            propertyAddress: group.propertyAddress.replace(/,/g, ""),
             propertySuburb: group.propertySuburb,
             propertyState: group.propertyState,
             propertyImage: group.propertyImage,
