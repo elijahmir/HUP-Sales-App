@@ -222,7 +222,7 @@ export function buildOfferPayload(formData: OfferFormData): OfferSubmissionPaylo
                 [p.street, p.suburb, p.state, p.postcode]
                     .map((s) => s.trim())
                     .filter(Boolean)
-                    .join(", ")
+                    .join(" ")
             ),
         };
     };

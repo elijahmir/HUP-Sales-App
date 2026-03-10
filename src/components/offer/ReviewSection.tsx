@@ -168,7 +168,7 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
                                     <p className="uppercase">
                                         {[p.street, p.suburb, p.state, p.postcode]
                                             .filter(Boolean)
-                                            .join(", ")}
+                                            .join(" ")}
                                     </p>
                                 </div>
                             </div>

@@ -382,7 +382,7 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                                 <div key={i} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
                                                     <p className="font-semibold text-gray-900">{p.fullName}</p>
                                                     <p className="text-xs text-gray-500">{p.email} • {p.mobileCountryCode} {p.mobileNumber}</p>
-                                                    <p className="text-xs text-gray-500 mt-1">{[p.street, p.suburb, p.state, p.postcode].filter(Boolean).join(", ")}</p>
+                                                    <p className="text-xs text-gray-500 mt-1">{[p.street, p.suburb, p.state, p.postcode].filter(Boolean).join(" ")}</p>
                                                 </div>
                                             ))}
                                         </div>
