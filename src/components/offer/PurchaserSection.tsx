@@ -379,8 +379,9 @@ export function PurchaserSection({
                                                 updatePurchaser(index, "mobileNumber", val);
                                             }
                                         }}
+                                        minLength={9}
                                         className={`input-field flex-1 ${errors[`purchaser_${index}_mobileNumber`] ? "border-red-500" : ""}`}
-                                        placeholder="412 345 678"
+                                        placeholder="412345678"
                                     />
                                 </div>
                                 {errors[`purchaser_${index}_mobileNumber`] && (

@@ -14,7 +14,7 @@ const isValidEmail = (email: string): boolean =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const isValidMobile = (number: string): boolean =>
-    /^\d{6,15}$/.test(number.replace(/\s/g, ""));
+    /^\d{9,15}$/.test(number.replace(/\s/g, ""));
 
 const isValidACN = (acn: string): boolean =>
     /^\d{9}$/.test(acn.replace(/\s/g, ""));
@@ -94,9 +94,9 @@ export function validatePurchaserStep(formData: OfferFormData): ValidationErrors
         if (!p.mobileNumber.trim()) {
             errors[`${prefix}_mobileNumber`] = "Mobile number is required";
         } else if (p.mobileCountryCode === "+61" && p.mobileNumber.replace(/\s/g, "").length !== 9) {
-            errors[`${prefix}_mobileNumber`] = "Australian mobile numbers must be 9 digits";
+            errors[`${prefix}_mobileNumber`] = "Australian mobile must be exactly 9 digits (e.g. 412 345 678)";
         } else if (!isValidMobile(p.mobileNumber)) {
-            errors[`${prefix}_mobileNumber`] = "Invalid mobile number";
+            errors[`${prefix}_mobileNumber`] = "Mobile number must be at least 9 digits";
         }
         if (!p.street.trim()) {
             errors[`${prefix}_street`] = "Street address is required";
