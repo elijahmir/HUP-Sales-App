@@ -93,6 +93,7 @@ export async function GET(request: NextRequest) {
                         position: s.position || s.role || "",
                         photoUrl: s.photo?.thumb_360 || s.photo?.original || "",
                         mobile: mobileObj?.number || "",
+                        email: s.email || "",
                     };
                 });
 

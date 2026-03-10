@@ -76,6 +76,13 @@ function toInitials(name: string): string {
     return parts.map((n) => n[0].toUpperCase() + ".").join("");
 }
 
+function toTitleCase(str: string): string {
+    if (!str) return "";
+    return str.replace(/\w\S*/g, (txt) => {
+        return txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase();
+    });
+}
+
 // Dedicated proxy route for local downloading that bypasses bucket CORS blockages entirely
 async function loadImageAsBase64(url: string, originProxy: boolean = false): Promise<string | null> {
     if (!url) return null;
@@ -239,7 +246,7 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
     // TRUNCATE Property Address strictly leaving 90mm space for stats so it NEVER overlaps
     const statsStartLeft = pageW - marginR - 100; // Left more room for enlarged stats
     const maxAddressWidth = statsStartLeft - propTextX - 5;
-    printTruncated(doc, data.propertyAddress.toUpperCase(), propTextX, y + 12, maxAddressWidth);
+    printTruncated(doc, toTitleCase(data.propertyAddress), propTextX, y + 12, maxAddressWidth);
 
     doc.setFontSize(9); // Increased font size
     doc.setFont("helvetica", "normal");
@@ -250,7 +257,7 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
     if (data.bath != null) featuresArr.push(`${data.bath} BATH`);
     if (data.garages != null) featuresArr.push(`${data.garages} CAR`);
 
-    const suburbState = `${data.propertySuburb} ${data.propertyState}`.trim().toUpperCase();
+    const suburbState = toTitleCase(`${data.propertySuburb} ${data.propertyState}`.trim());
     let featuresText = suburbState;
     if (featuresArr.length > 0) {
         featuresText += `    ${featuresArr.join("   ")}`;
@@ -396,7 +403,7 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...GRAY600);
         const maxWidthStructure = cols.price.x - cols.structure.x - 3;
-        printTruncated(doc, offer.structure.toUpperCase(), cols.structure.x, ty, maxWidthStructure);
+        printTruncated(doc, toTitleCase(offer.structure), cols.structure.x, ty, maxWidthStructure);
 
         // 3. Offer Price
         doc.setFontSize(9);

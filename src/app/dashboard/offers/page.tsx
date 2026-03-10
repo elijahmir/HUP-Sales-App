@@ -24,10 +24,12 @@ import {
     FileText,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { X, CheckCircle2 } from "lucide-react";
+import { X, CheckCircle2, ArrowRight } from "lucide-react";
 import type { OfferFormData, ContactStaffInfo } from "@/lib/offer/types";
 import { generateVendorOfferReport } from "@/lib/offer/VendorOfferReport";
 import type { ReportData, OfferData, AgentInfo } from "@/lib/offer/VendorOfferReport";
+import { getChanges } from "@/lib/offer/diff";
+import ExpandedOffersTable from "@/components/dashboard/ExpandedOffersTable";
 
 // Types
 interface OfferRow {
@@ -39,7 +41,11 @@ interface OfferRow {
     offer_price: string;
     created_at: string;
     updated_at: string;
+    original_form_data?: OfferFormData;
     submitter_email: string | null;
+    contract_drafted?: boolean;
+    contract_drafted_by?: string | null;
+    contract_drafted_at?: string | null;
 }
 
 interface PropertyGroup {
@@ -123,6 +129,8 @@ function PropertyOfferCard({
     onOfferClick,
     onDeleteOffer,
     onDownloadReport,
+    onToggleContractDrafted,
+    currentUserEmail,
 }: {
     group: PropertyGroup;
     isExpanded: boolean;
@@ -130,6 +138,8 @@ function PropertyOfferCard({
     onOfferClick: (offer: OfferRow) => void;
     onDeleteOffer: (offer: OfferRow) => void;
     onDownloadReport: (group: PropertyGroup) => void;
+    onToggleContractDrafted: (offer: OfferRow, drafted: boolean) => void;
+    currentUserEmail: string;
 }) {
     return (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -158,7 +168,7 @@ function PropertyOfferCard({
                     {/* Property Info */}
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-[#001F49] truncate text-sm uppercase">
+                            <h3 className="font-bold text-[#001F49] truncate text-sm capitalize">
                                 {group.propertyAddress.replace(/,/g, "")}
                             </h3>
                         </div>
@@ -228,93 +238,14 @@ function PropertyOfferCard({
 
             {/* Expanded Offers */}
             {isExpanded && (
-                <div className="border-t border-gray-100">
-                    {/* Action Bar */}
-                    <div className="px-5 py-2.5 bg-white/80 flex items-center justify-end gap-2 border-b border-gray-100">
-                        <button
-                            onClick={() => onDownloadReport(group)}
-                            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-semibold hover:bg-blue-100 transition-colors"
-                        >
-                            <FileText className="w-3.5 h-3.5" />
-                            Download Report
-                        </button>
-                    </div>
-                    <div className="px-5 py-3 bg-gray-50 text-xs font-semibold text-gray-500 grid grid-cols-12 gap-2">
-                        <span className="col-span-3">Purchaser</span>
-                        <span className="col-span-2">Structure</span>
-                        <span className="col-span-2 text-right">Offer Price</span>
-                        <span className="col-span-1 text-right">Deposit</span>
-                        <span className="col-span-1 text-center">Finance</span>
-                        <span className="col-span-2 text-right">Submitted</span>
-                        <span className="col-span-1 text-right">Actions</span>
-                    </div>
-                    {group.offers
-                        .sort((a, b) => parsePrice(b.offer_price) - parsePrice(a.offer_price))
-                        .map((offer, idx) => {
-                            const isHighest = idx === 0;
-                            const fd = offer.form_data;
-                            return (
-                                <div
-                                    key={offer.id}
-                                    className={`w-full text-left px-5 py-3 grid grid-cols-12 gap-2 items-center text-sm border-t border-gray-50 hover:bg-blue-50/50 transition-colors ${isHighest ? "bg-emerald-50/30" : ""}`}
-                                >
-                                    <button
-                                        onClick={() => onOfferClick(offer)}
-                                        className="col-span-3 flex items-center gap-2 cursor-pointer text-left"
-                                    >
-                                        {isHighest && (
-                                            <Trophy className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
-                                        )}
-                                        <div className="min-w-0">
-                                            <p className="font-semibold text-[#001F49] truncate text-xs uppercase">
-                                                {offer.purchaser_name}
-                                            </p>
-                                            <p className="text-[10px] text-gray-400 truncate">
-                                                {fd.purchasers[0]?.email || offer.submitter_email || "—"}
-                                            </p>
-                                        </div>
-                                    </button>
-                                    <div className="col-span-2">
-                                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-600">
-                                            {fd.purchaserStructure}
-                                        </span>
-                                    </div>
-                                    <div className="col-span-2 text-right">
-                                        <span className={`font-bold ${isHighest ? "text-emerald-600" : "text-gray-700"}`}>
-                                            ${fd.offerPrice}
-                                        </span>
-                                    </div>
-                                    <div className="col-span-1 text-right text-gray-500">
-                                        ${fd.depositAmount || "—"}
-                                    </div>
-                                    <div className="col-span-1 text-center">
-                                        <span
-                                            className={`inline-block w-2 h-2 rounded-full ${fd.financeRequired ? "bg-amber-400" : "bg-emerald-400"}`}
-                                            title={fd.financeRequired ? "Finance required" : "No finance"}
-                                        />
-                                    </div>
-                                    <div className="col-span-2 text-right">
-                                        <span className="text-xs text-gray-400 flex items-center justify-end gap-1">
-                                            <Clock className="w-3 h-3" />
-                                            {timeAgo(offer.created_at)}
-                                        </span>
-                                    </div>
-                                    <div className="col-span-1 text-right">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onDeleteOffer(offer);
-                                            }}
-                                            className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                                            title="Remove offer"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                </div>
+                <ExpandedOffersTable
+                    group={group as any}
+                    onDownloadReport={onDownloadReport}
+                    onOfferClick={onOfferClick}
+                    onDeleteOffer={onDeleteOffer}
+                    onToggleContractDrafted={onToggleContractDrafted}
+                    currentUserEmail={currentUserEmail}
+                />
             )}
         </div>
     );
@@ -324,6 +255,8 @@ function PropertyOfferCard({
 function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose: () => void }) {
     if (!offer) return null;
     const fd = offer.form_data;
+    const isEdited = new Date(offer.updated_at).getTime() - new Date(offer.created_at).getTime() > 5000;
+    const changes = isEdited && offer.original_form_data ? getChanges(offer.original_form_data, fd) : [];
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-fade-in">
@@ -335,9 +268,16 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 bg-gray-50/50">
                     <div>
-                        <h2 className="text-xl font-bold text-[#001F49]">
-                            Offer from {offer.purchaser_name}
-                        </h2>
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-xl font-bold text-[#001F49]">
+                                Offer from {offer.purchaser_name}
+                            </h2>
+                            {isEdited && (
+                                <span className="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold rounded-full flex items-center gap-1.5" title={`Last edited: ${new Date(offer.updated_at).toLocaleString()}`}>
+                                    Edited
+                                </span>
+                            )}
+                        </div>
                         <p className="text-sm text-gray-500 mt-1">
                             Submitted on {new Date(offer.created_at).toLocaleString()}
                         </p>
@@ -352,6 +292,28 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
 
                 {/* Content */}
                 <div className="p-6 overflow-y-auto overflow-x-hidden space-y-8 flex-1">
+                    {/* Diff Viewer */}
+                    {changes.length > 0 && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 shadow-sm">
+                            <h3 className="text-sm font-bold text-amber-800 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <FileText className="w-4 h-4" />
+                                Recent Changes
+                            </h3>
+                            <div className="space-y-2">
+                                {changes.map((c, i) => (
+                                    <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between bg-white p-3 rounded-lg border border-amber-100 shadow-sm gap-2">
+                                        <div className="text-sm font-medium text-gray-900 min-w-[150px]">{c.label}</div>
+                                        <div className="flex items-center gap-2 flex-1 text-sm">
+                                            <span className="text-red-600 bg-red-50 px-2 py-1 rounded truncate flex-1 line-through" title={c.oldValue}>{c.oldValue}</span>
+                                            <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                            <span className="text-emerald-700 bg-emerald-50 px-2 py-1 rounded font-medium truncate flex-1" title={c.newValue}>{c.newValue}</span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Left Column */}
                         <div className="space-y-8">
@@ -528,6 +490,7 @@ export default function OffersDashboardPage() {
     const [selectedOffer, setSelectedOffer] = useState<OfferRow | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<OfferRow | null>(null);
     const [deleting, setDeleting] = useState(false);
+    const [currentUserEmail, setCurrentUserEmail] = useState("");
 
     const fetchOffers = useCallback(async () => {
         setLoading(true);
@@ -600,6 +563,10 @@ export default function OffersDashboardPage() {
     useEffect(() => {
         const load = async () => {
             await fetchOffers();
+            // Get current user email for contract drafted tracking
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) setCurrentUserEmail(user.email);
         };
         load();
     }, [fetchOffers]);
@@ -707,6 +674,60 @@ export default function OffersDashboardPage() {
         };
 
         await generateVendorOfferReport(reportData);
+    };
+
+    // Toggle Contract Drafted handler
+    const handleToggleContractDrafted = async (offer: OfferRow, drafted: boolean) => {
+        // Optimistic UI update
+        setGroups((prev) =>
+            prev.map((g) => ({
+                ...g,
+                offers: g.offers.map((o) =>
+                    o.id === offer.id
+                        ? {
+                            ...o,
+                            contract_drafted: drafted,
+                            contract_drafted_by: drafted ? currentUserEmail : null,
+                            contract_drafted_at: drafted ? new Date().toISOString() : null,
+                        }
+                        : o
+                ),
+            }))
+        );
+
+        try {
+            const res = await fetch("/api/offer/contract-drafted", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: offer.id,
+                    drafted,
+                    draftedBy: currentUserEmail,
+                }),
+            });
+
+            if (!res.ok) {
+                console.error("Failed to toggle contract drafted");
+                // Revert on failure
+                setGroups((prev) =>
+                    prev.map((g) => ({
+                        ...g,
+                        offers: g.offers.map((o) =>
+                            o.id === offer.id
+                                ? {
+                                    ...o,
+                                    contract_drafted: offer.contract_drafted,
+                                    contract_drafted_by: offer.contract_drafted_by,
+                                    contract_drafted_at: offer.contract_drafted_at,
+                                }
+                                : o
+                        ),
+                    }))
+                );
+            }
+        } catch (err) {
+            console.error("Error toggling contract drafted:", err);
+        }
     };
 
     // Filter
@@ -885,6 +906,8 @@ export default function OffersDashboardPage() {
                             onOfferClick={setSelectedOffer}
                             onDeleteOffer={setDeleteTarget}
                             onDownloadReport={handleDownloadReport}
+                            onToggleContractDrafted={handleToggleContractDrafted}
+                            currentUserEmail={currentUserEmail}
                         />
                     ))}
                 </div>

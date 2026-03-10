@@ -85,6 +85,7 @@ export interface ContactStaffInfo {
     position?: string;
     photoUrl?: string;
     mobile?: string;
+    email?: string;
 }
 
 export interface OfferProperty {

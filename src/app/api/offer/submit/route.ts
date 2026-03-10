@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/server-admin";
 import { buildOfferPayload, sendToWebhook } from "@/lib/offer/api";
+import { sendConfirmationEmail } from "@/lib/offer/confirmationEmail";
 import { checkRateLimit } from "@/lib/offer/rateLimit";
 import { validateHoneypot, sanitizeFormData, validateSubmission } from "@/lib/offer/security";
 import type { OfferFormData } from "@/lib/offer/types";
@@ -89,29 +90,62 @@ export async function POST(request: NextRequest) {
             // Anonymous submission — use admin client (bypasses RLS)
             const adminSupabase = createAdminClient();
 
-            const { data: insertData, error: insertError } = await adminSupabase
-                .from("sales_offer_submissions")
-                .insert({
-                    user_id: null, // No auth user
-                    status: "completed",
-                    form_data: formData,
-                    purchaser_name: purchaserName,
-                    property_address: propertyAddress,
-                    offer_price: offerPrice,
-                    submitter_email: submitterEmail,
-                    submitter_ip: submitterIp,
-                })
-                .select("id")
-                .single();
+            if (existingId) {
+                // Fetch existing to preserve original_form_data
+                const { data: existingOffer } = await adminSupabase
+                    .from("sales_offer_submissions")
+                    .select("form_data, original_form_data")
+                    .eq("id", existingId)
+                    .single();
 
-            if (insertError) {
-                console.error("Supabase anonymous insert error:", insertError);
-                return NextResponse.json(
-                    { error: "Failed to save submission" },
-                    { status: 500 }
-                );
+                const originalFormData = existingOffer?.original_form_data || existingOffer?.form_data;
+
+                const { error: updateError } = await adminSupabase
+                    .from("sales_offer_submissions")
+                    .update({
+                        form_data: formData,
+                        original_form_data: originalFormData,
+                        updated_at: new Date().toISOString(),
+                        purchaser_name: purchaserName,
+                        property_address: propertyAddress,
+                        offer_price: offerPrice,
+                        submitter_ip: submitterIp,
+                    })
+                    .eq("id", existingId);
+
+                if (updateError) {
+                    console.error("Supabase anonymous update error:", updateError);
+                    return NextResponse.json(
+                        { error: "Failed to update submission" },
+                        { status: 500 }
+                    );
+                }
+                savedId = existingId;
+            } else {
+                const { data: insertData, error: insertError } = await adminSupabase
+                    .from("sales_offer_submissions")
+                    .insert({
+                        user_id: null, // No auth user
+                        status: "completed",
+                        form_data: formData,
+                        purchaser_name: purchaserName,
+                        property_address: propertyAddress,
+                        offer_price: offerPrice,
+                        submitter_email: submitterEmail,
+                        submitter_ip: submitterIp,
+                    })
+                    .select("id")
+                    .single();
+
+                if (insertError) {
+                    console.error("Supabase anonymous insert error:", insertError);
+                    return NextResponse.json(
+                        { error: "Failed to save submission" },
+                        { status: 500 }
+                    );
+                }
+                savedId = insertData.id;
             }
-            savedId = insertData.id;
         } else {
             // Authenticated submission — use normal client
             const supabase = await createClient();
@@ -124,11 +158,21 @@ export async function POST(request: NextRequest) {
             }
 
             if (existingId) {
+                // Fetch existing to preserve original_form_data
+                const { data: existingOffer } = await supabase
+                    .from("sales_offer_submissions")
+                    .select("form_data, original_form_data")
+                    .eq("id", existingId)
+                    .single();
+
+                const originalFormData = existingOffer?.original_form_data || existingOffer?.form_data;
+
                 const { error: updateError } = await supabase
                     .from("sales_offer_submissions")
                     .update({
                         status: "completed",
                         form_data: formData,
+                        original_form_data: originalFormData,
                         updated_at: new Date().toISOString(),
                         purchaser_name: purchaserName,
                         property_address: propertyAddress,
@@ -175,6 +219,22 @@ export async function POST(request: NextRequest) {
 
         if (!webhookResult.success) {
             console.warn("Webhook failed but submission saved:", webhookResult.error);
+        }
+
+        // Send confirmation email to purchaser (fire-and-forget)
+        const purchaserEmail = formData.purchasers?.[0]?.email;
+        if (purchaserEmail) {
+            sendConfirmationEmail({
+                submissionId: savedId,
+                purchaserName: purchaserName,
+                purchaserEmail,
+                propertyAddress: propertyAddress,
+                offerPrice: offerPrice,
+                depositAmount: formData.depositAmount || "",
+                financeRequired: formData.financeRequired,
+                settlementPeriod: formData.settlementPeriod || "",
+                agents: formData.propertyContactStaff || [],
+            }).catch((err) => console.warn("Confirmation email failed:", err));
         }
 
         return NextResponse.json({
