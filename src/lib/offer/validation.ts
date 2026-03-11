@@ -54,6 +54,31 @@ export function validatePropertyStep(formData: OfferFormData): ValidationErrors 
 export function validatePurchaserStep(formData: OfferFormData): ValidationErrors {
     const errors: ValidationErrors = {};
 
+    // Buyer's Agent Verification
+    if (formData.isRepresentedByBuyersAgent) {
+        if (!formData.buyersAgency?.trim()) {
+            errors.buyersAgency = "Buyers Agency is required";
+        }
+        if (!formData.buyersAgentName?.trim()) {
+            errors.buyersAgentName = "Agent Name is required";
+        }
+        if (!formData.buyersAgentEmail?.trim()) {
+            errors.buyersAgentEmail = "Agent Email is required";
+        } else if (!isValidEmail(formData.buyersAgentEmail)) {
+            errors.buyersAgentEmail = "Invalid email address";
+        }
+        if (!formData.buyersAgentMobile?.trim()) {
+            errors.buyersAgentMobile = "Agent Mobile is required";
+        } else if (
+            formData.buyersAgentMobileCode === "+61 AU" &&
+            formData.buyersAgentMobile.replace(/\s/g, "").length !== 9
+        ) {
+            errors.buyersAgentMobile = "Australian mobile must be exactly 9 digits";
+        } else if (!isValidMobile(formData.buyersAgentMobile)) {
+            errors.buyersAgentMobile = "Mobile number must be at least 9 digits";
+        }
+    }
+
     // Trust-specific
     if (formData.purchaserStructure === "Trust") {
         if (!formData.trustName.trim()) {

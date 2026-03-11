@@ -85,6 +85,130 @@ export function PurchaserSection({
                 </p>
             </div>
 
+            {/* Buyer's Agent Toggle */}
+            <div className="p-4 sm:p-5 bg-gray-50/50 rounded-xl border border-gray-100 space-y-4">
+                <div>
+                    <label className="field-label mb-3 block text-base">
+                        Are you a Buyers Agent acting on behalf of the Purchaser?
+                    </label>
+                    <div className="flex flex-wrap gap-4">
+                        {[
+                            { label: "Yes", value: true },
+                            { label: "No", value: false },
+                        ].map((option) => (
+                            <label
+                                key={option.label}
+                                className={`flex items-center gap-2 cursor-pointer px-4 py-2 rounded-lg border transition-colors ${formData.isRepresentedByBuyersAgent === option.value
+                                    ? "bg-blue-50 border-harcourts-blue text-harcourts-blue"
+                                    : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"
+                                    }`}
+                            >
+                                <input
+                                    type="radio"
+                                    name="isRepresentedByBuyersAgent"
+                                    checked={formData.isRepresentedByBuyersAgent === option.value}
+                                    onChange={() => updateFormData({ isRepresentedByBuyersAgent: option.value })}
+                                    className="hidden"
+                                />
+                                <div
+                                    className={`w-4 h-4 rounded-full border flex items-center justify-center ${formData.isRepresentedByBuyersAgent === option.value
+                                        ? "border-harcourts-blue bg-harcourts-blue"
+                                        : "border-gray-300 bg-white"
+                                        }`}
+                                >
+                                    {formData.isRepresentedByBuyersAgent === option.value && (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                    )}
+                                </div>
+                                <span className="font-medium">{option.label}</span>
+                            </label>
+                        ))}
+                    </div>
+                </div>
+
+                {formData.isRepresentedByBuyersAgent && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="sm:col-span-2">
+                            <label className="field-label">Buyers Agency</label>
+                            <input
+                                type="text"
+                                value={formData.buyersAgency || ""}
+                                onChange={(e) => updateFormData({ buyersAgency: e.target.value })}
+                                className={`input-field ${errors.buyersAgency ? "border-red-500" : ""}`}
+                                placeholder="e.g. Harcourts Prime Buyers"
+                            />
+                            {errors.buyersAgency && (
+                                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" /> {errors.buyersAgency}
+                                </p>
+                            )}
+                        </div>
+                        <div>
+                            <label className="field-label">Buyers Agent Name</label>
+                            <input
+                                type="text"
+                                value={formData.buyersAgentName || ""}
+                                onChange={(e) => updateFormData({ buyersAgentName: e.target.value })}
+                                className={`input-field ${errors.buyersAgentName ? "border-red-500" : ""}`}
+                                placeholder="Jane Doe"
+                            />
+                            {errors.buyersAgentName && (
+                                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" /> {errors.buyersAgentName}
+                                </p>
+                            )}
+                        </div>
+                        <div>
+                            <label className="field-label">Email Address</label>
+                            <input
+                                type="email"
+                                value={formData.buyersAgentEmail || ""}
+                                onChange={(e) => updateFormData({ buyersAgentEmail: e.target.value })}
+                                className={`input-field ${errors.buyersAgentEmail ? "border-red-500" : ""}`}
+                                placeholder="jane@primebuyers.com.au"
+                            />
+                            {errors.buyersAgentEmail && (
+                                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" /> {errors.buyersAgentEmail}
+                                </p>
+                            )}
+                        </div>
+                        <div className="sm:col-span-2">
+                            <label className="field-label">Mobile Number</label>
+                            <div className="relative flex gap-2 w-full">
+                                <div className="relative w-[120px] sm:w-[140px] flex-shrink-0">
+                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10">
+                                        <Phone className="w-4 h-4" />
+                                    </div>
+                                    <CustomDropdown
+                                        value={formData.buyersAgentMobileCode || "+61 AU"}
+                                        onChange={(val) => updateFormData({ buyersAgentMobileCode: val })}
+                                        options={COUNTRY_CODES.map(c => ({
+                                            value: c.code,
+                                            label: c.code
+                                        }))}
+                                        hasError={!!errors.buyersAgentMobile}
+                                        className="w-full inline-block !pl-10"
+                                    />
+                                </div>
+                                <input
+                                    type="tel"
+                                    value={formData.buyersAgentMobile || ""}
+                                    onChange={(e) => updateFormData({ buyersAgentMobile: e.target.value.replace(/[^0-9\s]/g, "") })}
+                                    className={`input-field flex-grow ${errors.buyersAgentMobile ? "border-red-500" : ""}`}
+                                    placeholder="412 345 678"
+                                />
+                            </div>
+                            {errors.buyersAgentMobile && (
+                                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                    <AlertCircle className="w-3 h-3" /> {errors.buyersAgentMobile}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
             {/* Purchaser Structure */}
             <div>
                 <label className="field-label mb-3 block">Purchaser Type</label>

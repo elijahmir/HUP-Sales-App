@@ -29,6 +29,8 @@ interface ConfirmationEmailData {
   submissionId: string;
   purchaserName: string;
   purchaserEmail: string;
+  isRepresentedByBuyersAgent?: boolean;
+  buyersAgentName?: string;
   propertyAddress: string;
   offerPrice: string;
   depositAmount: string;
@@ -41,7 +43,14 @@ interface ConfirmationEmailData {
 export function buildConfirmationEmailHTML(data: ConfirmationEmailData): string {
   const editUrl = `${BASE_URL}/offer/edit/${data.submissionId}`;
   const financeText = data.financeRequired ? "Yes" : "Cash (No Finance)";
-  const firstName = data.purchaserName.split(" ")[0] || data.purchaserName;
+
+  let firstName = data.purchaserName.split(" ")[0] || data.purchaserName;
+  let contextLine = "We&rsquo;ve received your details and our team will review everything shortly. Below is a summary of your submission.";
+
+  if (data.isRepresentedByBuyersAgent && data.buyersAgentName) {
+    firstName = data.buyersAgentName.split(" ")[0] || data.buyersAgentName;
+    contextLine = `We&rsquo;ve received the offer you submitted on behalf of <strong>${escapeHtml(data.purchaserName)}</strong>. Our team will review everything shortly. Below is a summary of the submission.`;
+  }
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -75,7 +84,7 @@ export function buildConfirmationEmailHTML(data: ConfirmationEmailData): string 
                 Hi ${escapeHtml(firstName)},
               </p>
               <p style="margin:0 0 24px;color:#334155;font-size:15px;line-height:1.6;">
-                Thank you for submitting your offer. We&rsquo;ve received your details and our team will review everything shortly. Below is a summary of your submission.
+                ${contextLine}
               </p>
 
               <!-- Offer Summary Card -->

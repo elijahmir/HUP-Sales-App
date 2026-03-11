@@ -142,6 +142,12 @@ export interface OfferFormData {
     propertyContactStaff: ContactStaffInfo[];
 
     // Purchaser Section
+    isRepresentedByBuyersAgent: boolean;
+    buyersAgency?: string;
+    buyersAgentName?: string;
+    buyersAgentEmail?: string;
+    buyersAgentMobileCode?: string;
+    buyersAgentMobile?: string;
     purchaserStructure: "Individual" | "Company" | "Trust";
     trusteeType: "individual" | "company";
     trustName: string;
@@ -212,6 +218,12 @@ export const initialOfferFormData: OfferFormData = {
     propertyContactStaff: [],
 
     // Purchaser
+    isRepresentedByBuyersAgent: false,
+    buyersAgency: "",
+    buyersAgentName: "",
+    buyersAgentEmail: "",
+    buyersAgentMobileCode: "+61 AU",
+    buyersAgentMobile: "",
     purchaserStructure: "Individual",
     trusteeType: "individual",
     trustName: "",
