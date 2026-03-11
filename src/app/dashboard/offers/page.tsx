@@ -340,10 +340,10 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                     <div className="mt-4">
                                         <p className="text-xs text-gray-500 font-medium mb-2 uppercase">Individuals</p>
                                         <div className="space-y-2">
-                                            {fd.purchasers.map((p, i) => (
+                                            {fd.purchasers.slice(0, fd.purchaserCount || 1).map((p, i) => (
                                                 <div key={i} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                                    <p className="font-semibold text-gray-900">{p.fullName}</p>
-                                                    <p className="text-xs text-gray-500">{p.email} • {p.mobileCountryCode} {p.mobileNumber}</p>
+                                                    <p className="font-semibold text-gray-900">{p.fullName || `Purchaser ${i + 1} (Name pending)`}</p>
+                                                    <p className="text-xs text-gray-500">{p.email} • {p.mobileCountryCode || "+61"} {p.mobileNumber}</p>
                                                     <p className="text-xs text-gray-500 mt-1">{[p.street, p.suburb, p.state, p.postcode].filter(Boolean).join(" ").replace(/,/g, "")}</p>
                                                 </div>
                                             ))}

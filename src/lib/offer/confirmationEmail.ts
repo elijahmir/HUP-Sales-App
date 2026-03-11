@@ -26,24 +26,24 @@ const CONFIRMATION_WEBHOOK = "https://hup.app.n8n.cloud/webhook/offer-confirmati
 
 // ─── Types ───────────────────────────────────────────────────────
 interface ConfirmationEmailData {
-    submissionId: string;
-    purchaserName: string;
-    purchaserEmail: string;
-    propertyAddress: string;
-    offerPrice: string;
-    depositAmount: string;
-    financeRequired: boolean;
-    settlementPeriod: string;
-    agents: ContactStaffInfo[];
+  submissionId: string;
+  purchaserName: string;
+  purchaserEmail: string;
+  propertyAddress: string;
+  offerPrice: string;
+  depositAmount: string;
+  financeRequired: boolean;
+  settlementPeriod: string;
+  agents: ContactStaffInfo[];
 }
 
 // ─── HTML Builder ────────────────────────────────────────────────
 export function buildConfirmationEmailHTML(data: ConfirmationEmailData): string {
-    const editUrl = `${BASE_URL}/offer/edit/${data.submissionId}`;
-    const financeText = data.financeRequired ? "Yes" : "Cash (No Finance)";
-    const firstName = data.purchaserName.split(" ")[0] || data.purchaserName;
+  const editUrl = `${BASE_URL}/offer/edit/${data.submissionId}`;
+  const financeText = data.financeRequired ? "Yes" : "Cash (No Finance)";
+  const firstName = data.purchaserName.split(" ")[0] || data.purchaserName;
 
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -123,9 +123,15 @@ export function buildConfirmationEmailHTML(data: ConfirmationEmailData): string 
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
                 <tr>
                   <td align="center">
-                    <a href="${editUrl}" target="_blank" style="display:inline-block;background:linear-gradient(135deg, ${PRIMARY} 0%, #0095D9 100%);color:${WHITE};font-size:15px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;letter-spacing:0.3px;">
-                      View &amp; Edit Your Offer
-                    </a>
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+                      <tr>
+                        <td align="center" style="border-radius:8px;background-color:${PRIMARY};">
+                          <a href="${editUrl}" target="_blank" style="display:inline-block;background-color:${PRIMARY};color:${WHITE};font-family:'Source Sans Pro',Arial,sans-serif;font-size:15px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px;letter-spacing:0.3px;border:1px solid ${PRIMARY};">
+                            View &amp; Edit Your Offer
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
                 <tr>
@@ -175,48 +181,48 @@ export function buildConfirmationEmailHTML(data: ConfirmationEmailData): string 
 
 // ─── Helpers ─────────────────────────────────────────────────────
 function escapeHtml(str: string): string {
-    if (!str) return "";
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+  if (!str) return "";
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 // ─── Send Confirmation Email ────────────────────────────────────
 export async function sendConfirmationEmail(data: ConfirmationEmailData): Promise<{ success: boolean; error?: string }> {
-    try {
-        const body = buildConfirmationEmailHTML(data);
-        const subject = `Offer Confirmation — ${data.propertyAddress}`;
+  try {
+    const body = buildConfirmationEmailHTML(data);
+    const subject = `Offer Confirmation — ${data.propertyAddress}`;
 
-        // Build CC list from property agents
-        const ccList = data.agents
-            .map((a) => a.email)
-            .filter((email): email is string => !!email && email.length > 0)
-            .join(", ");
+    // Build CC list from property agents
+    const ccList = data.agents
+      .map((a) => a.email)
+      .filter((email): email is string => !!email && email.length > 0)
+      .join(", ");
 
-        const webhookPayload = {
-            email: data.purchaserEmail,
-            subject,
-            cc: ccList,
-            body,
-        };
+    const webhookPayload = {
+      email: data.purchaserEmail,
+      subject,
+      cc: ccList,
+      body,
+    };
 
-        const res = await fetch(CONFIRMATION_WEBHOOK, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(webhookPayload),
-        });
+    const res = await fetch(CONFIRMATION_WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(webhookPayload),
+    });
 
-        if (!res.ok) {
-            const errText = await res.text();
-            console.error("Confirmation email webhook failed:", res.status, errText);
-            return { success: false, error: `Webhook ${res.status}` };
-        }
-
-        return { success: true };
-    } catch (err) {
-        console.error("Confirmation email error:", err);
-        return { success: false, error: err instanceof Error ? err.message : "Unknown error" };
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error("Confirmation email webhook failed:", res.status, errText);
+      return { success: false, error: `Webhook ${res.status}` };
     }
+
+    return { success: true };
+  } catch (err) {
+    console.error("Confirmation email error:", err);
+    return { success: false, error: err instanceof Error ? err.message : "Unknown error" };
+  }
 }

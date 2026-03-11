@@ -61,6 +61,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: validation.error }, { status: 400 });
         }
 
+        // === Clean up extra "ghost" purchasers before saving to DB ===
+        formData.purchasers = formData.purchasers.slice(0, formData.purchaserCount);
+
         // Build payload for n8n
         const payload = buildOfferPayload(formData);
 
@@ -221,10 +224,10 @@ export async function POST(request: NextRequest) {
             console.warn("Webhook failed but submission saved:", webhookResult.error);
         }
 
-        // Send confirmation email to purchaser (fire-and-forget)
+        // Send confirmation email to purchaser
         const purchaserEmail = formData.purchasers?.[0]?.email;
         if (purchaserEmail) {
-            sendConfirmationEmail({
+            await sendConfirmationEmail({
                 submissionId: savedId,
                 purchaserName: purchaserName,
                 purchaserEmail,
