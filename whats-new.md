@@ -2,6 +2,8 @@
 
 ## 🚀 OFFERS SYSTEM UPGRADES (March 2026)
 
+- **Buyer's Agent Strategy**: Upgraded the Offer Form to capture and represent Buyer's Agents securely, flawlessly redirecting the confirmation email pipeline to them directly, and ensuring comprehensive visibility on the Agent Dashboard.
+- **Archive Offers Engine**: Built a smart archiving loop that cross-references active VaultRE listings to automatically hide off-market/settled properties from your dashboard, minimizing clutter while bypassing filters automatically whenever you need to search a historical record.
 - **Smart Solicitor Auto-Fill**: Selecting a solicitor firm now dynamically split-fills the exact firm and agent names—no more double typing!
 - **Smarter Conditional Dates**: The "Subject to Sale" expected completion date is now a native, user-friendly calendar date picker.
 - **Flawless Offer Syncing**: Squashed a pesky duplicate-entry bug! Submitting an offer directly from a dashboard draft now flawlessly updates the record without creating clones.
