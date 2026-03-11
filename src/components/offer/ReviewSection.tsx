@@ -131,6 +131,15 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
 
             {/* Purchaser */}
             <ReviewCard title="Purchaser Details" icon={Users} step={1} onEdit={onJumpToStep}>
+                {formData.isRepresentedByBuyersAgent && (
+                    <div className="mb-3 pb-3 border-b border-gray-100 bg-blue-50/50 -mx-5 px-5 pt-3">
+                        <span className="text-harcourts-blue font-semibold text-xs mb-2 block uppercase tracking-wider">Represented by Buyer's Agent</span>
+                        <Row label="Agency" value={formData.buyersAgency} />
+                        <Row label="Agent Name" value={formData.buyersAgentName} />
+                        <Row label="Email" value={formData.buyersAgentEmail} />
+                        <Row label="Mobile" value={`${formData.buyersAgentMobileCode || ''} ${formData.buyersAgentMobile || ''}`.trim() || undefined} />
+                    </div>
+                )}
                 <Row label="Structure" value={formData.purchaserStructure} />
                 {formData.purchaserStructure === "Trust" && (
                     <>

@@ -317,10 +317,29 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Left Column */}
                         <div className="space-y-8">
-                            {/* Property Details */}
                             <section>
                                 <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 border-b border-gray-100 pb-2">Purchaser Structure</h3>
                                 <div className="space-y-3 text-sm">
+                                    {fd.isRepresentedByBuyersAgent && (
+                                        <div className="mb-4 pb-4 border-b border-gray-100 bg-blue-50/30 -mx-2 px-2 rounded-lg pt-2">
+                                            <p className="text-[11px] font-bold text-harcourts-blue uppercase tracking-wider mb-3">Represented by Buyer's Agent</p>
+                                            <div className="grid grid-cols-3 text-gray-500 mb-2">
+                                                <span className="col-span-1 border-r border-gray-100">Agency</span>
+                                                <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.buyersAgency}</span>
+                                            </div>
+                                            <div className="grid grid-cols-3 text-gray-500 mb-2">
+                                                <span className="col-span-1 border-r border-gray-100">Agent</span>
+                                                <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.buyersAgentName}</span>
+                                            </div>
+                                            <div className="grid grid-cols-3 text-gray-500 mb-2 items-center">
+                                                <span className="col-span-1 border-r border-gray-100">Contact</span>
+                                                <span className="col-span-2 pl-3 text-gray-900 font-medium text-xs break-all leading-tight">
+                                                    {fd.buyersAgentMobileCode} {fd.buyersAgentMobile}<br />
+                                                    <a href={`mailto:${fd.buyersAgentEmail}`} className="text-harcourts-blue hover:underline">{fd.buyersAgentEmail}</a>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="grid grid-cols-3 text-gray-500">
                                         <span className="col-span-1 border-r border-gray-100">Structure</span>
                                         <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.purchaserStructure}</span>
