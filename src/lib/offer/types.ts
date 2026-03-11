@@ -222,7 +222,7 @@ export const initialOfferFormData: OfferFormData = {
     buyersAgency: "",
     buyersAgentName: "",
     buyersAgentEmail: "",
-    buyersAgentMobileCode: "+61 AU",
+    buyersAgentMobileCode: "+61",
     buyersAgentMobile: "",
     purchaserStructure: "Individual",
     trusteeType: "individual",

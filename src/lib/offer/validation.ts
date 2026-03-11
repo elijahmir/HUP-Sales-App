@@ -70,7 +70,7 @@ export function validatePurchaserStep(formData: OfferFormData): ValidationErrors
         if (!formData.buyersAgentMobile?.trim()) {
             errors.buyersAgentMobile = "Agent Mobile is required";
         } else if (
-            formData.buyersAgentMobileCode === "+61 AU" &&
+            formData.buyersAgentMobileCode === "+61" &&
             formData.buyersAgentMobile.replace(/\s/g, "").length !== 9
         ) {
             errors.buyersAgentMobile = "Australian mobile must be exactly 9 digits";

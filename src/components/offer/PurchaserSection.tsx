@@ -175,28 +175,32 @@ export function PurchaserSection({
                         </div>
                         <div className="sm:col-span-2">
                             <label className="field-label">Mobile Number</label>
-                            <div className="relative flex gap-2 w-full">
-                                <div className="relative w-[120px] sm:w-[140px] flex-shrink-0">
-                                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none z-10">
-                                        <Phone className="w-4 h-4" />
-                                    </div>
-                                    <CustomDropdown
-                                        value={formData.buyersAgentMobileCode || "+61 AU"}
-                                        onChange={(val) => updateFormData({ buyersAgentMobileCode: val })}
-                                        options={COUNTRY_CODES.map(c => ({
-                                            value: c.code,
-                                            label: c.code
-                                        }))}
-                                        hasError={!!errors.buyersAgentMobile}
-                                        className="w-full inline-block !pl-10"
-                                    />
-                                </div>
+                            <div className="flex gap-2">
+                                <CustomDropdown
+                                    value={formData.buyersAgentMobileCode || "+61"}
+                                    onChange={(val) => updateFormData({ buyersAgentMobileCode: val })}
+                                    options={COUNTRY_CODES.map((c) => ({
+                                        value: c.dial,
+                                        label: `${c.dial} ${c.code}`,
+                                    }))}
+                                    icon={<Phone className="w-3.5 h-3.5" />}
+                                    width="w-32"
+                                    placeholder="+61"
+                                    hasError={!!errors.buyersAgentMobile}
+                                    className="flex-shrink-0"
+                                />
                                 <input
                                     type="tel"
                                     value={formData.buyersAgentMobile || ""}
-                                    onChange={(e) => updateFormData({ buyersAgentMobile: e.target.value.replace(/[^0-9\s]/g, "") })}
-                                    className={`input-field flex-grow ${errors.buyersAgentMobile ? "border-red-500" : ""}`}
-                                    placeholder="412 345 678"
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/\D/g, "");
+                                        const maxLen = formData.buyersAgentMobileCode === "+61" ? 9 : 15;
+                                        if (val.length <= maxLen) {
+                                            updateFormData({ buyersAgentMobile: val });
+                                        }
+                                    }}
+                                    className={`input-field flex-1 ${errors.buyersAgentMobile ? "border-red-500" : ""}`}
+                                    placeholder="412345678"
                                 />
                             </div>
                             {errors.buyersAgentMobile && (
