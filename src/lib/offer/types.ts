@@ -96,6 +96,7 @@ export interface OfferProperty {
     state: string;
     postcode: string;
     status: string;
+    propertyClass: string;
     bed?: number;
     bath?: number;
     garages?: number;
@@ -133,6 +134,7 @@ export interface OfferFormData {
     propertyState: string;
     propertyPostcode: string;
     propertyStatus: string;
+    propertyClass: string;
     propertyBed: number | null;
     propertyBath: number | null;
     propertyGarages: number | null;
@@ -202,6 +204,7 @@ export const initialOfferFormData: OfferFormData = {
     propertyState: "",
     propertyPostcode: "",
     propertyStatus: "",
+    propertyClass: "",
     propertyBed: null,
     propertyBath: null,
     propertyGarages: null,

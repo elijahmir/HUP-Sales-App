@@ -105,6 +105,7 @@ export async function GET(request: NextRequest) {
                 state,
                 postcode,
                 status: item.saleLife?.status || item.status || "unknown",
+                propertyClass: item.class?.name || "Unknown",
                 bed: item.bed || null,
                 bath: item.bath || null,
                 garages: item.garages || null,

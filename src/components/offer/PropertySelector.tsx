@@ -22,6 +22,7 @@ export function PropertySelector({
     const [error, setError] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [suburbFilter, setSuburbFilter] = useState("All Suburbs");
+    const [classFilter, setClassFilter] = useState("All Classes");
 
     const fetchProperties = useCallback(async () => {
         setLoading(true);
@@ -43,14 +44,21 @@ export function PropertySelector({
     }, [fetchProperties]);
 
     // Derive unique suburbs from loaded properties
+    // Derive unique suburbs from loaded properties
     const suburbs = ["All Suburbs", ...Array.from(
         new Set(properties.map((p) => p.suburb).filter(Boolean))
+    ).sort()];
+
+    // Derive unique classes from loaded properties
+    const propertyClasses = ["All Classes", ...Array.from(
+        new Set(properties.map((p) => p.propertyClass).filter(Boolean))
     ).sort()];
 
     const filteredProperties = properties.filter((p) => {
         const matchSearch = p.displayAddress.toLowerCase().includes(searchTerm.toLowerCase());
         const matchSuburb = suburbFilter === "All Suburbs" || p.suburb === suburbFilter;
-        return matchSearch && matchSuburb;
+        const matchClass = classFilter === "All Classes" || p.propertyClass === classFilter;
+        return matchSearch && matchSuburb && matchClass;
     });
 
     const handleSelect = (property: OfferProperty) => {
@@ -62,6 +70,7 @@ export function PropertySelector({
             propertyState: property.state,
             propertyPostcode: property.postcode,
             propertyStatus: property.status,
+            propertyClass: property.propertyClass || "",
             propertyBed: property.bed || null,
             propertyBath: property.bath || null,
             propertyGarages: property.garages || null,
@@ -79,6 +88,7 @@ export function PropertySelector({
             propertyState: "",
             propertyPostcode: "",
             propertyStatus: "",
+            propertyClass: "",
             propertyBed: null,
             propertyBath: null,
             propertyGarages: null,
@@ -122,12 +132,17 @@ export function PropertySelector({
                     )}
 
                     {/* Status Badge */}
-                    <div className="absolute top-4 right-4">
+                    <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
                         <span
                             className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider border ${getStatusColor(formData.propertyStatus)}`}
                         >
                             {formData.propertyStatus}
                         </span>
+                        {formData.propertyClass && (
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/90 text-harcourts-navy shadow-sm backdrop-blur-sm">
+                                {formData.propertyClass}
+                            </span>
+                        )}
                     </div>
 
                     {/* Property Details */}
@@ -244,14 +259,24 @@ export function PropertySelector({
                         className="input-field-normal pl-12"
                     />
                 </div>
-                <CustomDropdown
-                    value={suburbFilter}
-                    options={suburbs.map((s) => ({ value: s, label: s }))}
-                    onChange={setSuburbFilter}
-                    icon={<MapPin className="w-3.5 h-3.5" />}
-                    width="w-44"
-                    placeholder="All Suburbs"
-                />
+                <div className="flex gap-3">
+                    <CustomDropdown
+                        value={suburbFilter}
+                        options={suburbs.map((s) => ({ value: s, label: s }))}
+                        onChange={setSuburbFilter}
+                        icon={<MapPin className="w-3.5 h-3.5" />}
+                        width="w-44"
+                        placeholder="All Suburbs"
+                    />
+                    <CustomDropdown
+                        value={classFilter}
+                        options={propertyClasses.map((c) => ({ value: c, label: c }))}
+                        onChange={setClassFilter}
+                        icon={<Home className="w-3.5 h-3.5" />}
+                        width="w-44"
+                        placeholder="All Classes"
+                    />
+                </div>
             </div>
 
             {errors.propertyId && (
@@ -327,6 +352,11 @@ export function PropertySelector({
                                             >
                                                 {property.status}
                                             </span>
+                                            {property.propertyClass && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                                                    {property.propertyClass}
+                                                </span>
+                                            )}
                                             <div className="flex items-center gap-2 text-xs text-gray-400">
                                                 {property.bed != null && (
                                                     <span className="flex items-center gap-0.5">
