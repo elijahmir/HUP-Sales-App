@@ -63,6 +63,7 @@ interface PropertyGroup {
     totalOffers: number;
     latestDate: string;
     agents?: ContactStaffInfo[];
+    isArchived?: boolean;
 }
 
 
@@ -506,6 +507,7 @@ export default function OffersDashboardPage() {
     const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
     const [suburbFilter, setSuburbFilter] = useState("All");
     const [searchTerm, setSearchTerm] = useState("");
+    const [showArchived, setShowArchived] = useState(false);
     const [selectedOffer, setSelectedOffer] = useState<OfferRow | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<OfferRow | null>(null);
     const [deleting, setDeleting] = useState(false);
@@ -524,6 +526,27 @@ export default function OffersDashboardPage() {
             console.error("Error fetching offers:", error);
             setLoading(false);
             return;
+        }
+
+        // Fetch active properties from VaultRE to determine archiving
+        let activePropertiesSet = new Set<string>();
+        try {
+            const activeRes = await fetch("/api/offer/properties", {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+            });
+            if (activeRes.ok) {
+                const activeData = await activeRes.json();
+                if (activeData.properties && Array.isArray(activeData.properties)) {
+                    // Create a normalized set of active addresses for robust matching
+                    activeData.properties.forEach((p: any) => {
+                        const normalizedAddr = p.displayAddress?.toLowerCase().replace(/,/g, "").trim();
+                        if (normalizedAddr) activePropertiesSet.add(normalizedAddr);
+                    });
+                }
+            }
+        } catch (vaultErr) {
+            console.error("Failed to fetch active properties for archive filtering:", vaultErr);
         }
 
         // Group by property address
@@ -549,6 +572,7 @@ export default function OffersDashboardPage() {
                     totalOffers: 0,
                     latestDate: row.created_at,
                     agents: Array.isArray(fd.propertyContactStaff) ? fd.propertyContactStaff : [],
+                    isArchived: false, // Default, will compute below
                 });
             }
 
@@ -568,8 +592,11 @@ export default function OffersDashboardPage() {
                 (sum, o) => sum + parsePrice(o.offer_price),
                 0
             );
-            g.avgOffer = g.totalOffers > 0 ? Math.round(totalPrices / g.totalOffers) : 0;
             if (g.lowestOffer === Infinity) g.lowestOffer = 0;
+
+            // Check archive status against VaultRE active set
+            const normalizedGroupAddr = g.propertyAddress.toLowerCase().replace(/,/g, "").trim();
+            g.isArchived = !activePropertiesSet.has(normalizedGroupAddr);
         }
 
         const sorted = Array.from(groupMap.values()).sort(
@@ -752,8 +779,15 @@ export default function OffersDashboardPage() {
     // Filter
     const filtered = groups.filter((g) => {
         const matchSuburb = suburbFilter === "All" || g.propertySuburb === suburbFilter;
+        // Search should match by property address or property status/class optionally
         const matchSearch = !searchTerm || g.propertyAddress.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchSuburb && matchSearch;
+
+        // Archiving Logic:
+        // If there's an active search term, bypass the archive filter so historicals can be found
+        // Otherwise, if showArchived is false, filter out archived groups.
+        const matchArchive = searchTerm ? true : (showArchived || !g.isArchived);
+
+        return matchSuburb && matchSearch && matchArchive;
     });
 
     const uniqueSuburbs = ["All", ...Array.from(new Set(groups.map((g) => g.propertySuburb).filter(Boolean)))].sort();
@@ -894,6 +928,22 @@ export default function OffersDashboardPage() {
                             </option>
                         ))}
                     </select>
+                </div>
+                {/* Archive Toggle */}
+                <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg shrink-0 shadow-sm transition-all hover:border-gray-300">
+                    <button
+                        onClick={() => setShowArchived(!showArchived)}
+                        className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-harcourts-blue focus-visible:ring-offset-2 ${showArchived ? 'bg-harcourts-blue' : 'bg-gray-200'}`}
+                        role="switch"
+                        aria-checked={showArchived}
+                    >
+                        <span className="sr-only">Include archived</span>
+                        <span
+                            aria-hidden="true"
+                            className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${showArchived ? 'translate-x-4' : 'translate-x-0'}`}
+                        />
+                    </button>
+                    <span className="text-sm text-gray-600 font-medium select-none">Include archived</span>
                 </div>
             </div>
 
