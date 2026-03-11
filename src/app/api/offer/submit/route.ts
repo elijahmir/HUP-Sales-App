@@ -224,13 +224,17 @@ export async function POST(request: NextRequest) {
             console.warn("Webhook failed but submission saved:", webhookResult.error);
         }
 
-        // Send confirmation email to purchaser
-        const purchaserEmail = formData.purchasers?.[0]?.email;
-        if (purchaserEmail) {
+        // Send confirmation email to purchaser or buyer's agent
+        const isAgent = formData.isRepresentedByBuyersAgent;
+        const recipientEmail = isAgent ? formData.buyersAgentEmail : formData.purchasers?.[0]?.email;
+
+        if (recipientEmail) {
             await sendConfirmationEmail({
                 submissionId: savedId,
                 purchaserName: purchaserName,
-                purchaserEmail,
+                purchaserEmail: recipientEmail,
+                isRepresentedByBuyersAgent: isAgent,
+                buyersAgentName: formData.buyersAgentName,
                 propertyAddress: propertyAddress,
                 offerPrice: offerPrice,
                 depositAmount: formData.depositAmount || "",
