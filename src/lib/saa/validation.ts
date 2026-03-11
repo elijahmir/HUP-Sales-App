@@ -143,6 +143,10 @@ export function isValidProperty(formData: FormData): ValidationResult {
     errors.propertyPostcode = "Postcode must be 4 digits";
   }
 
+  if (!isRequired(formData.propertyClass)) {
+    errors.propertyClass = "Property class is required";
+  }
+
   if (!isRequired(formData.ctVolume)) errors.ctVolume = "CT Volume is required";
   if (!isRequired(formData.folioNo)) errors.folioNo = "Folio No is required";
   if (!isRequired(formData.pid)) errors.pid = "PID is required";

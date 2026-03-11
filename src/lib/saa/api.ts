@@ -175,6 +175,7 @@ export interface SubmissionPayload {
   office_phone: string;
 
   // Property
+  property_class: string;
   property_street: string;
   property_suburb: string;
   property_state: string;
@@ -515,6 +516,7 @@ export function buildPayload(
     office_phone: toUpper(formData.officePhone),
 
     // Property - all uppercase
+    property_class: toUpper(formData.propertyClass),
     property_street: toUpper(formData.propertyStreet),
     property_suburb: toUpper(formData.propertySuburb),
     property_state: toUpper(formData.propertyState),

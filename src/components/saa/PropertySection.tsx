@@ -93,8 +93,8 @@ export function PropertySection({
                 )
               }
               className={`input-field ${errors.propertyPostcode
-                  ? "border-red-500 focus:ring-red-500"
-                  : ""
+                ? "border-red-500 focus:ring-red-500"
+                : ""
                 }`}
               placeholder="7315"
               maxLength={4}
@@ -133,6 +133,31 @@ export function PropertySection({
                   Warning: Suburb not found in Tasmania database
                 </p>
               )}
+          </div>
+
+          <div className="md:col-span-12">
+            <label htmlFor="propertyClass" className="field-label">
+              Property Class
+            </label>
+            <select
+              id="propertyClass"
+              value={formData.propertyClass}
+              onChange={(e) => handleChange("propertyClass", e.target.value)}
+              className={`input-field ${errors.propertyClass
+                  ? "border-red-500 focus:ring-red-500"
+                  : ""
+                }`}
+            >
+              <option value="">Select a property class</option>
+              <option value="Residential">Residential</option>
+              <option value="Rural">Rural</option>
+              <option value="Commercial">Commercial</option>
+              <option value="Business">Business</option>
+              <option value="Land">Land</option>
+            </select>
+            {errors.propertyClass && (
+              <p className="error-text">{errors.propertyClass}</p>
+            )}
           </div>
         </div>
       </div>
@@ -253,8 +278,8 @@ export function PropertySection({
                     handleChange("commissionValue", "2.5");
                 }}
                 className={`px-4 py-2 text-sm font-medium transition-colors ${formData.commissionType === "percentage"
-                    ? "bg-harcourts-blue text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
+                  ? "bg-harcourts-blue text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 Percentage
@@ -266,8 +291,8 @@ export function PropertySection({
                   handleChange("commissionValue", "");
                 }}
                 className={`px-4 py-2 text-sm font-medium transition-colors ${formData.commissionType === "fixed"
-                    ? "bg-harcourts-blue text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
+                  ? "bg-harcourts-blue text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 Fixed
@@ -282,8 +307,8 @@ export function PropertySection({
                   );
                 }}
                 className={`px-4 py-2 text-sm font-medium transition-colors ${formData.commissionType === "reit"
-                    ? "bg-harcourts-blue text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-50"
+                  ? "bg-harcourts-blue text-white"
+                  : "bg-white text-gray-700 hover:bg-gray-50"
                   }`}
               >
                 REIT Scale
@@ -383,8 +408,8 @@ export function PropertySection({
                 setPeriodError("");
               }}
               className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${formData.agencyPeriodType === "standard"
-                  ? "bg-harcourts-blue text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-harcourts-blue text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}
             >
               Standard
@@ -399,8 +424,8 @@ export function PropertySection({
                 setPeriodError("");
               }}
               className={`flex-1 px-4 py-2 text-sm font-medium transition-colors ${formData.agencyPeriodType === "development"
-                  ? "bg-harcourts-blue text-white"
-                  : "bg-white text-gray-700 hover:bg-gray-50"
+                ? "bg-harcourts-blue text-white"
+                : "bg-white text-gray-700 hover:bg-gray-50"
                 }`}
             >
               Development
@@ -423,9 +448,9 @@ export function PropertySection({
             }}
             disabled={formData.agencyPeriodType === "development"}
             className={`input-field ${(errors.soleAgencyPeriod || periodError) &&
-                formData.agencyPeriodType !== "development"
-                ? "border-red-500 focus:ring-red-500"
-                : ""
+              formData.agencyPeriodType !== "development"
+              ? "border-red-500 focus:ring-red-500"
+              : ""
               } ${formData.agencyPeriodType === "development" ? "bg-gray-100" : ""
               }`}
             placeholder="90"
@@ -444,6 +469,6 @@ export function PropertySection({
             )}
         </div>
       </div>
-    </div>
+    </div >
   );
 }

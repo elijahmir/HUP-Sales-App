@@ -42,6 +42,7 @@ export interface FormData {
   propertySuburb: string;
   propertyState: string;
   propertyPostcode: string;
+  propertyClass: string;
   ctVolume: string;
   folioNo: string;
   pid: string;
@@ -97,6 +98,7 @@ export const initialFormData: FormData = {
   propertySuburb: "",
   propertyState: "TAS",
   propertyPostcode: "",
+  propertyClass: "",
   ctVolume: "",
   folioNo: "",
   pid: "",
