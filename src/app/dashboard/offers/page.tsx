@@ -46,6 +46,9 @@ interface OfferRow {
     contract_drafted?: boolean;
     contract_drafted_by?: string | null;
     contract_drafted_at?: string | null;
+    contract_signed?: boolean;
+    contract_signed_by?: string | null;
+    contract_signed_at?: string | null;
 }
 
 interface PropertyGroup {
@@ -131,6 +134,7 @@ function PropertyOfferCard({
     onDeleteOffer,
     onDownloadReport,
     onToggleContractDrafted,
+    onToggleContractSigned,
     currentUserEmail,
 }: {
     group: PropertyGroup;
@@ -140,6 +144,7 @@ function PropertyOfferCard({
     onDeleteOffer: (offer: OfferRow) => void;
     onDownloadReport: (group: PropertyGroup) => void;
     onToggleContractDrafted: (offer: OfferRow, drafted: boolean) => void;
+    onToggleContractSigned: (offer: OfferRow, signed: boolean) => void;
     currentUserEmail: string;
 }) {
     return (
@@ -245,6 +250,7 @@ function PropertyOfferCard({
                     onOfferClick={onOfferClick}
                     onDeleteOffer={onDeleteOffer}
                     onToggleContractDrafted={onToggleContractDrafted}
+                    onToggleContractSigned={onToggleContractSigned}
                     currentUserEmail={currentUserEmail}
                 />
             )}
@@ -701,6 +707,7 @@ export default function OffersDashboardPage() {
                 bankLender: fd.bankLender,
                 financeAmount: fd.financeAmount,
                 createdAt: o.created_at,
+                contractSigned: o.contract_signed ?? false,
             };
         });
 
@@ -773,6 +780,60 @@ export default function OffersDashboardPage() {
             }
         } catch (err) {
             console.error("Error toggling contract drafted:", err);
+        }
+    };
+
+    // Toggle Contract Signed handler
+    const handleToggleContractSigned = async (offer: OfferRow, signed: boolean) => {
+        // Optimistic UI update
+        setGroups((prev) =>
+            prev.map((g) => ({
+                ...g,
+                offers: g.offers.map((o) =>
+                    o.id === offer.id
+                        ? {
+                            ...o,
+                            contract_signed: signed,
+                            contract_signed_by: signed ? currentUserEmail : null,
+                            contract_signed_at: signed ? new Date().toISOString() : null,
+                        }
+                        : o
+                ),
+            }))
+        );
+
+        try {
+            const res = await fetch("/api/offer/contract-signed", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    id: offer.id,
+                    signed,
+                    signedBy: currentUserEmail,
+                }),
+            });
+
+            if (!res.ok) {
+                console.error("Failed to toggle contract signed");
+                // Revert on failure
+                setGroups((prev) =>
+                    prev.map((g) => ({
+                        ...g,
+                        offers: g.offers.map((o) =>
+                            o.id === offer.id
+                                ? {
+                                    ...o,
+                                    contract_signed: offer.contract_signed,
+                                    contract_signed_by: offer.contract_signed_by,
+                                    contract_signed_at: offer.contract_signed_at,
+                                }
+                                : o
+                        ),
+                    }))
+                );
+            }
+        } catch (err) {
+            console.error("Error toggling contract signed:", err);
         }
     };
 
@@ -976,6 +1037,7 @@ export default function OffersDashboardPage() {
                             onDeleteOffer={setDeleteTarget}
                             onDownloadReport={handleDownloadReport}
                             onToggleContractDrafted={handleToggleContractDrafted}
+                            onToggleContractSigned={handleToggleContractSigned}
                             currentUserEmail={currentUserEmail}
                         />
                     ))}

@@ -24,6 +24,7 @@ interface OfferData {
     bankLender?: string;
     financeAmount?: string;
     createdAt?: string;
+    contractSigned?: boolean;
 }
 
 interface ReportData {
@@ -293,15 +294,22 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
     y += cardH + 10;
 
     // ── OFFERS TABLE ────────────────────────────────────────────
-    const sortedOffers = [...data.offers].sort((a, b) => b.offerPrice - a.offerPrice);
+    // Filter to signed-only offers; fallback to all if none are signed
+    const signedOffers = data.offers.filter(o => o.contractSigned);
+    const offersToRender = signedOffers.length > 0 ? signedOffers : data.offers;
+    const sortedOffers = [...offersToRender].sort((a, b) => b.offerPrice - a.offerPrice);
 
-    // Landscape Columns Allocation (contentW is 267)
+    // Landscape Columns Allocation (contentW is 267) — 9 columns
     const cols = {
-        purchaser: { x: marginL + 5, w: contentW * 0.30 },
-        structure: { x: marginL + 5 + (contentW * 0.30), w: contentW * 0.20 },
-        price: { x: marginL + 5 + (contentW * 0.50), w: contentW * 0.20 },
-        deposit: { x: marginL + 5 + (contentW * 0.70), w: contentW * 0.15 },
-        finance: { x: marginL + 5 + (contentW * 0.85), w: contentW * 0.15 },
+        purchaser: { x: marginL + 5, w: contentW * 0.18 },
+        structure: { x: marginL + 5 + (contentW * 0.18), w: contentW * 0.09 },
+        price: { x: marginL + 5 + (contentW * 0.27), w: contentW * 0.13 },
+        deposit: { x: marginL + 5 + (contentW * 0.40), w: contentW * 0.09 },
+        finance: { x: marginL + 5 + (contentW * 0.49), w: contentW * 0.13 },
+        settle: { x: marginL + 5 + (contentW * 0.62), w: contentW * 0.09 },
+        coolOff: { x: marginL + 5 + (contentW * 0.71), w: contentW * 0.09 },
+        bldgInsp: { x: marginL + 5 + (contentW * 0.80), w: contentW * 0.09 },
+        subjSale: { x: marginL + 5 + (contentW * 0.89), w: contentW * 0.11 },
     };
 
     const rowHeight = 16; // Taller row to accommodate Purchaser Name & Email vertically
@@ -316,7 +324,7 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         // Flat at bottom corners to meet rows seamlessly
         doc.rect(marginL, startY + 4, contentW, headerHeight - 4, "F");
 
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...GRAY600);
 
@@ -326,6 +334,10 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         doc.text("Offer Price", cols.price.x, ty);
         doc.text("Deposit", cols.deposit.x, ty);
         doc.text("Finance", cols.finance.x, ty);
+        doc.text("Settlement", cols.settle.x, ty);
+        doc.text("Cool Off", cols.coolOff.x, ty);
+        doc.text("Bldg Insp", cols.bldgInsp.x, ty);
+        doc.text("Subj Sale", cols.subjSale.x, ty);
 
         doc.setDrawColor(229, 231, 235);
         doc.setLineWidth(0.3);
@@ -392,21 +404,21 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         // 1. Purchaser Initials
         const maxWidthPurchaser = cols.structure.x - px - 3;
 
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont("helvetica", "bold");
         doc.setTextColor(...NAVY);
         const nameStr = toInitials(offer.purchaserName);
         printTruncated(doc, nameStr, px, ty, maxWidthPurchaser);
 
         // 2. Structure
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...GRAY600);
         const maxWidthStructure = cols.price.x - cols.structure.x - 3;
         printTruncated(doc, toTitleCase(offer.structure), cols.structure.x, ty, maxWidthStructure);
 
         // 3. Offer Price
-        doc.setFontSize(9);
+        doc.setFontSize(8);
         doc.setFont("helvetica", "bold");
         const tColor = isHighest ? GREEN : NAVY;
         doc.setTextColor(tColor[0], tColor[1], tColor[2]);
@@ -414,17 +426,63 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         printTruncated(doc, priceStr, cols.price.x, ty, cols.deposit.x - cols.price.x - 3);
 
         // 4. Deposit
-        doc.setFontSize(8);
+        doc.setFontSize(7);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...GRAY600);
-        const depStr = offer.deposit > 0 ? `$${formatPrice(offer.deposit)}` : "—";
+        const depStr = offer.deposit > 0 ? `$${formatPrice(offer.deposit)}` : "\u2014";
         printTruncated(doc, depStr, cols.deposit.x, ty, cols.finance.x - cols.deposit.x - 3);
 
         // 5. Finance
-        const cx = cols.finance.x + 4;
-        const dotColor = offer.financeRequired ? AMBER : GREEN;
-        doc.setFillColor(dotColor[0], dotColor[1], dotColor[2]);
-        doc.circle(cx, ty - 1.2, 1.5, "F");
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        if (offer.financeRequired) {
+            doc.setTextColor(...AMBER);
+            const financeText = offer.bankLender ? offer.bankLender : "Yes";
+            printTruncated(doc, financeText, cols.finance.x, ty, cols.settle.x - cols.finance.x - 3);
+        } else {
+            doc.setTextColor(...GREEN);
+            doc.text("Cash", cols.finance.x, ty);
+        }
+
+        // 6. Settlement Period
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...GRAY600);
+        const settleStr = offer.settlementPeriod || "\u2014";
+        printTruncated(doc, settleStr, cols.settle.x, ty, cols.coolOff.x - cols.settle.x - 3);
+
+        // 7. Cooling Off Period
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        if (offer.coolingOffPeriod) {
+            doc.setTextColor(...AMBER);
+            doc.text("Yes", cols.coolOff.x, ty);
+        } else {
+            doc.setTextColor(...GREEN);
+            doc.text("No", cols.coolOff.x, ty);
+        }
+
+        // 8. Building Inspection
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        if (offer.buildingInspection) {
+            doc.setTextColor(...AMBER);
+            doc.text("Yes", cols.bldgInsp.x, ty);
+        } else {
+            doc.setTextColor(...GREEN);
+            doc.text("No", cols.bldgInsp.x, ty);
+        }
+
+        // 9. Subject to Sale
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        if (offer.subjectToSale) {
+            doc.setTextColor(...AMBER);
+            doc.text("Yes", cols.subjSale.x, ty);
+        } else {
+            doc.setTextColor(...GREEN);
+            doc.text("No", cols.subjSale.x, ty);
+        }
 
         y += rowHeight;
 

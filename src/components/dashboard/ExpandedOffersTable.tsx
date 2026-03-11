@@ -17,6 +17,9 @@ export interface OfferRow {
     contract_drafted?: boolean;
     contract_drafted_by?: string | null;
     contract_drafted_at?: string | null;
+    contract_signed?: boolean;
+    contract_signed_by?: string | null;
+    contract_signed_at?: string | null;
 }
 export interface PropertyGroup {
     propertyAddress: string;
@@ -41,6 +44,7 @@ interface ExpandedOffersTableProps {
     onOfferClick: (offer: OfferRow) => void;
     onDeleteOffer: (offer: OfferRow) => void;
     onToggleContractDrafted: (offer: OfferRow, drafted: boolean) => void;
+    onToggleContractSigned: (offer: OfferRow, signed: boolean) => void;
     currentUserEmail: string;
 }
 
@@ -100,18 +104,19 @@ const getAvailableOperators = (column: FilterColumn): FilterOperator[] => {
     }
 };
 
+// ─── Reusable date formatter ────────────────────────────────────
+function formatStatusDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) +
+        " at " +
+        d.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
 // ─── Contract Drafted Cell ──────────────────────────────────────
 function ContractDraftedCell({ offer, onToggle }: { offer: OfferRow; onToggle: (drafted: boolean) => void }) {
     const [hovering, setHovering] = useState(false);
     const drafted = offer.contract_drafted ?? false;
-
-    const formatDraftedDate = (dateStr: string | null | undefined): string => {
-        if (!dateStr) return "";
-        const d = new Date(dateStr);
-        return d.toLocaleDateString("en-AU", { day: "numeric", month: "short", year: "numeric" }) +
-            " at " +
-            d.toLocaleTimeString("en-AU", { hour: "2-digit", minute: "2-digit", hour12: true });
-    };
 
     return (
         <div
@@ -139,7 +144,47 @@ function ContractDraftedCell({ offer, onToggle }: { offer: OfferRow; onToggle: (
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
                     <div className="bg-gray-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2 shadow-xl whitespace-nowrap">
                         <p className="font-semibold">Drafted by {offer.contract_drafted_by}</p>
-                        <p className="text-gray-300">{formatDraftedDate(offer.contract_drafted_at)}</p>
+                        <p className="text-gray-300">{formatStatusDate(offer.contract_drafted_at)}</p>
+                    </div>
+                    <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-1/2 -translate-x-1/2 -bottom-1" />
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ─── Contract Signed Cell ───────────────────────────────────────
+function ContractSignedCell({ offer, onToggle }: { offer: OfferRow; onToggle: (signed: boolean) => void }) {
+    const [hovering, setHovering] = useState(false);
+    const signed = offer.contract_signed ?? false;
+
+    return (
+        <div
+            className="relative inline-flex items-center justify-center"
+            onMouseEnter={() => setHovering(true)}
+            onMouseLeave={() => setHovering(false)}
+        >
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onToggle(!signed);
+                }}
+                className="p-1 rounded-lg transition-all duration-200 cursor-pointer hover:scale-110"
+                title={signed ? "Unmark contract signed" : "Mark as contract signed"}
+            >
+                {signed ? (
+                    <CheckCircle2 className="w-4 h-4 text-blue-500 drop-shadow-sm" />
+                ) : (
+                    <Circle className="w-4 h-4 text-gray-300 hover:text-gray-400" />
+                )}
+            </button>
+
+            {/* Hover tooltip */}
+            {hovering && signed && offer.contract_signed_by && (
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 pointer-events-none">
+                    <div className="bg-gray-900 text-white text-[10px] leading-relaxed rounded-lg px-3 py-2 shadow-xl whitespace-nowrap">
+                        <p className="font-semibold">Signed by {offer.contract_signed_by}</p>
+                        <p className="text-gray-300">{formatStatusDate(offer.contract_signed_at)}</p>
                     </div>
                     <div className="w-2 h-2 bg-gray-900 rotate-45 absolute left-1/2 -translate-x-1/2 -bottom-1" />
                 </div>
@@ -153,6 +198,7 @@ export default function ExpandedOffersTable({
     onOfferClick,
     onDeleteOffer,
     onToggleContractDrafted,
+    onToggleContractSigned,
     currentUserEmail,
 }: ExpandedOffersTableProps) {
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
@@ -421,7 +467,7 @@ export default function ExpandedOffersTable({
                 <button
                     onClick={() => handleSort("structure")}
                     disabled={!isSortable}
-                    className={`col-span-2 text-left flex items-center ${isSortable ? 'hover:text-gray-900 cursor-pointer transition-colors' : ''}`}
+                    className={`col-span-1 text-left flex items-center ${isSortable ? 'hover:text-gray-900 cursor-pointer transition-colors' : ''}`}
                 >
                     Structure <SortIcon columnKey="structure" />
                 </button>
@@ -440,7 +486,8 @@ export default function ExpandedOffersTable({
                     Deposit <SortIcon columnKey="deposit" />
                 </button>
                 <span className="col-span-1 text-center">Finance</span>
-                <span className="col-span-1 text-center">Contract</span>
+                <span className="col-span-1 text-center text-[10px] leading-tight">Contract<br />Drafted</span>
+                <span className="col-span-1 text-center text-[10px] leading-tight">Contract<br />Signed</span>
                 <button
                     onClick={() => handleSort("submitted")}
                     disabled={!isSortable}
@@ -485,7 +532,7 @@ export default function ExpandedOffersTable({
                                     </p>
                                 </div>
                             </button>
-                            <div className="col-span-2">
+                            <div className="col-span-1">
                                 <span className="px-2 py-0.5 rounded text-[10px] font-bold capitalize bg-gray-100 text-gray-600">
                                     {fd.purchaserStructure}
                                 </span>
@@ -509,6 +556,13 @@ export default function ExpandedOffersTable({
                                 <ContractDraftedCell
                                     offer={offer}
                                     onToggle={(drafted) => onToggleContractDrafted(offer, drafted)}
+                                />
+                            </div>
+                            {/* Contract Signed */}
+                            <div className="col-span-1 flex justify-center">
+                                <ContractSignedCell
+                                    offer={offer}
+                                    onToggle={(signed) => onToggleContractSigned(offer, signed)}
                                 />
                             </div>
                             <div className="col-span-1 text-right flex flex-col items-end justify-center">
