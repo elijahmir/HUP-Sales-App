@@ -98,7 +98,7 @@ export const initialFormData: FormData = {
   propertySuburb: "",
   propertyState: "TAS",
   propertyPostcode: "",
-  propertyClass: "",
+  propertyClass: "Residential",
   ctVolume: "",
   folioNo: "",
   pid: "",

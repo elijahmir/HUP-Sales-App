@@ -144,11 +144,10 @@ export function PropertySection({
               value={formData.propertyClass}
               onChange={(e) => handleChange("propertyClass", e.target.value)}
               className={`input-field ${errors.propertyClass
-                  ? "border-red-500 focus:ring-red-500"
-                  : ""
+                ? "border-red-500 focus:ring-red-500"
+                : ""
                 }`}
             >
-              <option value="">Select a property class</option>
               <option value="Residential">Residential</option>
               <option value="Rural">Rural</option>
               <option value="Commercial">Commercial</option>
