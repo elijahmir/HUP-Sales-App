@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         const stateFilter = searchParams.get("state") || "";
 
         // Fetch properties with status: listing, conditional only
-        const url = new URL(`${baseUrl}/properties/residential/sale`);
+        const url = new URL(`${baseUrl}/properties/sale`);
         url.searchParams.set("status", "listing,conditional");
         url.searchParams.set("pagesize", "100");
         url.searchParams.set("page", "1");
