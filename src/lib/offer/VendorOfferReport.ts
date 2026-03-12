@@ -20,6 +20,10 @@ interface OfferData {
     coolingOffPeriod?: boolean;
     buildingInspection?: boolean;
     subjectToSale?: boolean;
+    subjectToSaleAddress?: string;
+    subjectToSalePrice?: string;
+    subjectToSaleUnderContract?: boolean;
+    subjectToSaleCompletionDate?: string;
     specialClauses?: string;
     bankLender?: string;
     financeAmount?: string;
@@ -295,21 +299,22 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
 
     // ── OFFERS TABLE ────────────────────────────────────────────
     // Filter to signed-only offers; fallback to all if none are signed
+    // Only include offers where Contract Signed is checked
     const signedOffers = data.offers.filter(o => o.contractSigned);
-    const offersToRender = signedOffers.length > 0 ? signedOffers : data.offers;
-    const sortedOffers = [...offersToRender].sort((a, b) => b.offerPrice - a.offerPrice);
+    const sortedOffers = [...signedOffers].sort((a, b) => b.offerPrice - a.offerPrice);
 
-    // Landscape Columns Allocation (contentW is 267) — 9 columns
+    // Landscape Columns Allocation (contentW is 267) — 10 columns
     const cols = {
-        purchaser: { x: marginL + 5, w: contentW * 0.18 },
-        structure: { x: marginL + 5 + (contentW * 0.18), w: contentW * 0.09 },
-        price: { x: marginL + 5 + (contentW * 0.27), w: contentW * 0.13 },
-        deposit: { x: marginL + 5 + (contentW * 0.40), w: contentW * 0.09 },
-        finance: { x: marginL + 5 + (contentW * 0.49), w: contentW * 0.13 },
-        settle: { x: marginL + 5 + (contentW * 0.62), w: contentW * 0.09 },
-        coolOff: { x: marginL + 5 + (contentW * 0.71), w: contentW * 0.09 },
-        bldgInsp: { x: marginL + 5 + (contentW * 0.80), w: contentW * 0.09 },
-        subjSale: { x: marginL + 5 + (contentW * 0.89), w: contentW * 0.11 },
+        purchaser: { x: marginL + 5, w: contentW * 0.20 },
+        structure: { x: marginL + 5 + (contentW * 0.20), w: contentW * 0.06 },
+        price: { x: marginL + 5 + (contentW * 0.26), w: contentW * 0.10 },
+        deposit: { x: marginL + 5 + (contentW * 0.36), w: contentW * 0.08 },
+        finance: { x: marginL + 5 + (contentW * 0.44), w: contentW * 0.08 },
+        finAmt: { x: marginL + 5 + (contentW * 0.52), w: contentW * 0.10 },
+        settle: { x: marginL + 5 + (contentW * 0.62), w: contentW * 0.08 },
+        coolOff: { x: marginL + 5 + (contentW * 0.70), w: contentW * 0.06 },
+        bldgInsp: { x: marginL + 5 + (contentW * 0.76), w: contentW * 0.06 },
+        subjSale: { x: marginL + 5 + (contentW * 0.82), w: contentW * 0.18 },
     };
 
     const rowHeight = 16; // Taller row to accommodate Purchaser Name & Email vertically
@@ -334,6 +339,7 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         doc.text("Offer Price", cols.price.x, ty);
         doc.text("Deposit", cols.deposit.x, ty);
         doc.text("Finance", cols.finance.x, ty);
+        doc.text("Fin Amt", cols.finAmt.x, ty);
         doc.text("Settlement", cols.settle.x, ty);
         doc.text("Cool Off", cols.coolOff.x, ty);
         doc.text("Bldg Insp", cols.bldgInsp.x, ty);
@@ -354,8 +360,13 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         const offer = sortedOffers[i];
         const isHighest = i === 0;
 
+        let currentRowHeight = rowHeight;
+        if (offer.subjectToSale && offer.subjectToSaleAddress) {
+            currentRowHeight = 30; // Extra space for stacked details
+        }
+
         // Page break
-        if (y + rowHeight > pageH - 25) {
+        if (y + currentRowHeight > pageH - 25) {
             doc.setDrawColor(229, 231, 235);
             doc.setLineWidth(0.5);
             doc.roundedRect(marginL, tableStartY, contentW, y - tableStartY, 4, 4);
@@ -371,10 +382,10 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
             doc.setFillColor(236, 253, 245);
 
             if (i === sortedOffers.length - 1) { // Lowest row on the table
-                doc.roundedRect(marginL, y, contentW, rowHeight, 4, 4, "F");
-                doc.rect(marginL, y, contentW, rowHeight - 4, "F"); // Flat top
+                doc.roundedRect(marginL, y, contentW, currentRowHeight, 4, 4, "F");
+                doc.rect(marginL, y, contentW, currentRowHeight - 4, "F"); // Flat top
             } else {
-                doc.rect(marginL, y, contentW, rowHeight, "F");
+                doc.rect(marginL, y, contentW, currentRowHeight, "F");
             }
         }
 
@@ -444,12 +455,19 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
             doc.text("Cash", cols.finance.x, ty);
         }
 
+        // 5b. Finance Amount
+        doc.setFontSize(7);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(...GRAY600);
+        const finAmtStr = offer.financeAmount ? `$${offer.financeAmount}` : "\u2014";
+        printTruncated(doc, finAmtStr, cols.finAmt.x, ty, cols.finAmt.w - 3);
+
         // 6. Settlement Period
         doc.setFontSize(7);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...GRAY600);
         const settleStr = offer.settlementPeriod || "\u2014";
-        printTruncated(doc, settleStr, cols.settle.x, ty, cols.coolOff.x - cols.settle.x - 3);
+        printTruncated(doc, settleStr, cols.settle.x, ty, cols.settle.w - 3);
 
         // 7. Cooling Off Period
         doc.setFontSize(7);
@@ -479,12 +497,28 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         if (offer.subjectToSale) {
             doc.setTextColor(...AMBER);
             doc.text("Yes", cols.subjSale.x, ty);
+
+            if (offer.subjectToSaleAddress) {
+                doc.setTextColor(...GRAY600);
+                doc.setFontSize(6);
+                const addressStr = offer.subjectToSaleAddress;
+                printTruncated(doc, addressStr, cols.subjSale.x, ty + 5, cols.subjSale.w - 2);
+
+                const contractStr = offer.subjectToSaleUnderContract ? "Yes" : "No";
+                const priceStr = offer.subjectToSalePrice ? `$${offer.subjectToSalePrice}` : "—";
+
+                doc.text(`Price: ${priceStr}`, cols.subjSale.x, ty + 11);
+                doc.text(`Under Contract: ${contractStr}`, cols.subjSale.x, ty + 17);
+
+                const compDateStr = offer.subjectToSaleCompletionDate || "—";
+                doc.text(`Completion: ${compDateStr}`, cols.subjSale.x, ty + 23);
+            }
         } else {
             doc.setTextColor(...GREEN);
             doc.text("No", cols.subjSale.x, ty);
         }
 
-        y += rowHeight;
+        y += currentRowHeight;
 
         // Row separator
         if (i < sortedOffers.length - 1) {
