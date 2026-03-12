@@ -56,7 +56,15 @@ export async function GET(request: NextRequest) {
         }
 
         const data = await response.json();
-        const items = data.items || [];
+        const allItems = data.items || [];
+
+        // Filter to only include properties with an active sale listing
+        // This excludes lease-only properties — only "sale" and "both sale & lease" pass through
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const items = allItems.filter((item: any) => {
+            const saleStatus = item.saleLife?.status?.toLowerCase();
+            return saleStatus && ["listing", "conditional"].includes(saleStatus);
+        });
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const properties = items.map((item: any) => {
