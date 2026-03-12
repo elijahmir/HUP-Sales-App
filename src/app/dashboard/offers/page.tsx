@@ -22,9 +22,11 @@ import {
     Download,
     Trash2,
     FileText,
+    Pencil,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { X, CheckCircle2, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import type { OfferFormData, ContactStaffInfo } from "@/lib/offer/types";
 import { generateVendorOfferReport } from "@/lib/offer/VendorOfferReport";
 import type { ReportData, OfferData, AgentInfo } from "@/lib/offer/VendorOfferReport";
@@ -289,12 +291,22 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                             Submitted on {new Date(offer.created_at).toLocaleString()}
                         </p>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <Link
+                            href={`/offer/edit/${offer.id}`}
+                            className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors text-sm font-semibold"
+                            onClick={onClose}
+                        >
+                            <Pencil className="w-4 h-4" />
+                            Edit Offer
+                        </Link>
+                        <button
+                            onClick={onClose}
+                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
                 {/* Content */}
