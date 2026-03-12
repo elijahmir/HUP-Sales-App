@@ -7,13 +7,13 @@
  *   Navy/Accent: #001F49
  *   Background: #FFFFFF
  *   Font:       Source Sans Pro, Arial, sans-serif
- *   Logo:       https://resources.cloudhi.io/images/logo/harcourts-international-logo.svg
+ *   Logo:       HUP Stacked White logo
  */
 
 import type { ContactStaffInfo } from "./types";
 
 // ─── Constants ───────────────────────────────────────────────────
-const LOGO_URL = "https://resources.cloudhi.io/images/logo/harcourts-international-logo.svg";
+const LOGO_URL = `${process.env.NEXT_PUBLIC_APP_URL || "https://salesapp.hup.net.au"}/hup-logo-white.png`;
 const PRIMARY = "#00ADEF";
 const NAVY = "#001F49";
 const GRAY_BG = "#F8FAFC";
@@ -70,9 +70,8 @@ export function buildConfirmationEmailHTML(data: ConfirmationEmailData): string 
           <!-- Header -->
           <tr>
             <td style="background:linear-gradient(135deg, ${NAVY} 0%, #002D6B 100%);padding:32px 40px;text-align:center;">
-              <img src="${LOGO_URL}" alt="Harcourts" width="200" style="display:block;margin:0 auto 16px;max-width:200px;height:auto;" />
+              <img src="${LOGO_URL}" alt="Harcourts Ulverstone & Penguin" width="220" style="display:block;margin:0 auto 20px;max-width:220px;height:auto;" />
               <h1 style="margin:0;color:${WHITE};font-size:22px;font-weight:700;letter-spacing:0.5px;">Offer Confirmation</h1>
-              <p style="margin:8px 0 0;color:${PRIMARY};font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;">Harcourts Ulverstone &amp; Penguin</p>
             </td>
           </tr>
 
@@ -169,8 +168,7 @@ export function buildConfirmationEmailHTML(data: ConfirmationEmailData): string 
           <!-- Footer -->
           <tr>
             <td style="background-color:${NAVY};padding:28px 40px;text-align:center;">
-              <p style="margin:0 0 4px;color:${WHITE};font-size:14px;font-weight:700;">Sales Up Team</p>
-              <p style="margin:0 0 12px;color:${PRIMARY};font-size:12px;font-weight:600;">Harcourts Ulverstone &amp; Penguin</p>
+              <img src="${LOGO_URL}" alt="Harcourts Ulverstone & Penguin" width="160" style="display:block;margin:0 auto 16px;max-width:160px;height:auto;" />
               <hr style="border:none;border-top:1px solid rgba(255,255,255,0.15);margin:12px 0;" />
               <p style="margin:0;color:rgba(255,255,255,0.5);font-size:11px;line-height:1.5;">
                 This is an automated confirmation email. Please do not reply directly to this email.
