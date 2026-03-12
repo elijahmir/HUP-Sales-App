@@ -58,12 +58,16 @@ export async function GET(request: NextRequest) {
         const data = await response.json();
         const allItems = data.items || [];
 
-        // Filter to only include properties with an active sale listing
-        // This excludes lease-only properties — only "sale" and "both sale & lease" pass through
+        // Filter to exclude lease-only properties
+        // Properties from /properties/sale that have a leaseLife but NO saleLife are lease-only → exclude them
+        // Everything else (has saleLife, or has neither) is a valid sale/both listing → include
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const items = allItems.filter((item: any) => {
-            const saleStatus = item.saleLife?.status?.toLowerCase();
-            return saleStatus && ["listing", "conditional"].includes(saleStatus);
+            const hasLease = !!item.leaseLife;
+            const hasSale = !!item.saleLife;
+            // Exclude lease-only (has lease but no sale lifecycle)
+            if (hasLease && !hasSale) return false;
+            return true;
         });
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
