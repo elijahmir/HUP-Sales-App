@@ -15,6 +15,7 @@ import {
   PenTool,
   Settings,
   BarChart3,
+  Droplets,
 } from "lucide-react";
 import AppraisalDetailsModal from "@/components/appraisal-details-modal";
 import type { ListingData } from "@/lib/gemini-ocr";
@@ -310,6 +311,61 @@ export default function DashboardHub() {
               >
                 <BarChart3 className="w-3.5 h-3.5" />
                 View Offers Dashboard →
+              </button>
+            </div>
+          </Link>
+        </motion.div>
+
+        {/* Expense Approval */}
+        <motion.div variants={item} className="md:col-span-2 group relative">
+          <Link href="/dashboard/expense-approval" className="block h-full">
+            <div className="relative h-full bg-gradient-to-br from-teal-500/5 to-cyan-500/5 rounded-2xl p-8 overflow-hidden shadow-sm border border-teal-500/20 transition-all duration-300 hover:shadow-md hover:border-teal-500/30 hover:-translate-y-1 flex flex-col justify-between">
+              <div className="absolute top-0 right-0 p-4 opacity-5">
+                <Droplets className="w-32 h-32 text-teal-600" />
+              </div>
+
+              {/* Content */}
+              <div className="relative z-10 flex flex-col gap-5">
+                <div className="inline-flex items-center gap-2 self-start bg-teal-50 px-3 py-1.5 rounded-full border border-teal-100">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-teal-500" />
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-teal-700">
+                    New Feature
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <h2 className="font-display text-2xl font-bold tracking-tight text-[#001F49]">
+                    Expense Approval
+                  </h2>
+                  <p className="text-slate-500 text-base max-w-md leading-relaxed">
+                    Landlord expense approval for council rates, land tax, and TasWater
+                    with DocuSign integration.
+                  </p>
+                </div>
+              </div>
+
+              <div className="relative z-10 mt-6 pt-5 border-t border-teal-100 flex items-center justify-between group-hover:border-teal-200 transition-colors">
+                <span className="font-semibold text-base text-teal-700">
+                  Create Approval
+                </span>
+                <div className="w-9 h-9 rounded-full bg-teal-100 flex items-center justify-center group-hover:bg-teal-200 group-hover:text-teal-800 transition-all duration-300">
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  window.location.href = "/dashboard/expense-approvals";
+                }}
+                className="relative z-20 mt-3 flex items-center gap-2 text-xs font-semibold text-teal-600 hover:text-teal-800 transition-colors cursor-pointer"
+              >
+                <BarChart3 className="w-3.5 h-3.5" />
+                View Approvals Dashboard →
               </button>
             </div>
           </Link>

@@ -1,0 +1,394 @@
+{
+  "name": "New Agreement",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "796be5aa-d13c-4bfb-9c2e-6b35973ed68d",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4a3f2e3f-095b-45d3-9d81-10422a5e51ab",
+      "name": "Webhook",
+      "webhookId": "796be5aa-d13c-4bfb-9c2e-6b35973ed68d"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"docusign_url\": \"{{ $json.instance_url || 'null' }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        448,
+        0
+      ],
+      "id": "c7e390a5-c1a9-40e9-b136-9e3e21485130",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        176
+      ],
+      "id": "17245dd5-4a64-464d-b7cc-f8c05f322be4",
+      "name": "When clicking ‘Execute workflow’",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "url": "https://api.docusign.com/v1/accounts/a07219b4-d1d8-4f3b-a151-a602b7a8db79/workflows/030bed19-639d-44d0-bb0a-27f67d340e7f/trigger-requirements",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        176
+      ],
+      "id": "55c37f35-9e50-4610-b48d-ceaac5838ec0",
+      "name": "HTTP Get Schema",
+      "credentials": {
+        "oAuth2Api": {
+          "id": "Trz0X1YJeDE43ibr",
+          "name": "DocuSign"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.docusign.com/v1/accounts/a07219b4-d1d8-4f3b-a151-a602b7a8db79/workflows/030bed19-639d-44d0-bb0a-27f67d340e7f/actions/trigger",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"instance_name\": \"SOA Agreement for {{$json.body.property_address_full || 'Not Applicable'}}\",\n  \"trigger_inputs\": {\n    \"startDate\": \"{{ $now.toISO() }}\",\n    \"agent_name\": \"{{$json.body.agent_name || 'Not Applicable'}}\",\n    \"agent_email\": \"{{$json.body.agent_email || 'Not Applicable'}}\",\n    \"agent_mobile\": \"{{$json.body.agent_mobile || 'Not Applicable'}}\",\n    \"office_name\": \"{{$json.body.office_name || 'Not Applicable'}}\",\n    \"office_street\": \"{{ $json.body.office_street || 'Not Applicable' }}\",\n    \"office_suburb\": \"{{ $json.body.office_suburb || 'Not Applicable' }}\",\n    \"office_state\": \"{{ $json.body.office_state || 'NA' }}\",\n    \"office_postcode\": \"{{ $json.body.office_postcode || 'NA' }}\",\n    \"office_address\": \"{{$json.body.office_address_full || 'Not Applicable'}}\",\n    \"office_phone\": \"{{$json.body.office_phone || 'Not Applicable'}}\",\n    \"property_street\": \"{{$json.body.property_street || 'Not Applicable'}}\",\n    \"property_suburb\": \"{{$json.body.property_suburb || 'Not Applicable'}}\",\n    \"property_state\": \"{{$json.body.property_state || 'Not Applicable'}}\",\n    \"property_postcode\": \"{{$json.body.property_postcode || 'Not Applicable'}}\",\n    \"property_address_full\": \"{{$json.body.property_address_full || 'Not Applicable'}}\",\n    \"ct_volume\": \"{{$json.body.ct_volume || 'Not Applicable'}}\",\n    \"folio_no\": \"{{$json.body.folio_no || 'Not Applicable'}}\",\n    \"pid\": \"{{$json.body.pid || 'Not Applicable'}}\",\n    \"listing_no\": \"{{$json.body.listing_no || 'Not Applicable'}}\",\n    \"listing_price\": \"{{$json.body.listing_price || 'Not Applicable'}}\",\n    \"listing_price_in_words\": \"{{ $json.body.listing_price_in_words || 'Not Applicable' }}\",\n    \"listing_price_in_words_with_currency\": \"{{ $json.body.listing_price_in_words_with_currency || 'Not Applicable' }}\",\n    \"commission_fixed\": \"{{ $json.body.commission_fixed || 'Not Applicable' }}\",\n    \"commission_percentage\": \"{{ $json.body.commission_percentage || 'NA' }}\",\n    \"commission_value\": \"{{ $json.body.commission_value ? 'OF THE SALE PRICE' : 'Not Applicable' }}\",\n    \"commission_value_in_words\": \"{{ $json.body.commission_value_in_words || 'Not Applicable' }}\",\n    \"commission_value_in_words_with_currency\": \"{{ $json.body.commission_value_in_words_with_currency || 'Not Applicable' }}\",\n    \"gst_taxable\": \"{{$json.body.gst_taxable || ' ' }}\",\n    \"gst_none_taxable\": \"{{ $json.body.gst_non_taxable || ' ' }}\",\n    \"agency_period_type\": \"{{ $json.body.agency_period_type || 'Not Applicable' }}\",\n    \"sole_agency_period\": \"{{$json.body.sole_agency_period || 'Not Applicable'}}\",\n    \"vendor_structure\": \"{{$json.body.vendor_structure || 'Not Applicable'}}\",\n    \"vendor_count\": \"{{ $json.body.vendor_count || 'Not Applicable' }}\",\n    \"company_name\": \"{{ $json.body.company_name || 'Not Applicable' }}\",\n    \"all_vendors_names\": \"{{ ($json.body.all_vendors_names || 'Not Applicable').trim() }}\",\n    \"all_vendors_first_names\": \"{{ $json.body.all_vendors_first_names || 'Not Applicable' }}\",\n    \"all_vendors_email\": \"{{ $json.body.all_vendors_email || 'Not Applicable' }}\",\n    \"vendor_1_full_name\": \"{{ ($json.body.vendor_1.full_name || 'Not Applicable').trim() }}\",\n    \"vendor_1_full_name_id\": \"{{ ($json.body.vendor_1.full_name_id || 'Not Applicable').trim() }}\",\n    \"vendor_1_full_name_trustee\": \"{{ $json.body.vendor_1.full_name_trustee || 'Not Applicable' }}\",\n    \"vendor_1_full_name_val\": \"{{ ($json.body.vendor_1.full_name_val || 'Not Applicable').trim() }}\",\n    \"vendor_1_email\": \"{{$json.body.vendor_1.email || 'Not Applicable'}}\",\n    \"vendor_1_email_val\": \"{{$json.body.vendor_1.email_val || 'Not Applicable'}}\",\n    \"vendor_1_mobile\": \"{{$json.body.vendor_1.mobile || 'Not Applicable'}}\",\n    \"vendor_1_home_phone\": \"{{ $json.body.vendor_1.home_phone || 'Not Applicable' }}\",\n    \"vendor_1_street\": \"{{$json.body.vendor_1.street || 'Not Applicable'}}\",\n    \"vendor_1_suburb\": \"{{$json.body.vendor_1.suburb || 'Not Applicable'}}\",\n    \"vendor_1_state\": \"{{$json.body.vendor_1.state || 'NA'}}\",\n    \"vendor_1_postcode\": \"{{$json.body.vendor_1.postcode || 'NA'}}\",\n    \"vendor_1_address_full\": \"{{$json.body.vendor_1.address_full || 'Not Applicable'}}\",\n    \"vendor_2_full_name\": \"{{$json.body.vendor_2.full_name || 'Not Applicable'}}\",\n    \"vendor_2_full_name_id\": \"{{ $json.body.vendor_2.full_name_id || 'Not Applicable' }}\",\n    \"vendor_2_full_name_trustee\": \"{{ $json.body.vendor_2.full_name_trustee || 'Not Applicable' }}\",\n    \"vendor_2_full_name_val\": \"{{ $json.body.vendor_2.full_name_val || 'Not Applicable' }}\",\n    \"vendor_2_email\": \"{{$json.body.vendor_2.email || 'Not Applicable'}}\",\n    \"vendor_2_email_val\": \"{{$json.body.vendor_2.email_val || 'Not Applicable'}}\",\n    \"vendor_2_mobile\": \"{{$json.body.vendor_2.mobile || 'Not Applicable'}}\",\n    \"vendor_2_home_phone\": \"{{ $json.body.vendor_2.home_phone || 'Not Applicable' }}\",\n    \"vendor_2_street\": \"{{$json.body.vendor_2.street || 'Not Applicable'}}\",\n    \"vendor_2_suburb\": \"{{$json.body.vendor_2.suburb || 'Not Applicable'}}\",\n    \"vendor_2_state\": \"{{$json.body.vendor_2.state || 'NA'}}\",\n    \"vendor_2_postcode\": \"{{$json.body.vendor_2.postcode || 'NA'}}\",\n    \"vendor_2_address_full\": \"{{$json.body.vendor_2.address_full || 'Not Applicable'}}\",\n    \"vendor_3_full_name\": \"{{$json.body.vendor_3.full_name || 'Not Applicable'}}\",\n    \"vendor_3_full_name_id\": \"{{ $json.body.vendor_3.full_name_id || 'Not Applicable' }}\",\n    \"vendor_3_full_name_trustee\": \"{{ $json.body.vendor_3.full_name_trustee || 'Not Applicable' }}\",\n    \"vendor_3_full_name_val\": \"{{ $json.body.vendor_3.full_name_val || 'Not Applicable' }}\",\n    \"vendor_3_email\": \"{{$json.body.vendor_3.email || 'Not Applicable'}}\",\n    \"vendor_3_email_val\": \"{{$json.body.vendor_3.email_val || 'Not Applicable'}}\",\n    \"vendor_3_mobile\": \"{{$json.body.vendor_3.mobile || 'Not Applicable'}}\",\n    \"vendor_3_home_phone\": \"{{ $json.body.vendor_3.home_phone || 'Not Applicable' }}\",\n    \"vendor_3_street\": \"{{$json.body.vendor_3.street || 'Not Applicable'}}\",\n    \"vendor_3_suburb\": \"{{$json.body.vendor_3.suburb || 'Not Applicable'}}\",\n    \"vendor_3_state\": \"{{$json.body.vendor_3.state || 'NA'}}\",\n    \"vendor_3_postcode\": \"{{$json.body.vendor_3.postcode || 'NA'}}\",\n    \"vendor_3_address_full\": \"{{$json.body.vendor_3.address_full || 'Not Applicable'}}\",\n    \"vendor_4_full_name\": \"{{$json.body.vendor_4.full_name || 'Not Applicable'}}\",\n    \"vendor_4_full_name_id\": \"{{ $json.body.vendor_4.full_name_id || 'Not Applicable' }}\",\n    \"vendor_4_full_name_trustee\": \"{{ $json.body.vendor_4.full_name_trustee || 'Not Applicable' }}\",\n    \"vendor_4_full_name_val\": \"{{ $json.body.vendor_4.full_name_val || 'Not Applicable' }}\",\n    \"vendor_4_email\": \"{{$json.body.vendor_4.email || 'Not Applicable'}}\",\n    \"vendor_4_email_val\": \"{{$json.body.vendor_4.email_val || 'Not Applicable'}}\",\n    \"vendor_4_mobile\": \"{{$json.body.vendor_4.mobile || 'Not Applicable'}}\",\n    \"vendor_4_home_phone\": \"{{ $json.body.vendor_4.home_phone || 'Not Applicable' }}\",\n    \"vendor_4_street\": \"{{$json.body.vendor_4.street || 'Not Applicable'}}\",\n    \"vendor_4_suburb\": \"{{$json.body.vendor_4.suburb || 'Not Applicable'}}\",\n    \"vendor_4_state\": \"{{$json.body.vendor_4.state || 'NA'}}\",\n    \"vendor_4_postcode\": \"{{$json.body.vendor_4.postcode || 'NA'}}\",\n    \"vendor_4_address_full\": \"{{$json.body.vendor_4.address_full || 'Not Applicable'}}\",\n    \"marketing_total_cost\": \"{{$json.body.marketing_total_cost || 'Not Applicable'}}\",\n    \"marketing_total_cost_in_words\": \"{{ $json.body.marketing_total_cost_in_words || 'Not Applicable' }}\",\n    \"marketing_total_cost_in_words_with_currency\": \"{{ $json.body.marketing_total_cost_in_words_with_currency || 'Not Applicable' }}\",\n    \"marketing_list_string\": \"{{$json.body.marketing_list_string || 'Not Applicable'}}\",\n    \"annexure_a\": \"{{ $json.body.annexure_a }}\",\n    \"file_name\": \"{{ ($json.body.file_name || 'Not Applicable').replace(/\\\\t/g, '') }}\",\n    \"file_name_folder\": \"{{ $json.body.file_name_folder || 'Not Applicable' }}\",\n    \"file_name_main\": \"{{ $json.body.file_name_main || 'Not Applicable' }}\",\n    \"annexure_count\": \"{{ $json.body.annexure_count || '0' }}\",\n    \"annex_item_1\": \"{{ $json.body.annex_item_1 || '' }}\",\n    \"annex_des_1\": \"{{ $json.body.annex_des_1 || '' }}\",\n    \"annex_item_2\": \"{{ $json.body.annex_item_2 || '' }}\",\n    \"annex_des_2\": \"{{ $json.body.annex_des_2 || ''}}\",\n    \"annex_item_3\": \"{{ $json.body.annex_item_3 || '' }}\",\n    \"annex_des_3\": \"{{ $json.body.annex_des_3 || '' }}\",\n    \"annex_item_4\": \"{{ $json.body.annex_item_4 || '' }}\",\n    \"annex_des_4\": \"{{ $json.body.annex_des_4 || '' }}\",\n    \"annex_item_5\": \"{{ $json.body.annex_item_5 || '' }}\",\n    \"annex_des_5\": \"{{ $json.body.annex_des_5 || '' }}\",\n    \"annex_item_6\": \"{{ $json.body.annex_item_6 || '' }}\",\n    \"annex_des_6\": \"{{ $json.body.annex_des_6 || '' }}\",\n    \"annex_item_7\": \"{{ $json.body.annex_item_7 || '' }}\",\n    \"annex_des_7\": \"{{ $json.body.annex_des_7 || ''}}\",\n    \"annex_item_8\": \"{{ $json.body.annex_item_8 || '' }}\",\n    \"annex_des_8\": \"{{ $json.body.annex_des_8 || '' }}\",\n    \"annex_item_9\": \"{{ $json.body.annex_item_9 || '' }}\",\n    \"annex_des_9\": \"{{ $json.body.annex_des_9 || ''}}\",\n    \"annex_item_10\": \"{{ $json.body.annex_item_10 || '' }}\",\n    \"annex_des_10\": \"{{ $json.body.annex_des_10 || ''}}\",\n    \"annex_item_11\": \"{{ $json.body.annex_item_11 || '' }}\",\n    \"annex_des_11\": \"{{ $json.body.annex_des_11 || '' }}\",\n    \"annex_item_12\": \"{{ $json.body.annex_item_12 || '' }}\",\n    \"annex_des_12\": \"{{ $json.body.annex_des_12 || '' }}\",\n    \"annex_item_13\": \"{{ $json.body.annex_item_13 || '' }}\",\n    \"annex_des_13\": \"{{ $json.body.annex_des_13 || ''}}\",\n    \"marketing_item_1\": \"{{ $json.body.marketing_item_1 || ''}}\",\n    \"marketing_price_1\": \"{{ $json.body.marketing_price_1 || ''}}\",\n    \"marketing_item_2\": \"{{ $json.body.marketing_item_2 || ''}}\",\n    \"marketing_price_2\": \"{{ $json.body.marketing_price_2 || ''}}\",\n    \"marketing_item_3\": \"{{ $json.body.marketing_item_3 || ''}}\",\n    \"marketing_price_3\": \"{{ $json.body.marketing_price_3 || ''}}\",\n    \"marketing_item_4\": \"{{ $json.body.marketing_item_4 || ''}}\",\n    \"marketing_price_4\": \"{{ $json.body.marketing_price_4 || ''}}\",\n    \"marketing_item_5\": \"{{ $json.body.marketing_item_5 || ''}}\",\n    \"marketing_price_5\": \"{{ $json.body.marketing_price_5 || ''}}\",\n    \"marketing_item_6\": \"{{ $json.body.marketing_item_6 || ''}}\",\n    \"marketing_price_6\": \"{{ $json.body.marketing_price_6 || ''}}\",\n    \"marketing_item_7\": \"{{ $json.body.marketing_item_7 || ''}}\",\n    \"marketing_price_7\": \"{{ $json.body.marketing_price_7 || ''}}\",\n    \"marketing_item_8\": \"{{ $json.body.marketing_item_8 || ''}}\",\n    \"marketing_price_8\": \"{{ $json.body.marketing_price_8 || ''}}\",\n    \"marketing_item_9\": \"{{ $json.body.marketing_item_9 || ''}}\",\n    \"marketing_price_9\": \"{{ $json.body.marketing_price_9 || ''}}\",\n    \"marketing_item_10\": \"{{ $json.body.marketing_item_10 || ''}}\",\n    \"marketing_price_10\": \"{{ $json.body.marketing_price_10 || ''}}\",\n    \"marketing_item_11\": \"{{ $json.body.marketing_item_11 || ''}}\",\n    \"marketing_price_11\": \"{{ $json.body.marketing_price_11 || ''}}\",\n    \"marketing_item_12\": \"{{ $json.body.marketing_item_12 || ''}}\",\n    \"marketing_price_12\": \"{{ $json.body.marketing_price_12 || ''}}\",\n    \"marketing_item_13\": \"{{ $json.body.marketing_item_13 || ''}}\",\n    \"marketing_price_13\": \"{{ $json.body.marketing_price_13 || ''}}\",\n    \"marketing_item_14\": \"{{ $json.body.marketing_item_14 || ''}}\",\n    \"marketing_price_14\": \"{{ $json.body.marketing_price_14 || ''}}\",\n    \"marketing_item_15\": \"{{ $json.body.marketing_item_15 || ''}}\",\n    \"marketing_price_15\": \"{{ $json.body.marketing_price_15 || ''}}\",\n    \"marketing_item_16\": \"{{ $json.body.marketing_item_16 || ''}}\",\n    \"marketing_price_16\": \"{{ $json.body.marketing_price_16 || ''}}\",\n    \"marketing_item_17\": \"{{ $json.body.marketing_item_17 || ''}}\",\n    \"marketing_price_17\": \"{{ $json.body.marketing_price_17 || ''}}\",\n    \"marketing_item_18\": \"{{ $json.body.marketing_item_18 || ''}}\",\n    \"marketing_price_18\": \"{{ $json.body.marketing_price_18 || ''}}\",\n    \"marketing_item_19\": \"{{ $json.body.marketing_item_19 || ''}}\",\n    \"marketing_price_19\": \"{{ $json.body.marketing_price_19 || ''}}\",\n    \"marketing_item_20\": \"{{ $json.body.marketing_item_20 || ''}}\",\n    \"marketing_price_20\": \"{{ $json.body.marketing_price_20 || ''}}\",\n    \"company_acn\": \"{{ $json.body.company_acn || 'Not Applicable' }}\",\n    \"company_name_acn\": \"{{ $json.body.company_name_acn || 'Not Applicable' }}\",\n    \"trust_name\": \"{{ $json.body.trust_name || 'Not Applicable' }}\",\n    \"all_vendors_names_trust\": \"{{ ($json.body.all_vendors_names_trust || 'Not Applicable').trim() }}\",\n    \"vendor_type\": \"{{ $json.body.vendor_type || 'Not Applicable' }}\",\n    \"vendor_subtype\": \"{{ $json.body.vendor_subtype || 'Not Applicable' }}\",\n    \"agent_mobile_no\": {\n      \"countryCode\": \"{{ $json.body.agent_mobile_countrycode || '' }}\",\n      \"number\": \"{{ $json.body.agent_mobile_number || '' }}\"\n    },\n    \"vendor_1_mobile_no\": {\n      \"countryCode\": \"{{ $json.body.vendor_1.mobile_countrycode || '' }}\",\n      \"number\": \"{{ $json.body.vendor_1.mobile_number || '' }}\"\n    },\n    \"vendor_2_mobile_no\": {\n      \"countryCode\": \"{{ $json.body.vendor_2.mobile_countrycode || '' }}\",\n      \"number\": \"{{ $json.body.vendor_2.mobile_number || '' }}\"\n    },\n    \"vendor_3_mobile_no\": {\n      \"countryCode\": \"{{ $json.body.vendor_3.mobile_countrycode || '' }}\",\n      \"number\": \"{{ $json.body.vendor_3.mobile_number || '' }}\"\n    },\n    \"vendor_4_mobile_no\": {\n      \"countryCode\": \"{{ $json.body.vendor_4.mobile_countrycode || '' }}\",\n      \"number\": \"{{ $json.body.vendor_4.mobile_number || '' }}\"\n    }\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e4bb0bf8-d1c3-4df1-9b58-02b4474992cb",
+      "name": "HTTP Post Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "Pc6ND4tAVak1lyyt",
+          "name": "VaultRE Auth"
+        },
+        "oAuth2Api": {
+          "id": "Trz0X1YJeDE43ibr",
+          "name": "DocuSign"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "hup.app.n8n.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
+            "content-length": "5290",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "123.51.1.148",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "AU",
+            "cf-ray": "9d7d14bf4fa4e7e8-SYD",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "origin": "https://hup-sales-app.vercel.app",
+            "priority": "u=1, i",
+            "referer": "https://hup-sales-app.vercel.app/",
+            "sec-ch-ua": "\"Not:A-Brand\";v=\"99\", \"Google Chrome\";v=\"145\", \"Chromium\";v=\"145\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "cross-site",
+            "x-forwarded-for": "123.51.1.148, 172.69.60.131",
+            "x-forwarded-host": "hup.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-gwc-35-679675fcf-j46l7",
+            "x-is-trusted": "yes",
+            "x-real-ip": "123.51.1.148"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "agent_name": "JODI TUNN",
+            "agent_email": "jodi.tunn@harcourts.com.au",
+            "agent_mobile": "+61 409571361",
+            "agent_mobile_countrycode": "61",
+            "agent_mobile_number": "409571361",
+            "office_name": "PENGUIN",
+            "office_street": "54 MAIN ROAD",
+            "office_suburb": "PENGUIN",
+            "office_state": "TAS",
+            "office_postcode": "7316",
+            "office_address_full": "",
+            "office_phone": "03 6437 1755",
+            "property_street": "1/27 MAIN ROAD",
+            "property_suburb": "PENGUIN",
+            "property_state": "TAS",
+            "property_postcode": "7316",
+            "property_address_full": "1/27 MAIN ROAD, PENGUIN, TAS 7316",
+            "ct_volume": "100706",
+            "folio_no": "1",
+            "pid": "7814330",
+            "listing_no": "",
+            "annexure_a": false,
+            "annexure_count": 0,
+            "annex_item_1": null,
+            "annex_des_1": null,
+            "annex_item_2": null,
+            "annex_des_2": null,
+            "annex_item_3": null,
+            "annex_des_3": null,
+            "annex_item_4": null,
+            "annex_des_4": null,
+            "annex_item_5": null,
+            "annex_des_5": null,
+            "annex_item_6": null,
+            "annex_des_6": null,
+            "annex_item_7": null,
+            "annex_des_7": null,
+            "annex_item_8": null,
+            "annex_des_8": null,
+            "annex_item_9": null,
+            "annex_des_9": null,
+            "annex_item_10": null,
+            "annex_des_10": null,
+            "annex_item_11": null,
+            "annex_des_11": null,
+            "annex_item_12": null,
+            "annex_des_12": null,
+            "annex_item_13": null,
+            "annex_des_13": null,
+            "listing_price": "OFFERS OVER $850,000",
+            "listing_price_in_words": "EIGHT HUNDRED AND FIFTY THOUSAND",
+            "listing_price_in_words_with_currency": "EIGHT HUNDRED AND FIFTY THOUSAND DOLLARS",
+            "commission_fixed": null,
+            "commission_percentage": "2.5",
+            "commission_value": "0",
+            "commission_value_in_words": "zero",
+            "commission_value_in_words_with_currency": "zero dollars",
+            "gst_taxable": null,
+            "gst_non_taxable": "✔",
+            "agency_period_type": "standard",
+            "sole_agency_period": "120",
+            "vendor_structure": "INDIVIDUAL",
+            "vendor_type": "INDIVIDUAL",
+            "vendor_subtype": null,
+            "vendor_count": 2,
+            "trust_name": null,
+            "company_name": null,
+            "company_acn": null,
+            "company_name_acn": null,
+            "all_vendors_names": "\tWENDY ANNE TEMPLAR, GREGORY BRUCE TEMPLAR",
+            "all_vendors_names_trust": "\tWENDY ANNE TEMPLAR, GREGORY BRUCE TEMPLAR",
+            "all_vendors_first_names": "Wendy and Gregory",
+            "all_vendors_email": "wendy@penseainvestments.com.au;greg@penseainvestments.com.au",
+            "vendor_1": {
+              "full_name": "\tWENDY ANNE TEMPLAR",
+              "full_name_id": "\tWENDY ANNE TEMPLAR",
+              "full_name_trustee": null,
+              "full_name_val": "\tWENDY ANNE TEMPLAR",
+              "email": "wendy@penseainvestments.com.au",
+              "email_val": "wendy@penseainvestments.com.au",
+              "mobile": "+61 408556224",
+              "mobile_countrycode": "61",
+              "mobile_number": "408556224",
+              "home_phone": null,
+              "street": "815 SOUTH ROAD",
+              "suburb": "PENGUIN",
+              "state": "TAS",
+              "postcode": "7316",
+              "address_full": "815 SOUTH ROAD, PENGUIN, TAS 7316"
+            },
+            "vendor_2": {
+              "full_name": "GREGORY BRUCE TEMPLAR",
+              "full_name_id": "GREGORY BRUCE TEMPLAR",
+              "full_name_trustee": null,
+              "full_name_val": "GREGORY BRUCE TEMPLAR",
+              "email": "greg@penseainvestments.com.au",
+              "email_val": "greg@penseainvestments.com.au",
+              "mobile": "+61 419396875",
+              "mobile_countrycode": "61",
+              "mobile_number": "419396875",
+              "home_phone": null,
+              "street": "815 SOUTH ROAD",
+              "suburb": "PENGUIN",
+              "state": "TAS",
+              "postcode": "7316",
+              "address_full": "815 SOUTH ROAD, PENGUIN, TAS 7316"
+            },
+            "vendor_3": {
+              "full_name": null,
+              "full_name_id": null,
+              "full_name_trustee": null,
+              "full_name_val": null,
+              "email": null,
+              "email_val": null,
+              "mobile": null,
+              "mobile_countrycode": null,
+              "mobile_number": null,
+              "home_phone": null,
+              "street": null,
+              "suburb": null,
+              "state": null,
+              "postcode": null,
+              "address_full": null
+            },
+            "vendor_4": {
+              "full_name": null,
+              "full_name_id": null,
+              "full_name_trustee": null,
+              "full_name_val": null,
+              "email": null,
+              "email_val": null,
+              "mobile": null,
+              "mobile_countrycode": null,
+              "mobile_number": null,
+              "home_phone": null,
+              "street": null,
+              "suburb": null,
+              "state": null,
+              "postcode": null,
+              "address_full": null
+            },
+            "marketing_total_cost": "$2,038",
+            "marketing_total_cost_in_words": "two thousand, thirty-eight",
+            "marketing_total_cost_in_words_with_currency": "two thousand, thirty-eight dollars",
+            "marketing_list_string": "MARKETING BASE PACKAGE FY26, HOME PACKAGE | RIX",
+            "marketing_list_id": "311716, 311725",
+            "marketing_supplier_id": "67828, 67831",
+            "selected_marketing_ids": [
+              "311716",
+              "311725"
+            ],
+            "marketing_item_1": "1. Marketing Base Package FY26",
+            "marketing_price_1": "$1,675",
+            "marketing_item_2": "2. Home Package | RIX",
+            "marketing_price_2": "$363",
+            "marketing_item_3": null,
+            "marketing_price_3": null,
+            "marketing_item_4": null,
+            "marketing_price_4": null,
+            "marketing_item_5": null,
+            "marketing_price_5": null,
+            "marketing_item_6": null,
+            "marketing_price_6": null,
+            "marketing_item_7": null,
+            "marketing_price_7": null,
+            "marketing_item_8": null,
+            "marketing_price_8": null,
+            "marketing_item_9": null,
+            "marketing_price_9": null,
+            "marketing_item_10": null,
+            "marketing_price_10": null,
+            "marketing_item_11": null,
+            "marketing_price_11": null,
+            "marketing_item_12": null,
+            "marketing_price_12": null,
+            "marketing_item_13": null,
+            "marketing_price_13": null,
+            "marketing_item_14": null,
+            "marketing_price_14": null,
+            "marketing_item_15": null,
+            "marketing_price_15": null,
+            "marketing_item_16": null,
+            "marketing_price_16": null,
+            "marketing_item_17": null,
+            "marketing_price_17": null,
+            "marketing_item_18": null,
+            "marketing_price_18": null,
+            "marketing_item_19": null,
+            "marketing_price_19": null,
+            "marketing_item_20": null,
+            "marketing_price_20": null,
+            "file_name": "[1/27 MAIN ROAD, PENGUIN, TAS 7316][\tWENDY ANNE TEMPLAR, GREGORY BRUCE TEMPLAR][Wendy and Gregory][wendy@penseainvestments.com.au;greg@penseainvestments.com.au][JODI TUNN][+61 409571361][jodi.tunn@harcourts.com.au][56]",
+            "file_name_folder": "Main Road 1-27, Penguin",
+            "file_name_main": "1-27 Main Road - Sole Agency Agreement"
+          },
+          "webhookUrl": "https://hup.app.n8n.cloud/webhook/796be5aa-d13c-4bfb-9c2e-6b35973ed68d",
+          "executionMode": "production"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Post Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Get Schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Post Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "QgvG0qADBgC4xFBC",
+    "timeSavedPerExecution": 2
+  },
+  "versionId": "da9e7583-02ca-4e1c-926c-06a2af0f2e46",
+  "meta": {
+    "instanceId": "c9ddb60f06ad1ccfc6ce8013404853cf6efa7735a26b0e619a9a336dd607d044"
+  },
+  "id": "nylrXtum8tWLUqn9",
+  "tags": []
+}

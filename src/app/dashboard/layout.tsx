@@ -35,6 +35,7 @@ function getBreadcrumb(pathname: string): string | null {
   if (pathname.includes("/appraisal")) return "Front Sheet AI";
   if (pathname.includes("/saa")) return "Sole Agency Agreement";
   if (pathname.includes("/copypro")) return "CopyPro Assistant";
+  if (pathname.includes("/expense-approval")) return "Expense Approval";
   if (pathname.includes("/offers")) return "Offers Dashboard";
   if (pathname.includes("/offer")) return "Offer Form";
   if (pathname.includes("/settings")) return "Settings";
