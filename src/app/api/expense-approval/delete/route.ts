@@ -26,8 +26,7 @@ export async function DELETE(request: NextRequest) {
         const { error } = await supabase
             .from("landlord_expense_approvals")
             .delete()
-            .eq("id", id)
-            .eq("user_id", user.id);
+            .eq("id", id);
 
         if (error) {
             console.error("Delete error:", error);
