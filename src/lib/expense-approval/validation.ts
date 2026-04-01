@@ -144,18 +144,17 @@ export function validateTasWaterStep(formData: ExpenseApprovalFormData): Validat
     if (!formData.taswaterAccountName.trim()) {
         errors.taswaterAccountName = "Account name is required";
     }
-    if (!formData.taswaterPostalStreet.trim()) {
-        errors.taswaterPostalStreet = "Postal street address is required";
-    }
-    if (!formData.taswaterPostalSuburb.trim()) {
-        errors.taswaterPostalSuburb = "Postal suburb is required";
-    }
-    if (!formData.taswaterPostalPostcode.trim()) {
-        errors.taswaterPostalPostcode = "Postal postcode is required";
-    }
 
     if (formData.taswaterChangeOwnership && !formData.taswaterSettlementDate.trim()) {
         errors.taswaterSettlementDate = "Settlement date is required when change of ownership is selected";
+    }
+
+    // Authorisation type is required for each signatory
+    if (!formData.taswaterAuth1Type) {
+        errors.taswaterAuth1Type = "Please select Account Holder or Other";
+    }
+    if (formData.ownerCount >= 2 && !formData.taswaterAuth2Type) {
+        errors.taswaterAuth2Type = "Please select Account Holder or Other";
     }
 
     return errors;

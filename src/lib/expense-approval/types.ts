@@ -46,7 +46,7 @@ export interface ExpenseApprovalFormData {
     companyName: string;
     companyACN: string;
     hasMultipleDirectors: boolean;
-    ownerCount: 1 | 2 | 3 | 4;
+    ownerCount: 1 | 2;
     owners: OwnerInfo[];
 
     // Document Uploads (base64)
@@ -66,8 +66,15 @@ export interface ExpenseApprovalFormData {
     taswaterAuthorityLevel: "" | "1" | "2" | "3";
     taswaterCancelBpay: boolean;
     taswaterCancelDirectDebit: boolean;
+    taswaterTradeWasteOnly: boolean;
     taswaterChangeOwnership: boolean;
     taswaterSettlementDate: string;
+
+    // Authorisation — "I am an" per signatory
+    taswaterAuth1Type: "account_holder" | "other" | "";
+    taswaterAuth1OtherText: string;
+    taswaterAuth2Type: "account_holder" | "other" | "";
+    taswaterAuth2OtherText: string;
 }
 
 // ============================================
@@ -128,8 +135,15 @@ export const initialExpenseApprovalFormData: ExpenseApprovalFormData = {
     taswaterAuthorityLevel: "",
     taswaterCancelBpay: false,
     taswaterCancelDirectDebit: false,
+    taswaterTradeWasteOnly: false,
     taswaterChangeOwnership: false,
     taswaterSettlementDate: "",
+
+    // Authorisation
+    taswaterAuth1Type: "",
+    taswaterAuth1OtherText: "",
+    taswaterAuth2Type: "",
+    taswaterAuth2OtherText: "",
 };
 
 // ============================================

@@ -59,8 +59,10 @@ export interface ExpenseApprovalPayload {
     trade_waste_information_only: string;
     authorisation_account_holder_1: string;
     authorisation_other_1: string;
+    authorisation_other_details_1: string;
     authorisation_account_holder_2: string;
     authorisation_other_2: string;
+    authorisation_other_details_2: string;
 
     // Ownership structure
     ownership_structure: string;
@@ -93,9 +95,9 @@ export interface ExpenseApprovalPayload {
     taswater_postal_suburb: string | null;
     taswater_postal_state: string | null;
     taswater_postal_postcode: string | null;
-    taswater_cancel_bpay: string | null;
-    taswater_cancel_direct_debit: string | null;
-    taswater_change_ownership: string | null;
+    taswater_cancel_bpay: string;
+    taswater_cancel_direct_debit: string;
+    taswater_change_ownership: string;
     taswater_settlement_date: string | null;
 }
 
@@ -377,11 +379,13 @@ export function buildExpenseApprovalPayload(formData: ExpenseApprovalFormData): 
         // DocuSign display fields — TasWater checkmarks & visibility
         has_second_authorisation: (formData.taswater && formData.ownerCount >= 2) ? "." : "",
         has_change_ownership: (formData.taswater && formData.taswaterChangeOwnership) ? "✓" : "",
-        trade_waste_information_only: "",
-        authorisation_account_holder_1: formData.taswater ? "✓" : "",
-        authorisation_other_1: "",
-        authorisation_account_holder_2: (formData.taswater && formData.ownerCount >= 2) ? "✓" : "",
-        authorisation_other_2: "",
+        trade_waste_information_only: (formData.taswater && formData.taswaterTradeWasteOnly) ? "✓" : "",
+        authorisation_account_holder_1: formData.taswater && formData.taswaterAuth1Type === "account_holder" ? "✓" : "",
+        authorisation_other_1: formData.taswater && formData.taswaterAuth1Type === "other" ? "✓" : "",
+        authorisation_other_details_1: formData.taswater && formData.taswaterAuth1Type === "other" ? (formData.taswaterAuth1OtherText?.trim() || "") : "",
+        authorisation_account_holder_2: formData.taswater && formData.ownerCount >= 2 && formData.taswaterAuth2Type === "account_holder" ? "✓" : "",
+        authorisation_other_2: formData.taswater && formData.ownerCount >= 2 && formData.taswaterAuth2Type === "other" ? "✓" : "",
+        authorisation_other_details_2: formData.taswater && formData.ownerCount >= 2 && formData.taswaterAuth2Type === "other" ? (formData.taswaterAuth2OtherText?.trim() || "") : "",
 
         // TasWater (always present, null when not applicable)
         taswater_account_no: formData.taswater ? formData.taswaterAccountNo.trim() || null : null,
@@ -390,9 +394,9 @@ export function buildExpenseApprovalPayload(formData: ExpenseApprovalFormData): 
         taswater_postal_suburb: formData.taswater ? toUpper(formData.taswaterPostalSuburb.trim()) || null : null,
         taswater_postal_state: formData.taswater ? toUpper(formData.taswaterPostalState.trim()) || null : null,
         taswater_postal_postcode: formData.taswater ? formData.taswaterPostalPostcode.trim() || null : null,
-        taswater_cancel_bpay: formData.taswater ? (formData.taswaterCancelBpay ? "Yes" : "No") : null,
-        taswater_cancel_direct_debit: formData.taswater ? (formData.taswaterCancelDirectDebit ? "Yes" : "No") : null,
-        taswater_change_ownership: formData.taswater ? (formData.taswaterChangeOwnership ? "Yes" : "No") : null,
+        taswater_cancel_bpay: formData.taswater ? (formData.taswaterCancelBpay ? "✓" : "") : "",
+        taswater_cancel_direct_debit: formData.taswater ? (formData.taswaterCancelDirectDebit ? "✓" : "") : "",
+        taswater_change_ownership: formData.taswater ? (formData.taswaterChangeOwnership ? "✓" : "") : "",
         taswater_settlement_date: formData.taswater && formData.taswaterChangeOwnership
             ? formData.taswaterSettlementDate.trim() || null
             : null,

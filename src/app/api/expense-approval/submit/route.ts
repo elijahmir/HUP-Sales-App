@@ -65,6 +65,21 @@ export async function POST(request: NextRequest) {
         // Build payload for n8n
         const payload = buildExpenseApprovalPayload(formData);
 
+        // 🔍 DEBUG: TasWater field tracing
+        console.log("🔍 [DEBUG] TasWater formData:", {
+            taswater: formData.taswater,
+            taswaterChangeOwnership: formData.taswaterChangeOwnership,
+            taswaterCancelBpay: formData.taswaterCancelBpay,
+            taswaterCancelDirectDebit: formData.taswaterCancelDirectDebit,
+            taswaterSettlementDate: formData.taswaterSettlementDate,
+        });
+        console.log("🔍 [DEBUG] TasWater payload:", {
+            taswater_change_ownership: payload.taswater_change_ownership,
+            taswater_cancel_bpay: payload.taswater_cancel_bpay,
+            taswater_cancel_direct_debit: payload.taswater_cancel_direct_debit,
+            taswater_settlement_date: payload.taswater_settlement_date,
+        });
+
         // Summary fields
         const ownerName =
             formData.owners[0]?.fullName ||

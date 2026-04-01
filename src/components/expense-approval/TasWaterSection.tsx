@@ -1,9 +1,8 @@
 "use client";
 
+import { useRef } from "react";
 import type { ExpenseApprovalFormData } from "@/lib/expense-approval/types";
-import { AlertCircle, Info, Droplets, MapPin, Calendar, Copy } from "lucide-react";
-import { SuburbAutocomplete } from "@/components/saa/SuburbAutocomplete";
-import { isValidSuburb } from "@/lib/saa/suburbs";
+import { AlertCircle, Info, Droplets, Calendar } from "lucide-react";
 
 interface TasWaterSectionProps {
     formData: ExpenseApprovalFormData;
@@ -18,6 +17,8 @@ export function TasWaterSection({
     errors,
     setErrors,
 }: TasWaterSectionProps) {
+    const datePickerRef = useRef<HTMLInputElement>(null);
+
     const clearError = (key: string) => {
         if (errors[key]) {
             const newErrors = { ...errors };
@@ -26,23 +27,11 @@ export function TasWaterSection({
         }
     };
 
-    const handlePostalSameAsProperty = (checked: boolean) => {
-        if (checked) {
-            updateFormData({
-                taswaterPostalSameAsProperty: true,
-                taswaterPostalStreet: formData.propertyStreet,
-                taswaterPostalSuburb: formData.propertySuburb,
-                taswaterPostalPostcode: formData.propertyPostcode,
-                taswaterPostalState: formData.propertyState,
-            });
-        } else {
-            updateFormData({
-                taswaterPostalSameAsProperty: false,
-                taswaterPostalStreet: "",
-                taswaterPostalSuburb: "",
-                taswaterPostalPostcode: "",
-                taswaterPostalState: "TAS",
-            });
+    const openDatePicker = () => {
+        try {
+            datePickerRef.current?.showPicker();
+        } catch {
+            datePickerRef.current?.click();
         }
     };
 
@@ -105,190 +94,177 @@ export function TasWaterSection({
                 </div>
             </div>
 
-            {/* Postal Address */}
-            <div className="p-4 sm:p-5 bg-gray-50/50 rounded-xl border border-gray-100 space-y-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-teal-600" />
-                        <h3 className="font-semibold text-harcourts-navy">Postal Address for Notices</h3>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={() => handlePostalSameAsProperty(!formData.taswaterPostalSameAsProperty)}
-                        className="text-xs text-teal-600 hover:text-teal-800 font-medium flex items-center gap-1 transition-colors"
-                    >
-                        <Copy className="w-3 h-3" />
-                        {formData.taswaterPostalSameAsProperty
-                            ? "Unlink Property Address"
-                            : "Same as Property Address"}
-                    </button>
+            {/* Authorisation — "I am an:" per signatory */}
+            <div className="p-4 sm:p-5 bg-gray-50/50 rounded-xl border border-gray-100 space-y-5">
+                <div className="flex items-center gap-2 mb-1">
+                    <Info className="w-4 h-4 text-teal-600" />
+                    <h3 className="font-semibold text-harcourts-navy">Authorisation</h3>
                 </div>
 
-                {formData.taswaterPostalSameAsProperty ? (
-                    <div className="p-3 bg-teal-50/50 rounded-lg border border-teal-100">
-                        <p className="text-sm text-gray-700">
-                            {formData.propertyStreet}, {formData.propertySuburb} {formData.propertyState} {formData.propertyPostcode}
-                        </p>
-                        <p className="text-xs text-teal-500 mt-1">Linked to property address above</p>
+                {/* Signatory 1 */}
+                <div className="space-y-2">
+                    <label className="field-label mb-1 block">
+                        {formData.owners[0]?.fullName
+                            ? `${formData.owners[0].fullName} — I am an:`
+                            : "Signatory 1 — I am an:"}
+                    </label>
+                    <div className="flex flex-wrap gap-3">
+                        {[
+                            { label: "Account Holder", value: "account_holder" as const },
+                            { label: "Other", value: "other" as const },
+                        ].map((opt) => (
+                            <label
+                                key={`auth1-${opt.value}`}
+                                className={`
+                                    flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-all text-sm
+                                    ${formData.taswaterAuth1Type === opt.value
+                                        ? "border-teal-500 bg-teal-50 text-teal-700 font-medium"
+                                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                                    }
+                                `}
+                            >
+                                <input
+                                    type="radio"
+                                    name="auth1Type"
+                                    checked={formData.taswaterAuth1Type === opt.value}
+                                    onChange={() => {
+                                        updateFormData({ taswaterAuth1Type: opt.value });
+                                        clearError("taswaterAuth1Type");
+                                    }}
+                                    className="sr-only"
+                                />
+                                {opt.label}
+                            </label>
+                        ))}
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-                        {/* Street Address - 8 cols */}
-                        <div className="md:col-span-8">
-                            <label className="field-label">Street Address *</label>
+                    {errors.taswaterAuth1Type && (
+                        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" />{errors.taswaterAuth1Type}
+                        </p>
+                    )}
+                    {formData.taswaterAuth1Type === "other" && (
+                        <div className="mt-2">
                             <input
                                 type="text"
-                                value={formData.taswaterPostalStreet}
-                                onChange={(e) => {
-                                    updateFormData({ taswaterPostalStreet: e.target.value });
-                                    clearError("taswaterPostalStreet");
-                                }}
-                                placeholder="e.g. PO Box 113"
-                                className={`form-input ${errors.taswaterPostalStreet ? "border-red-500" : ""}`}
+                                value={formData.taswaterAuth1OtherText || ""}
+                                onChange={(e) => updateFormData({ taswaterAuth1OtherText: e.target.value })}
+                                placeholder="e.g. Company Director / President / CEO"
+                                className="form-input text-sm"
                             />
-                            {errors.taswaterPostalStreet && (
-                                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                                    <AlertCircle className="w-3 h-3" />{errors.taswaterPostalStreet}
-                                </p>
-                            )}
                         </div>
+                    )}
+                </div>
 
-                        {/* Postcode - 4 cols */}
-                        <div className="md:col-span-4">
-                            <label className="field-label">Postcode *</label>
-                            <input
-                                type="text"
-                                value={formData.taswaterPostalPostcode}
-                                onChange={(e) => {
-                                    updateFormData({ taswaterPostalPostcode: e.target.value.replace(/[^0-9]/g, "") });
-                                    clearError("taswaterPostalPostcode");
-                                }}
-                                placeholder="7315"
-                                maxLength={4}
-                                className={`form-input ${errors.taswaterPostalPostcode ? "border-red-500" : ""}`}
-                            />
-                            {errors.taswaterPostalPostcode && (
-                                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                                    <AlertCircle className="w-3 h-3" />{errors.taswaterPostalPostcode}
-                                </p>
-                            )}
+                {/* Signatory 2 — only if 2+ owners */}
+                {formData.ownerCount >= 2 && (
+                    <div className="space-y-2 pt-3 border-t border-gray-100">
+                        <label className="field-label mb-1 block">
+                            {formData.owners[1]?.fullName
+                                ? `${formData.owners[1].fullName} — I am an:`
+                                : "Signatory 2 — I am an:"}
+                        </label>
+                        <div className="flex flex-wrap gap-3">
+                            {[
+                                { label: "Account Holder", value: "account_holder" as const },
+                                { label: "Other", value: "other" as const },
+                            ].map((opt) => (
+                                <label
+                                    key={`auth2-${opt.value}`}
+                                    className={`
+                                        flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-all text-sm
+                                        ${formData.taswaterAuth2Type === opt.value
+                                            ? "border-teal-500 bg-teal-50 text-teal-700 font-medium"
+                                            : "border-gray-200 text-gray-600 hover:border-gray-300"
+                                        }
+                                    `}
+                                >
+                                    <input
+                                        type="radio"
+                                        name="auth2Type"
+                                        checked={formData.taswaterAuth2Type === opt.value}
+                                        onChange={() => {
+                                            updateFormData({ taswaterAuth2Type: opt.value });
+                                            clearError("taswaterAuth2Type");
+                                        }}
+                                        className="sr-only"
+                                    />
+                                    {opt.label}
+                                </label>
+                            ))}
                         </div>
-
-                        {/* Suburb with Autocomplete - full width */}
-                        <div className="md:col-span-12">
-                            <label htmlFor="property-suburb" className="field-label">Suburb *</label>
-                            <SuburbAutocomplete
-                                value={formData.taswaterPostalSuburb}
-                                onChange={(value) => {
-                                    updateFormData({ taswaterPostalSuburb: value });
-                                    clearError("taswaterPostalSuburb");
-                                }}
-                                onSelect={(suburb) => {
-                                    updateFormData({
-                                        taswaterPostalSuburb: suburb.suburb,
-                                        taswaterPostalPostcode: suburb.postcode,
-                                        taswaterPostalState: suburb.state,
-                                    });
-                                    const newErrors = { ...errors };
-                                    delete newErrors.taswaterPostalSuburb;
-                                    delete newErrors.taswaterPostalPostcode;
-                                    setErrors(newErrors);
-                                }}
-                                error={!!errors.taswaterPostalSuburb}
-                            />
-                            {errors.taswaterPostalSuburb && (
-                                <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
-                                    <AlertCircle className="w-3 h-3" />{errors.taswaterPostalSuburb}
-                                </p>
-                            )}
-                            {formData.taswaterPostalSuburb &&
-                                !isValidSuburb(formData.taswaterPostalSuburb) && (
-                                    <p className="text-xs text-amber-600 mt-1">
-                                        Warning: Suburb not found in Tasmania database
-                                    </p>
-                                )}
-                        </div>
+                        {errors.taswaterAuth2Type && (
+                            <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                                <AlertCircle className="w-3 h-3" />{errors.taswaterAuth2Type}
+                            </p>
+                        )}
+                        {formData.taswaterAuth2Type === "other" && (
+                            <div className="mt-2">
+                                <input
+                                    type="text"
+                                    value={formData.taswaterAuth2OtherText || ""}
+                                    onChange={(e) => updateFormData({ taswaterAuth2OtherText: e.target.value })}
+                                    placeholder="e.g. Company Director / President / CEO"
+                                    className="form-input text-sm"
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>
 
-            {/* Additional Options */}
+            {/* Trade Waste */}
+            <div className="p-4 sm:p-5 bg-gray-50/50 rounded-xl border border-gray-100 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                    <Info className="w-4 h-4 text-teal-600" />
+                    <h3 className="font-semibold text-harcourts-navy">Trade Waste</h3>
+                </div>
+                <label className="field-label mb-1 block">
+                    Is this authorisation for access to Trade Waste information only?
+                </label>
+                <div className="flex flex-wrap gap-3">
+                    {[
+                        { label: "Yes", value: true },
+                        { label: "No", value: false },
+                    ].map((opt) => (
+                        <label
+                            key={`trade-waste-${opt.label}`}
+                            className={`
+                                flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-all text-sm
+                                ${formData.taswaterTradeWasteOnly === opt.value
+                                    ? "border-teal-500 bg-teal-50 text-teal-700 font-medium"
+                                    : "border-gray-200 text-gray-600 hover:border-gray-300"
+                                }
+                            `}
+                        >
+                            <input
+                                type="radio"
+                                name="tradeWasteOnly"
+                                checked={formData.taswaterTradeWasteOnly === opt.value}
+                                onChange={() => updateFormData({ taswaterTradeWasteOnly: opt.value })}
+                                className="sr-only"
+                            />
+                            {opt.label}
+                        </label>
+                    ))}
+                </div>
+                {formData.taswaterTradeWasteOnly && (
+                    <p className="text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">
+                        Trade Waste Authorised Representatives will not be granted access to water and sewerage account information.
+                    </p>
+                )}
+            </div>
+
+            {/* Purchase & Settlement */}
             <div className="p-4 sm:p-5 bg-gray-50/50 rounded-xl border border-gray-100 space-y-5">
                 <div className="flex items-center gap-2 mb-1">
                     <Info className="w-4 h-4 text-teal-600" />
-                    <h3 className="font-semibold text-harcourts-navy">Additional Options</h3>
+                    <h3 className="font-semibold text-harcourts-navy">Recent Purchase</h3>
                 </div>
 
-                {/* Cancel BPAY */}
-                <div>
-                    <label className="field-label mb-2 block">
-                        Would you like to cancel any existing BPAY arrangement?
-                    </label>
-                    <div className="flex gap-4">
-                        {[
-                            { label: "Yes", value: true },
-                            { label: "No", value: false },
-                        ].map((opt) => (
-                            <label
-                                key={`bpay-${opt.label}`}
-                                className={`
-                                    flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-all text-sm
-                                    ${formData.taswaterCancelBpay === opt.value
-                                        ? "border-teal-500 bg-teal-50 text-teal-700 font-medium"
-                                        : "border-gray-200 text-gray-600 hover:border-gray-300"
-                                    }
-                                `}
-                            >
-                                <input
-                                    type="radio"
-                                    name="cancelBpay"
-                                    checked={formData.taswaterCancelBpay === opt.value}
-                                    onChange={() => updateFormData({ taswaterCancelBpay: opt.value })}
-                                    className="sr-only"
-                                />
-                                {opt.label}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Cancel Direct Debit */}
-                <div>
-                    <label className="field-label mb-2 block">
-                        Would you like to cancel any existing Direct Debit arrangement?
-                    </label>
-                    <div className="flex gap-4">
-                        {[
-                            { label: "Yes", value: true },
-                            { label: "No", value: false },
-                        ].map((opt) => (
-                            <label
-                                key={`dd-${opt.label}`}
-                                className={`
-                                    flex items-center gap-2 px-4 py-2 rounded-lg border cursor-pointer transition-all text-sm
-                                    ${formData.taswaterCancelDirectDebit === opt.value
-                                        ? "border-teal-500 bg-teal-50 text-teal-700 font-medium"
-                                        : "border-gray-200 text-gray-600 hover:border-gray-300"
-                                    }
-                                `}
-                            >
-                                <input
-                                    type="radio"
-                                    name="cancelDirectDebit"
-                                    checked={formData.taswaterCancelDirectDebit === opt.value}
-                                    onChange={() => updateFormData({ taswaterCancelDirectDebit: opt.value })}
-                                    className="sr-only"
-                                />
-                                {opt.label}
-                            </label>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Change of Ownership */}
+                {/* Recently Purchased */}
                 <div className="space-y-3">
                     <label className="field-label mb-2 block">
-                        Is there a recent change of ownership?
+                        Have you recently purchased this property?
                     </label>
                     <div className="flex gap-4">
                         {[
@@ -322,17 +298,53 @@ export function TasWaterSection({
                         <div className="ml-0 mt-3 p-3 bg-teal-50/50 rounded-lg border border-teal-100">
                             <label className="field-label flex items-center gap-1.5">
                                 <Calendar className="w-3.5 h-3.5 text-teal-600" />
-                                Settlement Date *
+                                What was the settlement date? *
                             </label>
-                            <input
-                                type="date"
-                                value={formData.taswaterSettlementDate}
-                                onChange={(e) => {
-                                    updateFormData({ taswaterSettlementDate: e.target.value });
-                                    clearError("taswaterSettlementDate");
-                                }}
-                                className={`form-input mt-1 ${errors.taswaterSettlementDate ? "border-red-500" : ""}`}
-                            />
+                            <div className="relative mt-1">
+                                <input
+                                    type="text"
+                                    inputMode="numeric"
+                                    value={formData.taswaterSettlementDate}
+                                    onChange={(e) => {
+                                        let v = e.target.value.replace(/[^0-9/]/g, "");
+                                        const digits = v.replace(/\//g, "");
+                                        if (digits.length >= 5) {
+                                            v = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+                                        } else if (digits.length >= 3) {
+                                            v = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+                                        }
+                                        updateFormData({ taswaterSettlementDate: v });
+                                        clearError("taswaterSettlementDate");
+                                    }}
+                                    placeholder="dd/mm/yyyy"
+                                    maxLength={10}
+                                    className={`form-input pr-10 ${errors.taswaterSettlementDate ? "border-red-500" : ""}`}
+                                />
+                                {/* Calendar icon button */}
+                                <button
+                                    type="button"
+                                    onClick={openDatePicker}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md hover:bg-teal-100 transition-colors cursor-pointer"
+                                    aria-label="Open date picker"
+                                >
+                                    <Calendar className="w-4 h-4 text-teal-600" />
+                                </button>
+                                {/* Hidden native date input */}
+                                <input
+                                    ref={datePickerRef}
+                                    type="date"
+                                    className="sr-only"
+                                    tabIndex={-1}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val) {
+                                            const [y, m, d] = val.split("-");
+                                            updateFormData({ taswaterSettlementDate: `${d}/${m}/${y}` });
+                                            clearError("taswaterSettlementDate");
+                                        }
+                                    }}
+                                />
+                            </div>
                             {errors.taswaterSettlementDate && (
                                 <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
                                     <AlertCircle className="w-3 h-3" />{errors.taswaterSettlementDate}
@@ -345,3 +357,4 @@ export function TasWaterSection({
         </div>
     );
 }
+

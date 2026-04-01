@@ -38,7 +38,7 @@ export function OwnershipSection({
     };
 
     const handleOwnerCountChange = (delta: number) => {
-        const newCount = Math.min(4, Math.max(1, formData.ownerCount + delta)) as 1 | 2 | 3 | 4;
+        const newCount = Math.min(2, Math.max(1, formData.ownerCount + delta)) as 1 | 2;
         const updatedOwners = [...formData.owners];
         while (updatedOwners.length < newCount) {
             updatedOwners.push(createEmptyOwner());
@@ -417,7 +417,7 @@ export function OwnershipSection({
                             <button
                                 type="button"
                                 onClick={() => handleOwnerCountChange(1)}
-                                disabled={formData.ownerCount >= 4}
+                                disabled={formData.ownerCount >= 2}
                                 className="p-1.5 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                             >
                                 <UserPlus className="w-4 h-4" />
