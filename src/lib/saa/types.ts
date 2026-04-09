@@ -58,7 +58,7 @@ export interface FormData {
   soleAgencyPeriod: string;
 
   // Vendor Section
-  vendorStructure: "Individual" | "Company" | "Trust" | "Power of Attorney";
+  vendorStructure: "Individual" | "Company" | "Trust" | "Power of Attorney" | "Deceased Estate";
   trusteeType: "individual" | "company";
   trustName: string;
   companyName: string;
@@ -80,6 +80,9 @@ export interface FormData {
   attorneyMobileCountryCode: string;
   attorneyMobile: string;
   poaNumber: string;
+
+  // Deceased Estate specifics
+  deceasedName: string;
 }
 
 export const initialFormData: FormData = {
@@ -152,6 +155,8 @@ export const initialFormData: FormData = {
   attorneyMobileCountryCode: "+61",
   attorneyMobile: "",
   poaNumber: "",
+
+  deceasedName: "",
 };
 
 export function createEmptyVendor(): VendorInfo {

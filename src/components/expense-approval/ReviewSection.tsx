@@ -4,7 +4,6 @@ import type { ExpenseApprovalFormData } from "@/lib/expense-approval/types";
 import {
     MapPin,
     CheckCircle2,
-    Building2,
     Droplets,
     FileText,
     Users,

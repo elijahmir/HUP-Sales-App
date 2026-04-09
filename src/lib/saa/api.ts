@@ -232,6 +232,8 @@ export interface SubmissionPayload {
   vendor_subtype: string | null;
   vendor_count: number;
   trust_name: string | null; // NEW FIELD
+  deceased_name: string | null;
+  family_of_late: string | null;
   company_name: string | null;
   company_acn: string | null; // NEW
   company_name_acn: string | null; // NEW: Name + (ACN ...)
@@ -472,13 +474,21 @@ export function buildPayload(
     // Only Vendor 1 (index 0) gets a value for non-Individual types
     if (
       formData.vendorStructure === "Individual" ||
-      formData.vendorStructure === "Power of Attorney"
+      formData.vendorStructure === "Power of Attorney" ||
+      formData.vendorStructure === "Deceased Estate"
     ) {
-      // For individuals/POA, each vendor gets their own full_name as val
+      // For individuals/POA/Estate, each vendor gets their own full_name as val
       const v = formData.vendors[vendorIndex];
-      return v.hasDifferentNameOnTitle
+      const name = v.hasDifferentNameOnTitle
         ? toUpper(v.nameOnTitle)
         : toUpper(v.fullName);
+
+      // Deceased Estate: append representative clause
+      if (formData.vendorStructure === "Deceased Estate" && name && formData.deceasedName) {
+        return `${name} as personal representative of the late ${toUpper(formData.deceasedName)} (Deceased).`;
+      }
+
+      return name;
     } else if (vendorIndex === 0) {
       // Only vendor_1 gets full_name_val for Trust/Company
       if (
@@ -639,6 +649,10 @@ export function buildPayload(
     vendor_count: formData.vendorCount,
     // Trust fields - only for Trust entity type
     trust_name: formData.vendorStructure === "Trust" ? trustNameUpper : null,
+    deceased_name: formData.vendorStructure === "Deceased Estate" ? toUpper(formData.deceasedName) : null,
+    family_of_late: formData.vendorStructure === "Deceased Estate" && formData.deceasedName
+      ? `The family of the late ${toUpper(formData.deceasedName)}`
+      : null,
     // Company fields - only for Company or Trust+Company
     company_name:
       formData.vendorStructure === "Company" ||
@@ -690,10 +704,11 @@ export function buildPayload(
 
       if (names.length === 0) return null;
 
-      // Individual: Same as all_vendors_names
+      // Individual / Deceased Estate: Same as all_vendors_names
       if (
         formData.vendorStructure === "Individual" ||
-        formData.vendorStructure === "Power of Attorney"
+        formData.vendorStructure === "Power of Attorney" ||
+        formData.vendorStructure === "Deceased Estate"
       ) {
         return names.join(", ");
       }

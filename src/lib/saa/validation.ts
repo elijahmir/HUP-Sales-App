@@ -237,6 +237,11 @@ export function isValidVendor(formData: FormData): ValidationResult {
       errors.poaNumber = "Power of Attorney Number is required";
   }
 
+  if (formData.vendorStructure === "Deceased Estate") {
+    if (!isRequired(formData.deceasedName))
+      errors.deceasedName = "Deceased person's name is required";
+  }
+
   for (let i = 0; i < count; i++) {
     const vendor = formData.vendors[i];
     const prefix = `vendors[${i}]`;

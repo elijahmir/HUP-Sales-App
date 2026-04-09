@@ -7,6 +7,7 @@ import {
   Copy,
   Mail,
   Phone,
+  ScrollText,
 } from "lucide-react";
 import type { FormData } from "@/lib/saa/types";
 import { createEmptyVendor } from "@/lib/saa/types";
@@ -92,7 +93,7 @@ export function VendorSection({
           <div className="col-span-full">
             <label className="field-label block mb-3">Ownership Type</label>
             <div className="flex flex-wrap gap-4">
-              {["Individual", "Company", "Trust", "Power of Attorney"].map((type) => (
+              {["Individual", "Company", "Trust", "Power of Attorney", "Deceased Estate"].map((type) => (
                 <label
                   key={type}
                   className={`flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg border transition-colors ${formData.vendorStructure === type
@@ -110,6 +111,8 @@ export function VendorSection({
                         vendorStructure: e.target.value as FormData["vendorStructure"],
                         // If Power of Attorney is selected, force 1 vendor
                         ...(e.target.value === "Power of Attorney" ? { vendorCount: 1 as const } : {}),
+                        // If Deceased Estate, reset to 1 representative
+                        ...(e.target.value === "Deceased Estate" ? { vendorCount: 1 as const } : {}),
                       });
                     }}
                     className="hidden"
@@ -404,13 +407,50 @@ export function VendorSection({
             </>
           )}
 
+          {formData.vendorStructure === "Deceased Estate" && (
+            <>
+              <div className="md:col-span-12 p-5 bg-amber-50/50 rounded-xl border border-amber-200 flex gap-4">
+                <ScrollText className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-gray-700">
+                  <p className="font-semibold text-amber-800 mb-1">Deceased Estate</p>
+                  <p>
+                    Enter the deceased person&apos;s full legal name and the Grant of Probate or Letters of Administration number.
+                    Then add the representative(s) who will sign the agreement below.
+                  </p>
+                </div>
+              </div>
+
+              <div className="md:col-span-12">
+                <label className="field-label text-amber-700">Deceased Person&apos;s Full Legal Name</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <User className="h-4 w-4 text-amber-500/60" />
+                  </div>
+                  <input
+                    type="text"
+                    value={formData.deceasedName}
+                    onChange={(e) => updateFormData({ deceasedName: e.target.value })}
+                    className={`input-field pl-10 ${errors.deceasedName ? "border-red-500" : ""}`}
+                    placeholder="Full Legal Name of Deceased"
+                  />
+                </div>
+                {errors.deceasedName && <p className="error-text">{errors.deceasedName}</p>}
+              </div>
+            </>
+          )}
+
           {(formData.vendorStructure === "Individual" ||
+            formData.vendorStructure === "Deceased Estate" ||
             (formData.vendorStructure === "Trust" &&
               formData.trusteeType === "individual")) && (
               <div className="md:col-span-4">
                 <label className="field-label">
                   Number of{" "}
-                  {formData.vendorStructure === "Trust" ? "Trustees" : "Signers"}
+                  {formData.vendorStructure === "Trust"
+                    ? "Trustees"
+                    : formData.vendorStructure === "Deceased Estate"
+                      ? "Representatives"
+                      : "Signers"}
                 </label>
                 <select
                   value={formData.vendorCount}
@@ -422,7 +462,9 @@ export function VendorSection({
                       {num}{" "}
                       {formData.vendorStructure === "Trust"
                         ? "Trustee"
-                        : "Signer"}
+                        : formData.vendorStructure === "Deceased Estate"
+                          ? "Representative"
+                          : "Signer"}
                       {num > 1 ? "s" : ""}
                     </option>
                   ))}
