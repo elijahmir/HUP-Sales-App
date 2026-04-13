@@ -304,17 +304,21 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
     const sortedOffers = [...signedOffers].sort((a, b) => b.offerPrice - a.offerPrice);
 
     // Landscape Columns Allocation (contentW is 267) — 10 columns
+    // Use usableW (inner width minus symmetric padding) so columns fill the table edge-to-edge
+    const tablePadding = 5;
+    const usableW = contentW - (tablePadding * 2); // 267 - 10 = 257mm
+
     const cols = {
-        purchaser: { x: marginL + 5, w: contentW * 0.20 },
-        structure: { x: marginL + 5 + (contentW * 0.20), w: contentW * 0.06 },
-        price: { x: marginL + 5 + (contentW * 0.26), w: contentW * 0.10 },
-        deposit: { x: marginL + 5 + (contentW * 0.36), w: contentW * 0.08 },
-        finance: { x: marginL + 5 + (contentW * 0.44), w: contentW * 0.08 },
-        finAmt: { x: marginL + 5 + (contentW * 0.52), w: contentW * 0.10 },
-        settle: { x: marginL + 5 + (contentW * 0.62), w: contentW * 0.08 },
-        coolOff: { x: marginL + 5 + (contentW * 0.70), w: contentW * 0.06 },
-        bldgInsp: { x: marginL + 5 + (contentW * 0.76), w: contentW * 0.06 },
-        subjSale: { x: marginL + 5 + (contentW * 0.82), w: contentW * 0.18 },
+        purchaser: { x: marginL + tablePadding, w: usableW * 0.07 },
+        structure: { x: marginL + tablePadding + (usableW * 0.07), w: usableW * 0.07 },
+        price: { x: marginL + tablePadding + (usableW * 0.14), w: usableW * 0.08 },
+        deposit: { x: marginL + tablePadding + (usableW * 0.22), w: usableW * 0.07 },
+        finance: { x: marginL + tablePadding + (usableW * 0.29), w: usableW * 0.14 },
+        finAmt: { x: marginL + tablePadding + (usableW * 0.43), w: usableW * 0.08 },
+        settle: { x: marginL + tablePadding + (usableW * 0.51), w: usableW * 0.22 },
+        coolOff: { x: marginL + tablePadding + (usableW * 0.73), w: usableW * 0.05 },
+        bldgInsp: { x: marginL + tablePadding + (usableW * 0.78), w: usableW * 0.05 },
+        subjSale: { x: marginL + tablePadding + (usableW * 0.83), w: usableW * 0.17 },
     };
 
     const rowHeight = 16; // Taller row to accommodate Purchaser Name & Email vertically
@@ -448,8 +452,8 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         doc.setFont("helvetica", "normal");
         if (offer.financeRequired) {
             doc.setTextColor(...AMBER);
-            const financeText = offer.bankLender ? offer.bankLender : "Yes";
-            printTruncated(doc, financeText, cols.finance.x, ty, cols.settle.x - cols.finance.x - 3);
+            const financeText = offer.bankLender ? toTitleCase(offer.bankLender) : "Yes";
+            printTruncated(doc, financeText, cols.finance.x, ty, cols.finAmt.x - cols.finance.x - 3);
         } else {
             doc.setTextColor(...GREEN);
             doc.text("Cash", cols.finance.x, ty);
@@ -466,7 +470,7 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         doc.setFontSize(7);
         doc.setFont("helvetica", "normal");
         doc.setTextColor(...GRAY600);
-        const settleStr = offer.settlementPeriod || "\u2014";
+        const settleStr = offer.settlementPeriod ? toTitleCase(offer.settlementPeriod) : "\u2014";
         printTruncated(doc, settleStr, cols.settle.x, ty, cols.settle.w - 3);
 
         // 7. Cooling Off Period
@@ -501,7 +505,7 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
             if (offer.subjectToSaleAddress) {
                 doc.setTextColor(...GRAY600);
                 doc.setFontSize(6);
-                const addressStr = offer.subjectToSaleAddress;
+                const addressStr = toTitleCase(offer.subjectToSaleAddress);
                 printTruncated(doc, addressStr, cols.subjSale.x, ty + 5, cols.subjSale.w - 2);
 
                 const contractStr = offer.subjectToSaleUnderContract ? "Yes" : "No";

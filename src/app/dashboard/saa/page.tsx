@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { RotateCcw, Save, Clock } from "lucide-react";
+import { RotateCcw, Save, Clock, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 import { AgentSection } from "@/components/saa/AgentSection";
 import { PropertySection } from "@/components/saa/PropertySection";
 import { AnnexureSection } from "@/components/saa/AnnexureSection";
@@ -390,6 +391,14 @@ export default function SAAFormPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/dashboard/saa/renewal"
+              className="flex items-center gap-2 px-4 py-2 bg-harcourts-blue text-white rounded-lg hover:bg-harcourts-blue/90 transition-colors shadow-sm font-medium"
+              title="Create Renewal"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span className="hidden sm:inline">Create Renewal</span>
+            </Link>
             <button
               onClick={() => setShowHistory(true)}
               className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 hover:text-harcourts-blue transition-colors shadow-sm"
