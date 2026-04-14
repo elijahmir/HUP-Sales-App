@@ -11,6 +11,7 @@ import {
 } from "@/components/saa/renewal/RenewalPropertySelector";
 import { RenewalDataReview } from "@/components/saa/renewal/RenewalDataReview";
 import { RenewalDurationForm } from "@/components/saa/renewal/RenewalDurationForm";
+import { RenewalAnnexureSection } from "@/components/saa/renewal/RenewalAnnexureSection";
 import { FormStepper, FormNavigation } from "@/components/saa/FormStepper";
 import { SuccessModal } from "@/components/saa/SuccessModal";
 import { LoadingModal } from "@/components/saa/LoadingModal";
@@ -21,6 +22,7 @@ import type {
 } from "@/lib/saa/renewal/types";
 import { initialRenewalFormData, RENEWAL_STEPS } from "@/lib/saa/renewal/types";
 import { submitRenewal } from "@/lib/saa/renewal/api";
+import type { RenewalAnnexureItem } from "@/lib/saa/renewal/api";
 import type { MarketingItem } from "@/lib/saa/marketing";
 import {
   getAgentByName,
@@ -48,6 +50,11 @@ export default function SAARewalPage() {
     vendorName: string;
     docusignUrl?: string;
   } | null>(null);
+
+  // Annexure A — hybrid data from previous SAA submission in DB
+  const [annexureItems, setAnnexureItems] = useState<RenewalAnnexureItem[] | null>(null);
+  const [includeAnnexure, setIncludeAnnexure] = useState(true);
+  const [annexureSourceDate, setAnnexureSourceDate] = useState<string | undefined>(undefined);
 
   // Load marketing items from VaultRE
   useEffect(() => {
@@ -176,6 +183,30 @@ export default function SAARewalPage() {
         setSelectedMarketingIds(marketingOptions.map((m) => m.id));
 
         toast.success("Property data loaded from VaultRE");
+
+        // Fetch annexure data from previous SAA submission (hybrid approach)
+        try {
+          const annexRes = await fetch(
+            `/api/saa/renewal/annexure?street=${encodeURIComponent(detail.street)}&suburb=${encodeURIComponent(detail.suburb)}`,
+          );
+          if (annexRes.ok) {
+            const annexData = await annexRes.json();
+            if (annexData.found && annexData.items.length > 0) {
+              setAnnexureItems(annexData.items);
+              setIncludeAnnexure(true);
+              setAnnexureSourceDate(annexData.sourceDate);
+              toast.info(
+                `Found ${annexData.items.length} Annexure A item(s) from previous agreement`,
+              );
+            } else {
+              setAnnexureItems(null);
+              setIncludeAnnexure(false);
+              setAnnexureSourceDate(undefined);
+            }
+          }
+        } catch (annexErr) {
+          console.warn("[Renewal] Annexure fetch failed (non-critical):", annexErr);
+        }
       } catch (err) {
         console.error("Failed to load property details:", err);
         toast.error("Failed to load property details. Please try again.");
@@ -189,6 +220,9 @@ export default function SAARewalPage() {
   const handlePropertyDeselect = useCallback(() => {
     setFormData(initialRenewalFormData);
     setSelectedMarketingIds([]);
+    setAnnexureItems(null);
+    setIncludeAnnexure(true);
+    setAnnexureSourceDate(undefined);
     setCurrentStep(0);
     setErrors({});
   }, []);
@@ -258,6 +292,8 @@ export default function SAARewalPage() {
         formData.propertyData,
         selectedMarketingIds,
         marketingOptions,
+        annexureItems,
+        includeAnnexure,
       );
 
       if (result.success) {
@@ -282,6 +318,9 @@ export default function SAARewalPage() {
   const handleReset = () => {
     setFormData(initialRenewalFormData);
     setSelectedMarketingIds([]);
+    setAnnexureItems(null);
+    setIncludeAnnexure(true);
+    setAnnexureSourceDate(undefined);
     setCurrentStep(0);
     setErrors({});
     setShowSuccess(false);
@@ -310,12 +349,25 @@ export default function SAARewalPage() {
         );
       case 1:
         return formData.propertyData ? (
-          <RenewalDataReview
-            propertyData={formData.propertyData}
-            marketingItems={marketingOptions}
-            selectedMarketingIds={selectedMarketingIds}
-            onDeselectProperty={handlePropertyDeselect}
-          />
+          <>
+            <RenewalDataReview
+              propertyData={formData.propertyData}
+              marketingItems={marketingOptions}
+              selectedMarketingIds={selectedMarketingIds}
+              onDeselectProperty={handlePropertyDeselect}
+            />
+            {/* Annexure A — shown only if previous SAA had annexure data */}
+            {annexureItems && annexureItems.length > 0 && (
+              <div className="mt-6">
+                <RenewalAnnexureSection
+                  items={annexureItems}
+                  includeAnnexure={includeAnnexure}
+                  onToggle={setIncludeAnnexure}
+                  sourceDate={annexureSourceDate}
+                />
+              </div>
+            )}
+          </>
         ) : null;
       case 2:
         return (

@@ -102,6 +102,78 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    // ── Fetch owners/vendors from VaultRE ────────────────────────
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let vendors: any[] = [];
+    const saleLifeId = data.saleLifeId;
+
+    if (saleLifeId) {
+      try {
+        const ownersRes = await fetch(
+          `${baseUrl}/properties/${propertyId}/sale/${saleLifeId}/owners`,
+          {
+            method: "GET",
+            headers: getHeaders(),
+            cache: "no-store",
+          },
+        );
+
+        if (ownersRes.ok) {
+          const ownersData = await ownersRes.json();
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          vendors = (ownersData.items || []).slice(0, 4).map((owner: any) => {
+            // Extract mobile number (typeCode "M")
+            const mobileObj = owner.phoneNumbers?.find(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (p: any) => p.typeCode === "M" || p.type === "Mobile",
+            );
+            // Extract home phone (typeCode "H")
+            const homePhoneObj = owner.phoneNumbers?.find(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (p: any) => p.typeCode === "H" || p.type === "Home",
+            );
+
+            const ownerAddr = owner.address || {};
+            const ownerSuburb = ownerAddr.suburb || {};
+            const ownerState = ownerAddr.state || {};
+
+            // Build street from unitNumber + streetNumber + street
+            const ownerStreetParts = [
+              ownerAddr.unitNumber ? `${ownerAddr.unitNumber}/` : "",
+              ownerAddr.streetNumber || "",
+              ownerAddr.street ? ` ${ownerAddr.street}` : "",
+            ].join("");
+
+            return {
+              fullName: owner.displayName || `${owner.firstName || ""} ${owner.lastName || ""}`.trim(),
+              email: owner.emails?.[0] || "",
+              mobile: mobileObj?.number || "",
+              mobileCountryCode: "61",
+              homePhone: homePhoneObj?.number || "",
+              street: ownerStreetParts.trim(),
+              suburb: ownerSuburb.name || "",
+              state: ownerState.abbreviation || "",
+              postcode: ownerSuburb.postcode || "",
+            };
+          });
+
+          console.log(
+            `[Renewal] Fetched ${vendors.length} owner(s) from VaultRE for property ${propertyId}`,
+          );
+        } else {
+          console.warn(
+            `[Renewal] Failed to fetch owners: ${ownersRes.status}`,
+          );
+        }
+      } catch (ownerError) {
+        console.error("[Renewal] Error fetching owners:", ownerError);
+      }
+    } else {
+      console.warn(
+        `[Renewal] No saleLifeId for property ${propertyId}, cannot fetch owners`,
+      );
+    }
+
     // ── Build response ──────────────────────────────────────────
     const propertyDetail = {
       id: data.id,
@@ -150,9 +222,8 @@ export async function GET(request: NextRequest) {
       // Staff
       contactStaff,
 
-      // Vendors — will be populated from previous SAA submissions
-      // or from VaultRE account contacts (future enhancement)
-      vendors: [],
+      // Vendors — fetched live from VaultRE owners endpoint
+      vendors,
 
       // Marketing items — populated client-side from expense types
       marketingItems: [],

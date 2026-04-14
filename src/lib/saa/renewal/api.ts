@@ -64,20 +64,20 @@ function toProperCase(str: string): string {
  */
 function buildVendorPayload(
   vendor: RenewalPropertyData["vendors"][number],
-  index: number,
+  _index: number,
 ): VendorPayload {
   const fullName = vendor.fullName.toUpperCase();
-  const cleaned = vendor.mobile.replace(/[\s-]/g, "");
+  const cleaned = vendor.mobile.replace(/[\s-]/g, "").replace(/^0/, "");
 
   return {
     full_name: fullName,
-    full_name_id: `${fullName} (Vendor ${index + 1})`,
+    full_name_id: fullName,
     full_name_trustee: null,
     full_name_val: fullName,
     email: vendor.email.toLowerCase(),
     email_val: vendor.email.toLowerCase(),
-    mobile: `${vendor.mobileCountryCode || "+61"} ${cleaned}`,
-    mobile_countrycode: vendor.mobileCountryCode || "+61",
+    mobile: `${vendor.mobileCountryCode || "61"} ${cleaned}`,
+    mobile_countrycode: vendor.mobileCountryCode || "61",
     mobile_number: cleaned,
     home_phone: vendor.homePhone || null,
     street: vendor.street.toUpperCase(),
@@ -95,16 +95,28 @@ function buildVendorPayload(
   };
 }
 
+/** Annexure item shape (from DB lookup) */
+export interface RenewalAnnexureItem {
+  item: string;
+  description: string;
+}
+
 /**
  * Build the SubmissionPayload from renewal data.
  * Maps VaultRE property data + form inputs into the payload shape
  * expected by the n8n/DocuSign pipeline.
+ *
+ * If annexureItems are provided and includeAnnexure is true,
+ * they are mapped into the annex_item_N / annex_des_N fields
+ * with full parity to the original SAA submission format.
  */
 export function buildRenewalPayload(
   formData: RenewalFormData,
   propertyData: RenewalPropertyData,
   selectedMarketingIds: string[],
   availableMarketingItems: MarketingItem[],
+  annexureItems?: RenewalAnnexureItem[] | null,
+  includeAnnexure?: boolean,
 ): SubmissionPayload {
   const vendors = propertyData.vendors;
   const vendorCount = vendors.length;
@@ -240,34 +252,28 @@ export function buildRenewalPayload(
     folio_no: propertyData.folioNumber,
     pid: propertyData.referenceID,
     listing_no: propertyData.listingNo,
-    annexure_a: false,
-    annexure_count: 0,
-    annex_item_1: null,
-    annex_des_1: null,
-    annex_item_2: null,
-    annex_des_2: null,
-    annex_item_3: null,
-    annex_des_3: null,
-    annex_item_4: null,
-    annex_des_4: null,
-    annex_item_5: null,
-    annex_des_5: null,
-    annex_item_6: null,
-    annex_des_6: null,
-    annex_item_7: null,
-    annex_des_7: null,
-    annex_item_8: null,
-    annex_des_8: null,
-    annex_item_9: null,
-    annex_des_9: null,
-    annex_item_10: null,
-    annex_des_10: null,
-    annex_item_11: null,
-    annex_des_11: null,
-    annex_item_12: null,
-    annex_des_12: null,
-    annex_item_13: null,
-    annex_des_13: null,
+
+    // Annexure A — mapped from previous SAA submission if available
+    annexure_a: !!(includeAnnexure && annexureItems && annexureItems.length > 0),
+    annexure_count:
+      includeAnnexure && annexureItems
+        ? annexureItems.filter((a) => a.item?.trim()).length
+        : 0,
+    ...(() => {
+      const fields: Record<string, string | null> = {};
+      for (let i = 1; i <= 13; i++) {
+        const entry =
+          includeAnnexure && annexureItems ? annexureItems[i - 1] : undefined;
+        if (entry && entry.item?.trim()) {
+          fields[`annex_item_${i}`] = `${i}. ${entry.item}`;
+          fields[`annex_des_${i}`] = entry.description || null;
+        } else {
+          fields[`annex_item_${i}`] = null;
+          fields[`annex_des_${i}`] = null;
+        }
+      }
+      return fields;
+    })(),
 
     // Pricing
     listing_price: listingPrice,
@@ -358,12 +364,16 @@ export async function submitRenewal(
   propertyData: RenewalPropertyData,
   selectedMarketingIds: string[],
   availableMarketingItems: MarketingItem[],
+  annexureItems?: RenewalAnnexureItem[] | null,
+  includeAnnexure?: boolean,
 ) {
   const payload = buildRenewalPayload(
     formData,
     propertyData,
     selectedMarketingIds,
     availableMarketingItems,
+    annexureItems,
+    includeAnnexure,
   );
 
   const supabase = createClient();
