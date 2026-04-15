@@ -221,8 +221,14 @@ export function buildRenewalPayload(
     agent_name: formData.agentName.toUpperCase(),
     agent_email: formData.agentEmail.toLowerCase(),
     agent_mobile: formData.agentMobile,
-    agent_mobile_countrycode: "+61",
-    agent_mobile_number: formData.agentMobile.replace(/[\s-]/g, ""),
+    agent_mobile_countrycode: (() => {
+      const match = formData.agentMobile.match(/^\+(\d+)\s/);
+      return match ? match[1] : "61";
+    })(),
+    agent_mobile_number: (() => {
+      const parts = formData.agentMobile.split(/\s+/);
+      return parts.length > 1 ? parts.slice(1).join("") : formData.agentMobile;
+    })(),
     office_name: formData.officeName.toUpperCase(),
     office_street: formData.officeStreet.toUpperCase(),
     office_suburb: formData.officeSuburb.toUpperCase(),
