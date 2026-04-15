@@ -92,6 +92,7 @@ export const tasmaniaSuburbs: SuburbData[] = [
   { suburb: "Marrawah", postcode: "7330", state: "TAS" },
   { suburb: "Arthur River", postcode: "7330", state: "TAS" },
   { suburb: "Sheffield", postcode: "7306", state: "TAS" },
+  { suburb: "Lower Barrington", postcode: "7306", state: "TAS" },
   { suburb: "Railton", postcode: "7305", state: "TAS" },
   { suburb: "Latrobe", postcode: "7307", state: "TAS" },
   { suburb: "Port Sorell", postcode: "7307", state: "TAS" },
