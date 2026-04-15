@@ -341,26 +341,69 @@ export function buildRenewalPayload(
     selected_marketing_ids: selectedMarketingIds,
     ...marketingFields,
 
-    // Metadata
-    is_renewal: true,
-    file_name: (() => {
-      let street = propertyData.street;
-      street = street.replace(/(\d+)[_\/](\d+)/g, "$1-$2");
-      return `${toProperCase(street)} - SAA Renewal`;
-    })(),
+    // Metadata - file_name with square bracket delimiters
+    // Format: [property][vendors_names][vendors_first_names][vendors_emails][agent_name][agent_mobile][agent_email]
+    // To parse later: split by '][' and remove first '[' and last ']'
+    file_name: [
+      [
+        propertyData.street.toUpperCase(),
+        propertyData.suburb.toUpperCase(),
+        propertyData.state.toUpperCase(),
+        propertyData.postcode,
+      ]
+        .filter(Boolean)
+        .join(", "),
+      allVendorNames,
+      (() => {
+        // Re-calculate first names with "and" logic for file_name
+        const firstNames = vendors
+          .slice(0, 4)
+          .map((v) => {
+            const firstWord = v.fullName.trim().split(" ")[0];
+            return firstWord ? toProperCase(firstWord) : "";
+          })
+          .filter(Boolean);
+        if (firstNames.length === 0) return "";
+        if (firstNames.length === 1) return firstNames[0];
+        if (firstNames.length === 2)
+          return `${firstNames[0]} and ${firstNames[1]}`;
+        const last = firstNames.pop();
+        return `${firstNames.join(", ")}, and ${last}`;
+      })(),
+      vendors
+        .slice(0, 4)
+        .map((v) => v.email.toLowerCase())
+        .filter(Boolean)
+        .join(";"),
+      formData.agentName.toUpperCase(),
+      formData.agentMobile.toUpperCase(),
+      formData.agentEmail.toLowerCase(),
+    ]
+      .map((value) => `[${value}]`)
+      .join(""),
+
+    // Folder Name: [Street Name] [Number], [Suburb] in Proper Case
     file_name_folder: (() => {
-      const street = propertyData.street;
-      const match = street.match(/^(\d[\d_/\-]*)\s+(.+)$/);
+      let street = propertyData.street;
+      const suburb = propertyData.suburb;
+      // Replace _/ with - for unit numbers (e.g., "1_60" or "1/60" → "1-60")
+      street = street.replace(/(\d+)[_\/](\d+)/g, "$1-$2");
+      // Match number at start (e.g., "1-60 Galvin Street" or "60 Galvin Street")
+      const match = street.match(/^([\d\-]+[A-Za-z]?)\s+(.*)$/);
+      // If match, flip: [Street Name] [Number] (e.g., "Galvin Street 1-60")
       const formattedStreet = match
         ? `${toProperCase(match[2])} ${match[1]}`
         : toProperCase(street);
-      return `${formattedStreet}, ${toProperCase(propertyData.suburb)}`;
+      return `${formattedStreet}, ${toProperCase(suburb)}`;
     })(),
+
+    // Main File Name with (Renewal) suffix
     file_name_main: (() => {
       let street = propertyData.street;
       street = street.replace(/(\d+)[_\/](\d+)/g, "$1-$2");
       return `${toProperCase(street)} - Sole Agency Agreement (Renewal)`;
     })(),
+    is_renewal: true,
   } as unknown as SubmissionPayload;
 
   return payload;
