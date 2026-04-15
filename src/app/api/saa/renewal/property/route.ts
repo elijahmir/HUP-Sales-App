@@ -28,6 +28,62 @@ function getHeaders() {
   };
 }
 
+/**
+ * Parse a VaultRE phone number into country code + local number.
+ * VaultRE formats: "0438330792", "+61438330792", "+639665971704"
+ *
+ * Returns: { countryCode: "61", localNumber: "438330792" }
+ */
+function parsePhoneNumber(raw: string): {
+  countryCode: string;
+  localNumber: string;
+} {
+  // Strip all whitespace and dashes
+  const cleaned = raw.replace(/[\s-()]/g, "");
+
+  // International format: +XX... or +XXX...
+  // Match +{1-3 digit country code}{rest}
+  const intlMatch = cleaned.match(/^\+(\d{1,3})(\d+)$/);
+  if (intlMatch) {
+    // Common country codes: 61 (AU), 63 (PH), 64 (NZ), 1 (US/CA), 44 (UK)
+    // VaultRE is AU-based, so prioritise 2-digit codes for AU region
+    const digits = intlMatch[1] + intlMatch[2];
+
+    // Try known 1-digit codes first
+    if (digits.startsWith("1") && digits.length >= 11) {
+      return { countryCode: "1", localNumber: digits.slice(1) };
+    }
+    // 2-digit codes (most common: 61 AU, 63 PH, 64 NZ, 44 UK)
+    if (digits.length >= 10) {
+      const cc2 = digits.slice(0, 2);
+      if (["61", "63", "64", "44", "49", "33", "39", "81", "86", "91"].includes(cc2)) {
+        let local = digits.slice(2);
+        // Strip leading 0 from local part if present (some formats include it)
+        local = local.replace(/^0/, "");
+        return { countryCode: cc2, localNumber: local };
+      }
+    }
+    // 3-digit codes (e.g., 353 Ireland, 852 HK)
+    if (digits.length >= 10) {
+      const cc3 = digits.slice(0, 3);
+      let local = digits.slice(3);
+      local = local.replace(/^0/, "");
+      return { countryCode: cc3, localNumber: local };
+    }
+
+    // Fallback: treat first 2 digits as country code
+    return { countryCode: intlMatch[1], localNumber: intlMatch[2].replace(/^0/, "") };
+  }
+
+  // Australian local format: starts with 0
+  if (cleaned.startsWith("0")) {
+    return { countryCode: "61", localNumber: cleaned.slice(1) };
+  }
+
+  // Bare number (no prefix) — assume Australian
+  return { countryCode: "61", localNumber: cleaned };
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { baseUrl } = getVaultREConfig();
@@ -144,11 +200,14 @@ export async function GET(request: NextRequest) {
               ownerAddr.street ? ` ${ownerAddr.street}` : "",
             ].join("");
 
+            // Parse phone number to extract country code and local number
+            const parsedMobile = parsePhoneNumber(mobileObj?.number || "");
+
             return {
               fullName: owner.displayName || `${owner.firstName || ""} ${owner.lastName || ""}`.trim(),
               email: owner.emails?.[0] || "",
-              mobile: mobileObj?.number || "",
-              mobileCountryCode: "61",
+              mobile: parsedMobile.localNumber,
+              mobileCountryCode: parsedMobile.countryCode,
               homePhone: homePhoneObj?.number || "",
               street: ownerStreetParts.trim(),
               suburb: ownerSuburb.name || "",

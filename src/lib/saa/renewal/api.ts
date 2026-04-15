@@ -60,14 +60,18 @@ function toProperCase(str: string): string {
 }
 
 /**
- * Build vendor payload from VaultRE vendor data
+ * Build vendor payload from VaultRE vendor data.
+ * `vendor.mobile` is already a local number (no country prefix, no leading 0)
+ * thanks to parsePhoneNumber in the property route.
  */
 function buildVendorPayload(
   vendor: RenewalPropertyData["vendors"][number],
   _index: number,
 ): VendorPayload {
   const fullName = vendor.fullName.toUpperCase();
-  const cleaned = vendor.mobile.replace(/[\s-]/g, "").replace(/^0/, "");
+  // Mobile arrives pre-parsed — just strip any residual whitespace/dashes
+  const localNumber = vendor.mobile.replace(/[\s-]/g, "");
+  const countryCode = vendor.mobileCountryCode || "61";
 
   return {
     full_name: fullName,
@@ -76,9 +80,9 @@ function buildVendorPayload(
     full_name_val: fullName,
     email: vendor.email.toLowerCase(),
     email_val: vendor.email.toLowerCase(),
-    mobile: `${vendor.mobileCountryCode || "61"} ${cleaned}`,
-    mobile_countrycode: vendor.mobileCountryCode || "61",
-    mobile_number: cleaned,
+    mobile: localNumber ? `${countryCode} ${localNumber}` : null,
+    mobile_countrycode: countryCode,
+    mobile_number: localNumber || null,
     home_phone: vendor.homePhone || null,
     street: vendor.street.toUpperCase(),
     suburb: vendor.suburb.toUpperCase(),
