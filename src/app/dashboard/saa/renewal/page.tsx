@@ -179,8 +179,23 @@ export default function SAARewalPage() {
           commissionValue,
         });
 
-        // Auto-select all marketing items
-        setSelectedMarketingIds(marketingOptions.map((m) => m.id));
+        // Pre-select marketing items from VaultRE advertising schedule
+        if (
+          detail.marketingScheduleIds &&
+          detail.marketingScheduleIds.length > 0
+        ) {
+          // Only select items that exist in both schedule and master catalog
+          const validIds = detail.marketingScheduleIds.filter((id: string) =>
+            marketingOptions.some((m) => m.id === id),
+          );
+          setSelectedMarketingIds(validIds);
+          toast.info(
+            `Pre-selected ${validIds.length} marketing item(s) from advertising schedule`,
+          );
+        } else {
+          // No schedule — leave empty for agent to select manually
+          setSelectedMarketingIds([]);
+        }
 
         toast.success("Property data loaded from VaultRE");
 

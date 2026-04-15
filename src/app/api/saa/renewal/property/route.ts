@@ -174,6 +174,44 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // ── Fetch advertising schedule (property-specific marketing) ──
+    let marketingScheduleIds: string[] = [];
+    if (saleLifeId) {
+      try {
+        const scheduleRes = await fetch(
+          `${baseUrl}/properties/${propertyId}/sale/${saleLifeId}/advertising/schedule`,
+          {
+            method: "GET",
+            headers: getHeaders(),
+            cache: "no-store",
+          },
+        );
+
+        if (scheduleRes.ok) {
+          const scheduleData = await scheduleRes.json();
+          // Check for NO_ADVERTISING_SCHEDULE response
+          if (scheduleData.schedule && Array.isArray(scheduleData.schedule)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            marketingScheduleIds = scheduleData.schedule
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .filter((item: any) => item.expenseType?.id)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .map((item: any) => String(item.expenseType.id));
+
+            console.log(
+              `[Renewal] Found ${marketingScheduleIds.length} marketing item(s) in advertising schedule for property ${propertyId}`,
+            );
+          }
+        } else {
+          console.log(
+            `[Renewal] No advertising schedule for property ${propertyId} (${scheduleRes.status})`,
+          );
+        }
+      } catch (scheduleErr) {
+        console.warn("[Renewal] Advertising schedule fetch failed (non-critical):", scheduleErr);
+      }
+    }
+
     // ── Build response ──────────────────────────────────────────
     const propertyDetail = {
       id: data.id,
@@ -227,6 +265,9 @@ export async function GET(request: NextRequest) {
 
       // Marketing items — populated client-side from expense types
       marketingItems: [],
+
+      // Property-specific marketing IDs from VaultRE advertising schedule
+      marketingScheduleIds,
     };
 
     return NextResponse.json({ property: propertyDetail });

@@ -78,6 +78,9 @@ export interface RenewalPropertyData {
 
   // Marketing items currently active
   marketingItems: MarketingItem[];
+
+  // Expense type IDs from VaultRE advertising schedule (property-specific)
+  marketingScheduleIds: string[];
 }
 
 // ─── Renewal Form State (Editable Fields Only) ──────────────────
