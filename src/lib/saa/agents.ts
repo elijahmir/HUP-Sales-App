@@ -88,6 +88,12 @@ export const agents: Agent[] = [
     mobile: "+61 421754973",
   },
   {
+    name: "Mel Eaton",
+    office: "Ulverstone",
+    email: "mel.eaton@harcourts.com.au",
+    mobile: "+61 418101118",
+  },
+  {
     name: "Elijah Mirandilla",
     office: "Ulverstone",
     email: "elijah.mirandilla@harcourts.com.au",
