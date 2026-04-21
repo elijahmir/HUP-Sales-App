@@ -87,9 +87,9 @@ function getServiceColor(service: string): string {
 
 function getOwnershipIcon(structure: string) {
     switch (structure) {
-        case "Company": return Building2;
-        case "Trust": return Shield;
-        default: return User;
+        case "Company": return "company";
+        case "Trust": return "trust";
+        default: return "individual";
     }
 }
 
@@ -144,10 +144,15 @@ function ApprovalCard({
     onDelete: (approval: ExpenseApprovalRow) => void;
 }) {
     const fd = approval.form_data;
-    const OwnerIcon = getOwnershipIcon(fd?.ownershipStructure || "Individual");
+    const ownerType = getOwnershipIcon(fd?.ownershipStructure || "Individual");
+    const OwnerIconEl = ownerType === "company"
+        ? <Building2 className="w-5 h-5 text-teal-600" />
+        : ownerType === "trust"
+            ? <Shield className="w-5 h-5 text-teal-600" />
+            : <User className="w-5 h-5 text-teal-600" />;
     
     // services_selected may be null, string, JSON string, or array — normalize
-    let rawServices = approval.services_selected;
+    const rawServices = approval.services_selected;
     let servicesArr: string[] = [];
     if (Array.isArray(rawServices)) {
         servicesArr = rawServices;
@@ -175,7 +180,7 @@ function ApprovalCard({
                 <div className="flex items-start gap-4">
                     {/* Icon */}
                     <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-100 flex-shrink-0 flex items-center justify-center">
-                        <OwnerIcon className="w-5 h-5 text-teal-600" />
+                        {OwnerIconEl}
                     </div>
 
                     {/* Info */}
@@ -567,7 +572,7 @@ export default function ExpenseApprovalsDashboard() {
     }, []);
 
     useEffect(() => {
-        fetchApprovals();
+        fetchApprovals(); // eslint-disable-line react-hooks/set-state-in-effect
     }, [fetchApprovals]);
 
     // Delete handler

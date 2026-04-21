@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
+
 import {
     DollarSign,
     Home,
@@ -13,7 +14,6 @@ import {
     Bed,
     Bath,
     Car,
-    Clock,
     Filter,
     Search,
     Loader2,
@@ -81,15 +81,6 @@ function formatPrice(num: number): string {
     return num.toLocaleString("en-AU", { maximumFractionDigits: 0 });
 }
 
-function timeAgo(dateStr: string): string {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `${mins}m ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-}
 
 // Stat Card
 function StatCard({
@@ -247,7 +238,7 @@ function PropertyOfferCard({
             {/* Expanded Offers */}
             {isExpanded && (
                 <ExpandedOffersTable
-                    group={group as any}
+                    group={group as PropertyGroup}
                     onDownloadReport={onDownloadReport}
                     onOfferClick={onOfferClick}
                     onDeleteOffer={onDeleteOffer}
@@ -341,7 +332,7 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                 <div className="space-y-3 text-sm">
                                     {fd.isRepresentedByBuyersAgent && (
                                         <div className="mb-4 pb-4 border-b border-gray-100 bg-blue-50/30 -mx-2 px-2 rounded-lg pt-2">
-                                            <p className="text-[11px] font-bold text-harcourts-blue uppercase tracking-wider mb-3">Represented by Buyer's Agent</p>
+                                            <p className="text-[11px] font-bold text-harcourts-blue uppercase tracking-wider mb-3">Represented by Buyer&apos;s Agent</p>
                                             <div className="grid grid-cols-3 text-gray-500 mb-2">
                                                 <span className="col-span-1 border-r border-gray-100">Agency</span>
                                                 <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.buyersAgency}</span>
@@ -547,7 +538,7 @@ export default function OffersDashboardPage() {
         }
 
         // Fetch active properties from VaultRE to determine archiving
-        let activePropertiesSet = new Set<string>();
+        const activePropertiesSet = new Set<string>();
         try {
             const activeRes = await fetch("/api/offer/properties", {
                 method: "GET",
@@ -557,7 +548,7 @@ export default function OffersDashboardPage() {
                 const activeData = await activeRes.json();
                 if (activeData.properties && Array.isArray(activeData.properties)) {
                     // Create a normalized set of active addresses for robust matching
-                    activeData.properties.forEach((p: any) => {
+                    activeData.properties.forEach((p: { displayAddress?: string }) => {
                         const normalizedAddr = p.displayAddress?.toLowerCase().replace(/,/g, "").trim();
                         if (normalizedAddr) activePropertiesSet.add(normalizedAddr);
                     });
@@ -606,10 +597,7 @@ export default function OffersDashboardPage() {
 
         // Calculate averages
         for (const g of groupMap.values()) {
-            const totalPrices = g.offers.reduce(
-                (sum, o) => sum + parsePrice(o.offer_price),
-                0
-            );
+            g.avgOffer = g.offers.reduce((sum, o) => sum + parsePrice(o.offer_price), 0) / g.offers.length;
             if (g.lowestOffer === Infinity) g.lowestOffer = 0;
 
             // Check archive status against VaultRE active set

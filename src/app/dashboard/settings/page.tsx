@@ -43,14 +43,14 @@ export default function SettingsPage() {
         return;
       }
 
-      // Check Profile Role
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
+      // Check admin role via app_metadata (server-controlled JWT claim).
+      // Per the 2026-04-21 security update, is_admin() now reads app_metadata.role
+      // instead of user_metadata.role (which users could self-modify via the browser SDK).
+      // app_metadata can only be set server-side, making it tamper-proof.
+      const isAdminUser =
+        (user?.app_metadata as { role?: string })?.role === "admin";
 
-      if (profile?.role !== "admin") {
+      if (!isAdminUser) {
         setIsAdmin(false);
         setLoading(false);
         return;

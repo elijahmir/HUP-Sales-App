@@ -17,7 +17,7 @@ import {
     initialExpenseApprovalFormData,
     type ExpenseApprovalFormData,
 } from "@/lib/expense-approval/types";
-import { validateStep, isStepValid, getEffectiveSteps } from "@/lib/expense-approval/validation";
+import { validateStep, getEffectiveSteps } from "@/lib/expense-approval/validation";
 
 // ── Success Screen ──────────────────────────────────────────────────────
 function SuccessScreen({ onNewForm }: { onNewForm: () => void }) {

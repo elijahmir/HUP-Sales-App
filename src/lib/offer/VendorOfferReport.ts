@@ -56,7 +56,7 @@ function getExactWidth(doc: jsPDF, text: string): number {
     return (doc.getStringUnitWidth(text) * doc.getFontSize()) / doc.internal.scaleFactor;
 }
 
-function printTruncated(doc: jsPDF, text: string, x: number, y: number, maxW: number, options?: any) {
+function printTruncated(doc: jsPDF, text: string, x: number, y: number, maxW: number, options?: { align?: "left" | "right" | "center" | "justify" }) {
     if (!text) return;
     const w = getExactWidth(doc, text);
     if (w <= maxW) {
@@ -356,7 +356,6 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
         return startY + headerHeight;
     };
 
-    let pageNum = 1;
     y = drawTableHeader(y);
 
     // Rows
@@ -376,7 +375,6 @@ export async function generateVendorOfferReport(data: ReportData): Promise<void>
             doc.roundedRect(marginL, tableStartY, contentW, y - tableStartY, 4, 4);
 
             doc.addPage();
-            pageNum++;
             y = 15;
             tableStartY = y;
             y = drawTableHeader(y);

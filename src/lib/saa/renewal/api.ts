@@ -66,6 +66,7 @@ function toProperCase(str: string): string {
  */
 function buildVendorPayload(
   vendor: RenewalPropertyData["vendors"][number],
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _index: number,
 ): VendorPayload {
   const fullName = vendor.fullName.toUpperCase();

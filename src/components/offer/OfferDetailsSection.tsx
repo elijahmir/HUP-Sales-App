@@ -6,7 +6,6 @@ import {
     AlertCircle,
     Info,
     DollarSign,
-    Landmark,
     ClipboardCheck,
     Calendar,
     FileText,
@@ -346,7 +345,7 @@ export function OfferDetailsSection({
                     <div className="space-y-4 pl-4 border-l-2 border-violet-200 animate-fade-in">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <label className="field-label">Purchaser's Property Address</label>
+                                <label className="field-label">Purchaser&apos;s Property Address</label>
                                 <input
                                     type="text"
                                     value={formData.subjectToSaleAddress}

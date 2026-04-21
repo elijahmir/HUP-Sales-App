@@ -104,6 +104,12 @@ export default function SAAFormPage() {
     }
   }, [formData.vendorStructure, formData.annexureA]);
 
+
+  // Stable dep variables for the signing clause effect
+  const vendor0FullName = formData.vendors[0]?.fullName;
+  const vendor0NameOnTitle = formData.vendors[0]?.nameOnTitle;
+  const vendor0HasDifferentName = formData.vendors[0]?.hasDifferentNameOnTitle;
+
   // Auto-populate SIGNING CLAUSE for POA as user types
   useEffect(() => {
     if (formData.vendorStructure !== "Power of Attorney") return;
@@ -118,9 +124,7 @@ export default function SAAFormPage() {
       return type === "subject" ? "they" : "their";
     };
 
-    const vendorNameRaw = formData.vendors[0]?.hasDifferentNameOnTitle
-      ? formData.vendors[0]?.nameOnTitle
-      : formData.vendors[0]?.fullName;
+    const vendorNameRaw = vendor0HasDifferentName ? vendor0NameOnTitle : vendor0FullName;
     const vendorName = toTitleCase(vendorNameRaw || "___");
     const attorneyName = toTitleCase(formData.attorneyName || "___");
     const poaNumber = formData.poaNumber || "___";
@@ -138,12 +142,11 @@ export default function SAAFormPage() {
       ],
       annexureCount: 1,
     }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     formData.vendorStructure,
-    formData.vendors[0]?.fullName,
-    formData.vendors[0]?.nameOnTitle,
-    formData.vendors[0]?.hasDifferentNameOnTitle,
+    vendor0FullName,
+    vendor0NameOnTitle,
+    vendor0HasDifferentName,
     formData.attorneyName,
     formData.poaNumber,
     formData.vendorPoaTitle,

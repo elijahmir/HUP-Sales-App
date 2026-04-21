@@ -381,7 +381,7 @@ export function PropertySelector({
                                     {property.contactStaff && property.contactStaff.length > 0 && (
                                         <div className="flex items-center flex-shrink-0 pl-2 ml-auto">
                                             <div className="flex -space-x-2">
-                                                {property.contactStaff.slice(0, 2).map((staff, idx) => (
+                                                {property.contactStaff.slice(0, 2).map((staff) => (
                                                     <div
                                                         key={staff.id}
                                                         className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 overflow-hidden ring-1 ring-gray-100 shadow-sm"

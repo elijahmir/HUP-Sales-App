@@ -250,7 +250,6 @@ export async function GET(request: NextRequest) {
           const scheduleData = await scheduleRes.json();
           // Check for NO_ADVERTISING_SCHEDULE response
           if (scheduleData.schedule && Array.isArray(scheduleData.schedule)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             marketingScheduleIds = scheduleData.schedule
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .filter((item: any) => item.expenseType?.id)

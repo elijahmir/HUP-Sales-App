@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import { FileText, Trophy, Clock, Trash2, ChevronUp, ChevronDown, Filter, Plus, X, CheckCircle2, Circle } from "lucide-react";
 import type { ContactStaffInfo, OfferFormData } from "@/lib/offer/types";
 
@@ -45,10 +45,10 @@ interface ExpandedOffersTableProps {
     onDeleteOffer: (offer: OfferRow) => void;
     onToggleContractDrafted: (offer: OfferRow, drafted: boolean) => void;
     onToggleContractSigned: (offer: OfferRow, signed: boolean) => void;
-    currentUserEmail: string;
+    currentUserEmail?: string;
 }
 
-function parsePrice(price: any): number {
+function parsePrice(price: string | number | null | undefined): number {
     if (!price) return 0;
     return Number(String(price).replace(/[^0-9.]/g, "")) || 0;
 }
@@ -103,6 +103,20 @@ const getAvailableOperators = (column: FilterColumn): FilterOperator[] => {
             return ["equals"];
     }
 };
+
+// ─── Sort indicator icon (module-level to maintain stable identity) ────────────
+function SortIcon({ columnKey, isSortable, sortConfig }: {
+    columnKey: SortKey;
+    isSortable: boolean;
+    sortConfig: { key: SortKey; direction: SortDirection } | null;
+}) {
+    if (!isSortable) return null;
+    if (sortConfig === null && columnKey === "offerPrice") {
+        return <ChevronDown className="w-3 h-3 ml-1 inline text-gray-400" />;
+    }
+    if (sortConfig?.key !== columnKey) return null;
+    return sortConfig.direction === "asc" ? <ChevronUp className="w-3 h-3 ml-1 inline" /> : <ChevronDown className="w-3 h-3 ml-1 inline" />;
+}
 
 // ─── Reusable date formatter ────────────────────────────────────
 function formatStatusDate(dateStr: string | null | undefined): string {
@@ -199,7 +213,6 @@ export default function ExpandedOffersTable({
     onDeleteOffer,
     onToggleContractDrafted,
     onToggleContractSigned,
-    currentUserEmail,
 }: ExpandedOffersTableProps) {
     const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection } | null>(null);
     const [showFilters, setShowFilters] = useState(false);
@@ -215,8 +228,8 @@ export default function ExpandedOffersTable({
                 return filters.every(rule => {
                     if (!rule.value) return true; // Ignore incomplete rules
 
-                    let itemValue: any;
-                    let compareValue: any = rule.value;
+                    let itemValue: string | number;
+                    let compareValue: string | number = rule.value;
 
                     switch (rule.column) {
                         case "purchaserName":
@@ -353,18 +366,6 @@ export default function ExpandedOffersTable({
 
     const isSortable = filteredAndSortedOffers.length > 1;
 
-    const SortIcon = ({ columnKey }: { columnKey: SortKey }) => {
-        if (!isSortable) return null;
-
-        // Default sort indicator
-        if (sortConfig === null && columnKey === "offerPrice") {
-            return <ChevronDown className="w-3 h-3 ml-1 inline text-gray-400" />;
-        }
-
-        if (sortConfig?.key !== columnKey) return null;
-        return sortConfig.direction === "asc" ? <ChevronUp className="w-3 h-3 ml-1 inline" /> : <ChevronDown className="w-3 h-3 ml-1 inline" />;
-    };
-
     return (
         <div className="border-t border-gray-100">
             {/* Action Bar */}
@@ -462,28 +463,28 @@ export default function ExpandedOffersTable({
                     disabled={!isSortable}
                     className={`col-span-3 text-left flex items-center ${isSortable ? 'hover:text-gray-900 cursor-pointer transition-colors' : ''}`}
                 >
-                    Purchaser <SortIcon columnKey="purchaserName" />
+                    Purchaser <SortIcon columnKey="purchaserName" isSortable={isSortable} sortConfig={sortConfig} />
                 </button>
                 <button
                     onClick={() => handleSort("structure")}
                     disabled={!isSortable}
                     className={`col-span-1 text-left flex items-center ${isSortable ? 'hover:text-gray-900 cursor-pointer transition-colors' : ''}`}
                 >
-                    Structure <SortIcon columnKey="structure" />
+                    Structure <SortIcon columnKey="structure" isSortable={isSortable} sortConfig={sortConfig} />
                 </button>
                 <button
                     onClick={() => handleSort("offerPrice")}
                     disabled={!isSortable}
                     className={`col-span-2 flex items-center justify-end ${isSortable ? 'hover:text-gray-900 cursor-pointer transition-colors' : ''}`}
                 >
-                    Offer Price <SortIcon columnKey="offerPrice" />
+                    Offer Price <SortIcon columnKey="offerPrice" isSortable={isSortable} sortConfig={sortConfig} />
                 </button>
                 <button
                     onClick={() => handleSort("deposit")}
                     disabled={!isSortable}
                     className={`col-span-1 flex items-center justify-end ${isSortable ? 'hover:text-gray-900 cursor-pointer transition-colors' : ''}`}
                 >
-                    Deposit <SortIcon columnKey="deposit" />
+                    Deposit <SortIcon columnKey="deposit" isSortable={isSortable} sortConfig={sortConfig} />
                 </button>
                 <span className="col-span-1 text-center">Finance</span>
                 <span className="col-span-1 text-center text-[10px] leading-tight">Contract<br />Drafted</span>
@@ -493,7 +494,7 @@ export default function ExpandedOffersTable({
                     disabled={!isSortable}
                     className={`col-span-1 flex items-center justify-end ${isSortable ? 'hover:text-gray-900 cursor-pointer transition-colors' : ''}`}
                 >
-                    Submitted <SortIcon columnKey="submitted" />
+                    Submitted <SortIcon columnKey="submitted" isSortable={isSortable} sortConfig={sortConfig} />
                 </button>
                 <span className="col-span-1 text-right">Actions</span>
             </div>

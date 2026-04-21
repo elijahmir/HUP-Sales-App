@@ -6,7 +6,6 @@ import {
   AlertCircle,
   Copy,
   Mail,
-  Phone,
   ScrollText,
 } from "lucide-react";
 import type { FormData } from "@/lib/saa/types";

@@ -30,7 +30,7 @@ export async function testVaultRE() {
             const data = await response.json();
             console.log(`Items returned: ${data.items ? data.items.length : 'N/A'}`);
             if (data.items && data.items.length > 0) {
-                console.log("Sample item classes:", data.items.map((i: any) => i.class?.name || 'Unknown'));
+                console.log("Sample item classes:", data.items.map((i: { class?: { name: string } }) => i.class?.name || 'Unknown'));
             }
         } else {
             const text = await response.text();
