@@ -1,6 +1,7 @@
 "use client";
 
 import type { OfferFormData } from "@/lib/offer/types";
+import { toTitleCase, formatAddress } from "@/lib/offer/format";
 import {
     Home,
     Users,
@@ -52,13 +53,13 @@ function ReviewCard({
     );
 }
 
-function Row({ label, value }: { label: string; value: string | null | undefined }) {
+function Row({ label, value, raw }: { label: string; value: string | null | undefined; raw?: boolean }) {
     if (!value) return null;
     return (
         <div className="flex justify-between py-1.5">
             <span className="text-gray-500">{label}</span>
-            <span className="font-medium text-gray-900 text-right max-w-[60%] break-words uppercase">
-                {value}
+            <span className="font-medium text-gray-900 text-right max-w-[60%] break-words">
+                {raw ? value : toTitleCase(value)}
             </span>
         </div>
     );
@@ -97,12 +98,12 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
                         </div>
                     )}
                     <div>
-                        <p className="font-semibold text-harcourts-navy uppercase">
-                            {formData.propertyAddress || "Not selected"}
+                        <p className="font-semibold text-harcourts-navy">
+                            {toTitleCase(formData.propertyAddress) || "Not selected"}
                         </p>
                         <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
                             <MapPin className="w-3 h-3" />
-                            {formData.propertySuburb}, {formData.propertyState}{" "}
+                            {toTitleCase(formData.propertySuburb)}, {formData.propertyState?.toUpperCase()}{" "}
                             {formData.propertyPostcode}
                         </div>
                     </div>
@@ -136,7 +137,7 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
                         <span className="text-harcourts-blue font-semibold text-xs mb-2 block uppercase tracking-wider">Represented by Buyer&apos;s Agent</span>
                         <Row label="Agency" value={formData.buyersAgency} />
                         <Row label="Agent Name" value={formData.buyersAgentName} />
-                        <Row label="Email" value={formData.buyersAgentEmail} />
+                        <Row label="Email" value={formData.buyersAgentEmail} raw />
                         <Row label="Mobile" value={`${formData.buyersAgentMobileCode || ''} ${formData.buyersAgentMobile || ''}`.trim() || undefined} />
                     </div>
                 )}
@@ -165,8 +166,8 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
                                     <span className="w-5 h-5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-500 flex items-center justify-center">
                                         {i + 1}
                                     </span>
-                                    <span className="font-semibold text-gray-900 uppercase">
-                                        {p.fullName || "—"}
+                                    <span className="font-semibold text-gray-900">
+                                        {toTitleCase(p.fullName) || "—"}
                                     </span>
                                 </div>
                                 <div className="ml-7 text-xs text-gray-400 space-y-0.5">
@@ -174,10 +175,8 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
                                     <p>
                                         {p.mobileCountryCode} {p.mobileNumber}
                                     </p>
-                                    <p className="uppercase">
-                                        {[p.street, p.suburb, p.state, p.postcode]
-                                            .filter(Boolean)
-                                            .join(" ")}
+                                    <p>
+                                        {formatAddress(p.street, p.suburb, p.state, p.postcode)}
                                     </p>
                                 </div>
                             </div>
@@ -190,13 +189,13 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
             <ReviewCard title="Solicitor" icon={Scale} step={2} onEdit={onJumpToStep}>
                 <Row label="Firm" value={formData.solicitorFirm} />
                 <Row label="Name" value={formData.solicitorName} />
-                <Row label="Email" value={formData.solicitorEmail} />
+                <Row label="Email" value={formData.solicitorEmail} raw />
             </ReviewCard>
 
             {/* Offer */}
             <ReviewCard title="Offer Details" icon={DollarSign} step={3} onEdit={onJumpToStep}>
-                <Row label="Offer Price" value={formData.offerPrice ? `$${formData.offerPrice}` : ""} />
-                <Row label="Deposit" value={formData.depositAmount ? `$${formData.depositAmount}` : ""} />
+                <Row label="Offer Price" value={formData.offerPrice ? `$${formData.offerPrice}` : ""} raw />
+                <Row label="Deposit" value={formData.depositAmount ? `$${formData.depositAmount}` : ""} raw />
                 <div className="border-t border-gray-100 mt-2 pt-2">
                     <BoolRow label="Finance Required" value={formData.financeRequired} />
                     {formData.financeRequired && (
@@ -205,20 +204,21 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
                             <Row
                                 label="Amount Borrowed"
                                 value={formData.financeAmount ? `$${formData.financeAmount}` : ""}
+                                raw
                             />
                         </>
                     )}
                     <BoolRow label="Building Inspection" value={formData.buildingInspection} />
                     <BoolRow label="Cooling Off Period" value={formData.coolingOffPeriod} />
-                    <Row label="Settlement Period" value={formData.settlementPeriod} />
+                    <Row label="Settlement Period" value={formData.settlementPeriod} raw />
                     <BoolRow label="Subject to Sale" value={formData.subjectToSale} />
                     {formData.subjectToSale && (
                         <div className="mt-1 mb-2 pt-1 pl-4 border-l-2 border-violet-100 space-y-1">
                             <Row label="Property Address" value={formData.subjectToSaleAddress} />
-                            <Row label="Max Asking Price" value={formData.subjectToSalePrice ? `$${formData.subjectToSalePrice}` : ""} />
+                            <Row label="Max Asking Price" value={formData.subjectToSalePrice ? `$${formData.subjectToSalePrice}` : ""} raw />
                             <BoolRow label="Under Contract" value={formData.subjectToSaleUnderContract} />
                             {formData.subjectToSaleUnderContract && (
-                                <Row label="Completion Date" value={formData.subjectToSaleCompletionDate} />
+                                <Row label="Completion Date" value={formData.subjectToSaleCompletionDate} raw />
                             )}
                         </div>
                     )}

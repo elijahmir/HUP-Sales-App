@@ -32,6 +32,8 @@ import { generateVendorOfferReport } from "@/lib/offer/VendorOfferReport";
 import type { ReportData, OfferData, AgentInfo } from "@/lib/offer/VendorOfferReport";
 import { getChanges } from "@/lib/offer/diff";
 import ExpandedOffersTable from "@/components/dashboard/ExpandedOffersTable";
+import { toTitleCase, formatAddress } from "@/lib/offer/format";
+import { CopyButton } from "@/components/offer/CopyButton";
 
 // Types
 interface OfferRow {
@@ -335,11 +337,11 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                             <p className="text-[11px] font-bold text-harcourts-blue uppercase tracking-wider mb-3">Represented by Buyer&apos;s Agent</p>
                                             <div className="grid grid-cols-3 text-gray-500 mb-2">
                                                 <span className="col-span-1 border-r border-gray-100">Agency</span>
-                                                <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.buyersAgency}</span>
+                                                <span className="col-span-2 pl-3 text-gray-900 font-medium flex items-center gap-1.5">{toTitleCase(fd.buyersAgency)} <CopyButton value={toTitleCase(fd.buyersAgency)} /></span>
                                             </div>
                                             <div className="grid grid-cols-3 text-gray-500 mb-2">
                                                 <span className="col-span-1 border-r border-gray-100">Agent</span>
-                                                <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.buyersAgentName}</span>
+                                                <span className="col-span-2 pl-3 text-gray-900 font-medium flex items-center gap-1.5">{toTitleCase(fd.buyersAgentName)} <CopyButton value={toTitleCase(fd.buyersAgentName)} /></span>
                                             </div>
                                             <div className="grid grid-cols-3 text-gray-500 mb-2 items-center">
                                                 <span className="col-span-1 border-r border-gray-100">Contact</span>
@@ -352,18 +354,18 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                     )}
                                     <div className="grid grid-cols-3 text-gray-500">
                                         <span className="col-span-1 border-r border-gray-100">Structure</span>
-                                        <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.purchaserStructure}</span>
+                                        <span className="col-span-2 pl-3 text-gray-900 font-medium flex items-center gap-1.5">{fd.purchaserStructure} <CopyButton value={fd.purchaserStructure} /></span>
                                     </div>
                                     {fd.companyName && (
                                         <div className="grid grid-cols-3 text-gray-500">
                                             <span className="col-span-1 border-r border-gray-100">Company</span>
-                                            <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.companyName} {fd.companyACN && `ACN: ${fd.companyACN}`}</span>
+                                            <span className="col-span-2 pl-3 text-gray-900 font-medium flex items-center gap-1.5">{toTitleCase(fd.companyName)} {fd.companyACN && `ACN: ${fd.companyACN}`} <CopyButton value={`${toTitleCase(fd.companyName)}${fd.companyACN ? ` ACN: ${fd.companyACN}` : ""}`} /></span>
                                         </div>
                                     )}
                                     {fd.trustName && (
                                         <div className="grid grid-cols-3 text-gray-500">
                                             <span className="col-span-1 border-r border-gray-100">Trust</span>
-                                            <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.trustName}</span>
+                                            <span className="col-span-2 pl-3 text-gray-900 font-medium flex items-center gap-1.5">{toTitleCase(fd.trustName)} <CopyButton value={toTitleCase(fd.trustName)} /></span>
                                         </div>
                                     )}
                                     <div className="mt-4">
@@ -371,9 +373,18 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                         <div className="space-y-2">
                                             {fd.purchasers.slice(0, fd.purchaserCount || 1).map((p, i) => (
                                                 <div key={i} className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                                    <p className="font-semibold text-gray-900">{p.fullName || `Purchaser ${i + 1} (Name pending)`}</p>
-                                                    <p className="text-xs text-gray-500">{p.email} • {p.mobileCountryCode || "+61"} {p.mobileNumber}</p>
-                                                    <p className="text-xs text-gray-500 mt-1">{[p.street, p.suburb, p.state, p.postcode].filter(Boolean).join(" ").replace(/,/g, "")}</p>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="font-semibold text-gray-900">{toTitleCase(p.fullName) || `Purchaser ${i + 1} (Name pending)`}</p>
+                                                        <CopyButton value={toTitleCase(p.fullName)} />
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 mt-0.5">
+                                                        <p className="text-xs text-gray-500">{p.email} • {p.mobileCountryCode || "+61"} {p.mobileNumber}</p>
+                                                        <CopyButton value={p.email} label="Copy email" />
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 mt-1">
+                                                        <p className="text-xs text-gray-500">{formatAddress(p.street, p.suburb, p.state, p.postcode)}</p>
+                                                        <CopyButton value={formatAddress(p.street, p.suburb, p.state, p.postcode)} label="Copy address" />
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -386,15 +397,15 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                 <div className="space-y-3 text-sm">
                                     <div className="grid grid-cols-3 text-gray-500">
                                         <span className="col-span-1 border-r border-gray-100">Firm</span>
-                                        <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.solicitorFirm}</span>
+                                        <span className="col-span-2 pl-3 text-gray-900 font-medium flex items-center gap-1.5">{toTitleCase(fd.solicitorFirm)} <CopyButton value={toTitleCase(fd.solicitorFirm)} /></span>
                                     </div>
                                     <div className="grid grid-cols-3 text-gray-500">
                                         <span className="col-span-1 border-r border-gray-100">Name</span>
-                                        <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.solicitorName}</span>
+                                        <span className="col-span-2 pl-3 text-gray-900 font-medium flex items-center gap-1.5">{toTitleCase(fd.solicitorName)} <CopyButton value={toTitleCase(fd.solicitorName)} /></span>
                                     </div>
                                     <div className="grid grid-cols-3 text-gray-500">
                                         <span className="col-span-1 border-r border-gray-100">Email</span>
-                                        <span className="col-span-2 pl-3 text-gray-900 font-medium">{fd.solicitorEmail}</span>
+                                        <span className="col-span-2 pl-3 text-gray-900 font-medium flex items-center gap-1.5">{fd.solicitorEmail} <CopyButton value={fd.solicitorEmail} /></span>
                                     </div>
                                 </div>
                             </section>
@@ -407,11 +418,11 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                 <div className="space-y-3 text-sm bg-emerald-50/50 p-4 rounded-xl border border-emerald-100">
                                     <div className="grid grid-cols-3 text-gray-600">
                                         <span className="col-span-1">Offer Price</span>
-                                        <span className="col-span-2 font-bold text-emerald-700 text-lg">${fd.offerPrice}</span>
+                                        <span className="col-span-2 font-bold text-emerald-700 text-lg flex items-center gap-1.5">${fd.offerPrice} <CopyButton value={fd.offerPrice} /></span>
                                     </div>
                                     <div className="grid grid-cols-3 text-gray-600">
                                         <span className="col-span-1">Deposit</span>
-                                        <span className="col-span-2 font-bold text-gray-900">${fd.depositAmount}</span>
+                                        <span className="col-span-2 font-bold text-gray-900 flex items-center gap-1.5">${fd.depositAmount} <CopyButton value={fd.depositAmount} /></span>
                                     </div>
                                 </div>
                             </section>
@@ -426,8 +437,8 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                         </div>
                                         {fd.financeRequired && (
                                             <div className="ml-6 space-y-1 text-xs text-gray-500">
-                                                <p>Lender: <span className="font-medium text-gray-900">{fd.bankLender}</span></p>
-                                                <p>Amount: <span className="font-medium text-gray-900">${fd.financeAmount}</span></p>
+                                                <p className="flex items-center gap-1.5">Lender: <span className="font-medium text-gray-900">{toTitleCase(fd.bankLender)}</span> <CopyButton value={toTitleCase(fd.bankLender)} /></p>
+                                                <p className="flex items-center gap-1.5">Amount: <span className="font-medium text-gray-900">${fd.financeAmount}</span> <CopyButton value={fd.financeAmount} /></p>
                                             </div>
                                         )}
                                     </div>
@@ -445,7 +456,7 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
 
                                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
                                         <p className="text-xs text-gray-500 mb-1">Settlement Period</p>
-                                        <p className="font-medium text-gray-900">{fd.settlementPeriod}</p>
+                                        <p className="font-medium text-gray-900 flex items-center gap-1.5">{fd.settlementPeriod} <CopyButton value={fd.settlementPeriod} /></p>
                                     </div>
 
                                     <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
@@ -455,8 +466,8 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                         </div>
                                         {fd.subjectToSale && (
                                             <div className="ml-6 space-y-1 text-xs text-gray-500">
-                                                <p>Address: <span className="font-medium text-gray-900">{fd.subjectToSaleAddress}</span></p>
-                                                <p>Price: <span className="font-medium text-gray-900">${fd.subjectToSalePrice}</span></p>
+                                                <p className="flex items-center gap-1.5">Address: <span className="font-medium text-gray-900">{toTitleCase(fd.subjectToSaleAddress)}</span> <CopyButton value={toTitleCase(fd.subjectToSaleAddress)} /></p>
+                                                <p className="flex items-center gap-1.5">Price: <span className="font-medium text-gray-900">${fd.subjectToSalePrice}</span> <CopyButton value={fd.subjectToSalePrice} /></p>
                                                 <p>Under Contract: <span className="font-medium text-gray-900">{fd.subjectToSaleUnderContract ? "Yes" : "No"}</span></p>
                                                 {fd.subjectToSaleUnderContract && (
                                                     <p>Completion Date: <span className="font-medium text-gray-900">{fd.subjectToSaleCompletionDate}</span></p>
