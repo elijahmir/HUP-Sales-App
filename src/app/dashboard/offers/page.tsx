@@ -272,7 +272,7 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                     <div>
                         <div className="flex items-center gap-3">
                             <h2 className="text-xl font-bold text-[#001F49]">
-                                Offer from {offer.purchaser_name}
+                                Offer from {toTitleCase(offer.purchaser_name)}
                             </h2>
                             {isEdited && (
                                 <span className="px-2 py-0.5 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold rounded-full flex items-center gap-1.5" title={`Last edited: ${new Date(offer.updated_at).toLocaleString()}`}>
@@ -346,8 +346,8 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                             <div className="grid grid-cols-3 text-gray-500 mb-2 items-center">
                                                 <span className="col-span-1 border-r border-gray-100">Contact</span>
                                                 <span className="col-span-2 pl-3 text-gray-900 font-medium text-xs break-all leading-tight">
-                                                    {fd.buyersAgentMobileCode} {fd.buyersAgentMobile}<br />
-                                                    <a href={`mailto:${fd.buyersAgentEmail}`} className="text-harcourts-blue hover:underline">{fd.buyersAgentEmail}</a>
+                                                    <span className="flex items-center gap-1.5">{fd.buyersAgentMobileCode} {fd.buyersAgentMobile} <CopyButton value={`${fd.buyersAgentMobileCode || ''} ${fd.buyersAgentMobile || ''}`.trim()} label="Copy phone" /></span>
+                                                    <span className="flex items-center gap-1.5"><a href={`mailto:${fd.buyersAgentEmail}`} className="text-harcourts-blue hover:underline">{fd.buyersAgentEmail}</a> <CopyButton value={fd.buyersAgentEmail || ''} label="Copy email" /></span>
                                                 </span>
                                             </div>
                                         </div>
@@ -378,8 +378,11 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                                         <CopyButton value={toTitleCase(p.fullName)} />
                                                     </div>
                                                     <div className="flex items-center gap-1.5 mt-0.5">
-                                                        <p className="text-xs text-gray-500">{p.email} • {p.mobileCountryCode || "+61"} {p.mobileNumber}</p>
+                                                        <p className="text-xs text-gray-500">{p.email}</p>
                                                         <CopyButton value={p.email} label="Copy email" />
+                                                        <span className="text-xs text-gray-300">•</span>
+                                                        <p className="text-xs text-gray-500">{p.mobileCountryCode || "+61"} {p.mobileNumber}</p>
+                                                        <CopyButton value={`${p.mobileCountryCode || '+61'} ${p.mobileNumber}`} label="Copy phone" />
                                                     </div>
                                                     <div className="flex items-center gap-1.5 mt-1">
                                                         <p className="text-xs text-gray-500">{formatAddress(p.street, p.suburb, p.state, p.postcode)}</p>
@@ -470,7 +473,7 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                                 <p className="flex items-center gap-1.5">Price: <span className="font-medium text-gray-900">${fd.subjectToSalePrice}</span> <CopyButton value={fd.subjectToSalePrice} /></p>
                                                 <p>Under Contract: <span className="font-medium text-gray-900">{fd.subjectToSaleUnderContract ? "Yes" : "No"}</span></p>
                                                 {fd.subjectToSaleUnderContract && (
-                                                    <p>Completion Date: <span className="font-medium text-gray-900">{fd.subjectToSaleCompletionDate}</span></p>
+                                                    <p className="flex items-center gap-1.5">Completion Date: <span className="font-medium text-gray-900">{fd.subjectToSaleCompletionDate}</span> <CopyButton value={fd.subjectToSaleCompletionDate} /></p>
                                                 )}
                                             </div>
                                         )}
@@ -478,7 +481,10 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
 
                                     {fd.specialClauses && (
                                         <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                            <p className="text-xs text-gray-500 mb-1">Special Clauses</p>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <p className="text-xs text-gray-500">Special Clauses</p>
+                                                <CopyButton value={fd.specialClauses} label="Copy special clauses" />
+                                            </div>
                                             <p className="text-sm text-gray-900 whitespace-pre-wrap">{fd.specialClauses}</p>
                                         </div>
                                     )}
@@ -487,7 +493,7 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                         <div className="bg-orange-50 p-3 rounded-lg border border-orange-100 flex items-center justify-between gap-3 overflow-hidden">
                                             <div className="min-w-0 flex-1">
                                                 <p className="text-xs text-orange-600 mb-1">Appendix Document</p>
-                                                <p className="font-medium text-orange-900 truncate">{fd.appendixFileName}</p>
+                                                <p className="font-medium text-orange-900 truncate flex items-center gap-1.5">{fd.appendixFileName} <CopyButton value={fd.appendixFileName} label="Copy filename" /></p>
                                             </div>
                                             {fd.appendixFileBase64 && (
                                                 <a
