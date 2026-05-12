@@ -276,6 +276,7 @@ export const otherStatesSuburbs: SuburbData[] = [
   { suburb: "Perth", postcode: "6000", state: "WA" },
   // Northern Territory
   { suburb: "Darwin", postcode: "0800", state: "NT" },
+  { suburb: "Acacia Hills", postcode: "0822", state: "NT" },
   // ACT
   { suburb: "Canberra", postcode: "2600", state: "ACT" },
 ];
