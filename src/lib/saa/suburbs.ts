@@ -91,6 +91,7 @@ export const tasmaniaSuburbs: SuburbData[] = [
   { suburb: "Smithton", postcode: "7330", state: "TAS" },
   { suburb: "Marrawah", postcode: "7330", state: "TAS" },
   { suburb: "Arthur River", postcode: "7330", state: "TAS" },
+  { suburb: "Acacia Hills", postcode: "7306", state: "TAS" },
   { suburb: "Sheffield", postcode: "7306", state: "TAS" },
   { suburb: "Lower Barrington", postcode: "7306", state: "TAS" },
   { suburb: "Railton", postcode: "7305", state: "TAS" },
@@ -276,7 +277,7 @@ export const otherStatesSuburbs: SuburbData[] = [
   { suburb: "Perth", postcode: "6000", state: "WA" },
   // Northern Territory
   { suburb: "Darwin", postcode: "0800", state: "NT" },
-  { suburb: "Acacia Hills", postcode: "0822", state: "NT" },
+
   // ACT
   { suburb: "Canberra", postcode: "2600", state: "ACT" },
 ];
