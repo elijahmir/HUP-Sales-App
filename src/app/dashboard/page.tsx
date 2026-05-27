@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   FileText,
+  FolderOpen,
   Sparkles,
   Clock,
   ArrowRight,
@@ -371,6 +372,46 @@ export default function DashboardHub() {
           </Link>
         </motion.div>
 
+        {/* Missing Millions CRM — hidden for now, uncomment to re-enable
+        <motion.div variants={item} className="md:col-span-2 group relative">
+          <Link href="/dashboard/missing-millions" className="block h-full">
+            <div className="relative h-full bg-gradient-to-br from-rose-500/5 to-pink-500/5 rounded-2xl p-8 overflow-hidden shadow-sm border border-rose-500/20 transition-all duration-300 hover:shadow-md hover:border-rose-500/30 hover:-translate-y-1 flex flex-col justify-between">
+              <div className="absolute top-0 right-0 p-4 opacity-5">
+                <Target className="w-32 h-32 text-rose-600" />
+              </div>
+              <div className="relative z-10 flex flex-col gap-5">
+                <div className="inline-flex items-center gap-2 self-start bg-rose-50 px-3 py-1.5 rounded-full border border-rose-100">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-rose-700">
+                    New Feature
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  <h2 className="font-display text-2xl font-bold tracking-tight text-[#001F49]">
+                    Missing Millions
+                  </h2>
+                  <p className="text-slate-500 text-base max-w-md leading-relaxed">
+                    CRM intelligence & revenue tracking — identify missed
+                    opportunities, track pipeline, and cross-reference VaultRE.
+                  </p>
+                </div>
+              </div>
+              <div className="relative z-10 mt-6 pt-5 border-t border-rose-100 flex items-center justify-between group-hover:border-rose-200 transition-colors">
+                <span className="font-semibold text-base text-rose-700">
+                  Open Dashboard
+                </span>
+                <div className="w-9 h-9 rounded-full bg-rose-100 flex items-center justify-center group-hover:bg-rose-200 group-hover:text-rose-800 transition-all duration-300">
+                  <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+          </Link>
+        </motion.div>
+        */}
+
         {/* CopyPro - Active (Horizontal) */}
         <motion.div variants={item} className="md:col-span-2 group relative">
           <Link href="/dashboard/copypro" className="block h-full">
@@ -408,6 +449,18 @@ export default function DashboardHub() {
                 </div>
               </div>
             </div>
+          </Link>
+          {/* Secondary entry into the listings repo, layered on top of
+              the card so it doesn't trigger the parent <Link>. Small +
+              tonal so it reads as "extra surface, not main action". */}
+          <Link
+            href="/dashboard/listings"
+            className="absolute top-4 right-4 z-20 inline-flex items-center gap-1.5 rounded-full bg-white/80 backdrop-blur px-3 py-1.5 text-xs font-medium text-violet-700 shadow-sm border border-violet-100 hover:bg-white hover:border-violet-200 transition-all"
+            onClick={(e) => e.stopPropagation()}
+            title="Open saved listings repo"
+          >
+            <FolderOpen className="w-3 h-3" />
+            <span>Saved listings</span>
           </Link>
         </motion.div>
 

@@ -30,16 +30,58 @@ function useBoundedScroll(threshold: number) {
   return { scrollYBoundedProgress };
 }
 
-function getBreadcrumb(pathname: string): string | null {
-  if (pathname === "/dashboard") return null;
-  if (pathname.includes("/appraisal")) return "Front Sheet AI";
-  if (pathname.includes("/saa")) return "Sole Agency Agreement";
-  if (pathname.includes("/copypro")) return "CopyPro Assistant";
-  if (pathname.includes("/expense-approval")) return "Expense Approval";
-  if (pathname.includes("/offers")) return "Offers Dashboard";
-  if (pathname.includes("/offer")) return "Offer Form";
-  if (pathname.includes("/settings")) return "Settings";
-  return null;
+/** A single segment in the floating navbar breadcrumb. `href` makes it a
+ *  clickable hop; omit for the current-page tail so it reads as static. */
+interface BreadcrumbSegment {
+  label: string;
+  href?: string;
+}
+
+/** Resolve the breadcrumb trail for a dashboard pathname.
+ *
+ *  Examples:
+ *    /dashboard                → []  (no breadcrumb on home)
+ *    /dashboard/copypro        → [{label:"CopyPro Assistant"}]
+ *    /dashboard/listings       → [{label:"CopyPro Assistant", href:"…copypro"},
+ *                                 {label:"Listings"}]
+ *    /dashboard/listings/<id>  → [{label:"CopyPro Assistant", href:"…copypro"},
+ *                                 {label:"Listings", href:"…listings"}]
+ *
+ *  Order in this function matters: the /listings checks must come before
+ *  /copypro so a listing-detail URL doesn't accidentally fall into the
+ *  CopyPro single-segment branch.
+ */
+function getBreadcrumb(pathname: string): BreadcrumbSegment[] {
+  if (pathname === "/dashboard") return [];
+  if (pathname.includes("/appraisal")) return [{ label: "Front Sheet AI" }];
+  if (pathname.includes("/saa")) return [{ label: "Sole Agency Agreement" }];
+
+  // CopyPro family — nest the children under the CopyPro parent so the
+  // breadcrumb tells the user where the listings tab lives relative to
+  // the chat. Both segments need to be clickable jump targets except
+  // the tail.
+  if (pathname.match(/^\/dashboard\/listings\/[^/]+/)) {
+    return [
+      { label: "CopyPro Assistant", href: "/dashboard/copypro" },
+      { label: "Listings", href: "/dashboard/listings" },
+    ];
+  }
+  if (pathname.includes("/listings")) {
+    return [
+      { label: "CopyPro Assistant", href: "/dashboard/copypro" },
+      { label: "Listings" },
+    ];
+  }
+  if (pathname.includes("/copypro")) return [{ label: "CopyPro Assistant" }];
+
+  if (pathname.includes("/missing-millions"))
+    return [{ label: "Missing Millions" }];
+  if (pathname.includes("/expense-approval"))
+    return [{ label: "Expense Approval" }];
+  if (pathname.includes("/offers")) return [{ label: "Offers Dashboard" }];
+  if (pathname.includes("/offer")) return [{ label: "Offer Form" }];
+  if (pathname.includes("/settings")) return [{ label: "Settings" }];
+  return [];
 }
 
 export default function DashboardLayout({
@@ -99,13 +141,31 @@ export default function DashboardLayout({
                     </div>
                   </Link>
 
-                  {/* Breadcrumb */}
-                  {breadcrumb && (
+                  {/* Breadcrumb — renders each segment as a chevron-led
+                      crumb. Non-tail segments are clickable Links so a
+                      user can jump back to any intermediate level
+                      (e.g. Sales App › CopyPro › Listings — click
+                      CopyPro to land back in the chat). The last
+                      segment is plain text (you're already there). */}
+                  {breadcrumb.length > 0 && (
                     <div className="hidden md:flex items-center gap-2 text-sm text-slate-400 ml-2">
-                      <ChevronRight className="w-4 h-4" />
-                      <span className="font-medium text-slate-600">
-                        {breadcrumb}
-                      </span>
+                      {breadcrumb.map((seg, i) => (
+                        <span key={`${seg.label}-${i}`} className="flex items-center gap-2">
+                          <ChevronRight className="w-4 h-4" />
+                          {seg.href ? (
+                            <Link
+                              href={seg.href}
+                              className="font-medium text-slate-500 hover:text-[#00ADEF] transition-colors"
+                            >
+                              {seg.label}
+                            </Link>
+                          ) : (
+                            <span className="font-medium text-slate-600">
+                              {seg.label}
+                            </span>
+                          )}
+                        </span>
+                      ))}
                     </div>
                   )}
                 </div>
