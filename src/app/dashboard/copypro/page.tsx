@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Source_Sans_3 } from "next/font/google";
-import { Sparkles, Wrench } from "lucide-react";
+import { FolderOpen, Sparkles, Wrench } from "lucide-react";
 import { ChatKit, useChatKit } from "@openai/chatkit-react";
 import Script from "next/script";
 import { ImageMergerModal } from "@/components/tools/ImageMergerModal";
@@ -58,6 +59,17 @@ function CopyProContent() {
   const headerExtras = (
     <>
       <VariantSwitch current={variant} />
+      {/* Listings repo entry — lets the consultant jump from their
+          active chat to the persisted listings they've saved. Sits next
+          to Tools so it's discoverable in the same toolbar group. */}
+      <Link
+        href="/dashboard/listings"
+        className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-[#00ADEF] transition-colors"
+        title="Open saved listings repo"
+      >
+        <FolderOpen className="w-3.5 h-3.5" />
+        <span className="hidden sm:inline">Listings</span>
+      </Link>
       <button
         onClick={() => setIsMergerOpen(true)}
         className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-600 hover:bg-slate-100 hover:text-[#00ADEF] transition-colors"

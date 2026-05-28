@@ -114,10 +114,24 @@ interface ReadyFrame {
   type: "ready";
 }
 
+/** Bubble boundary mid-turn. Fired by the backend when Claude paused
+ *  one text block (committed as a DB row) and is about to start a new
+ *  one — typically because a tool call ran in between. The frontend
+ *  uses this to finalise the current live bubble and spawn a fresh
+ *  placeholder so the next text streams into a new bubble, matching
+ *  how a real consultant would say "let me check… ok, here's what I
+ *  found". Without this, all text from the turn lands in one bubble. */
+interface BubbleBreakFrame {
+  type: "bubble_break";
+  message_id: string;
+  session_id: string;
+}
+
 type ServerFrame =
   | ReadyFrame
   | ChunkFrame
   | ActivityFrame
+  | BubbleBreakFrame
   | DoneFrame
   | ErrorFrame;
 
@@ -178,6 +192,11 @@ export function useChat(opts: UseChatOptions): UseChatResult {
 
   // Track the live assistant message ID so chunk events know what to append to.
   const liveAssistantIdRef = useRef<string | null>(null);
+
+  // handleFrame is defined after the WS effect but called from its message
+  // listener. A ref bridges the gap so the listener always invokes the
+  // latest closure without triggering react-hooks/immutability.
+  const handleFrameRef = useRef<(frame: ServerFrame) => void>(() => {});
 
   // The WS "message" listener is bound once when the socket opens, so its
   // closure captures whatever `opts` looked like at that moment. The parent
@@ -247,8 +266,7 @@ export function useChat(opts: UseChatOptions): UseChatResult {
         if (frame.type === "ready") {
           attempt = 0; // healthy handshake → reset backoff
         }
-        // eslint-disable-next-line react-hooks/immutability
-        handleFrame(frame);
+        handleFrameRef.current(frame);
       });
 
       ws.addEventListener("close", () => {
@@ -314,7 +332,10 @@ export function useChat(opts: UseChatOptions): UseChatResult {
     claudeSessionIdRef.current = opts.initialClaudeSessionId;
   }, [opts.initialClaudeSessionId]);
 
-  function handleFrame(frame: ServerFrame) {
+  // Wrap in an effect (no deps) to update the ref after render —
+  // writing to refs during render violates react-hooks/refs.
+  useEffect(() => {
+  handleFrameRef.current = function handleFrame(frame: ServerFrame) {
     if (frame.type === "ready") {
       setStatus("ready");
       return;
@@ -339,6 +360,38 @@ export function useChat(opts: UseChatOptions): UseChatResult {
       // or the turn ends ('done' / 'error') — so a brief tool call still
       // shows long enough for the user to notice.
       setActivity(frame.summary);
+      return;
+    }
+
+    if (frame.type === "bubble_break") {
+      // Mid-turn bubble boundary: the backend just committed the
+      // current live bubble as its own DB row. Seal it (no longer
+      // streaming), stamp it with the persisted DB id so per-message
+      // controls (Save as listing, Save as voice rule, Copy) reference
+      // a real row, then push a fresh empty placeholder for the next
+      // text block to stream into.
+      const liveId = liveAssistantIdRef.current;
+      const newId = makeId();
+      setMessages((prev) => {
+        const sealed = prev.map((m) =>
+          m.id === liveId
+            ? { ...m, id: frame.message_id, streaming: false, createdAt: Date.now() }
+            : m,
+        );
+        return [
+          ...sealed,
+          {
+            id: newId,
+            role: "assistant" as ChatRole,
+            text: "",
+            createdAt: Date.now(),
+            streaming: true,
+          },
+        ];
+      });
+      liveAssistantIdRef.current = newId;
+      // Activity ticker stays on; the next text_delta will overwrite
+      // the empty placeholder once Wendy starts typing the next bubble.
       return;
     }
 
@@ -401,7 +454,8 @@ export function useChat(opts: UseChatOptions): UseChatResult {
       setActivity(null);
       return;
     }
-  }
+  };
+  });
 
   const send = useCallback(
     ({ content }: SendArgs) => {
@@ -486,6 +540,30 @@ export interface SessionRow {
   total_input_tokens: number;
   total_output_tokens: number;
   total_cost_usd: number;
+}
+
+/** Minimal session metadata. Returned by GET /api/sessions/{id}. Used
+ *  to learn the session owner so the chat can render a banner when an
+ *  admin opens someone else's session. */
+export interface SessionInfo {
+  id: string;
+  consultant_slug: string;
+  user_name: string;
+  started_at: string;
+  last_active_at: string;
+}
+
+export async function fetchSessionInfo(
+  backendUrl: string,
+  sessionId: string,
+): Promise<SessionInfo | null> {
+  const res = await fetch(
+    `${backendUrl.replace(/\/$/, "")}/api/sessions/${encodeURIComponent(sessionId)}`,
+    { cache: "no-store", headers: await authHeaders() },
+  );
+  if (res.status === 404) return null; // not yours and not admin → don't show banner
+  if (!res.ok) throw new Error(`fetchSessionInfo ${res.status}: ${res.statusText}`);
+  return (await res.json()) as SessionInfo;
 }
 
 /** Fetch recent sessions, optionally filtered to a single consultant. */
@@ -647,6 +725,73 @@ export async function saveLearning(args: SaveLearningArgs): Promise<void> {
   }
 }
 
+export interface LearningRow {
+  id: number;
+  consultant_slug: string;
+  title: string;
+  trigger: string;
+  rule: string;
+  saved_by: string;
+  session_id: string | null;
+  scope: string;
+  created_at: string;
+}
+
+/** List a consultant's learnings, optionally by scope ('user' = pending
+ *  per-teammate rules for the admin queue; 'team' = promoted). */
+export async function fetchLearnings(
+  backendUrl: string,
+  consultantSlug: string,
+  scope?: "user" | "team",
+): Promise<LearningRow[]> {
+  const qs = scope ? `?scope=${scope}` : "";
+  const res = await fetch(
+    `${backendUrl.replace(/\/$/, "")}/api/learnings/${encodeURIComponent(consultantSlug)}${qs}`,
+    { cache: "no-store", headers: await authHeaders() },
+  );
+  if (!res.ok)
+    throw new Error(`fetchLearnings ${res.status}: ${res.statusText}`);
+  return (await res.json()) as LearningRow[];
+}
+
+/** Admin-only: promote a private voice rule to team scope (appends it to
+ *  the consultant's learnings.md server-side). */
+export async function promoteLearning(
+  backendUrl: string,
+  learningId: number,
+): Promise<LearningRow> {
+  const res = await fetch(
+    `${backendUrl.replace(/\/$/, "")}/api/learnings/${learningId}/promote`,
+    { method: "POST", headers: await authHeaders() },
+  );
+  if (!res.ok) {
+    let detail = "";
+    try { detail = ((await res.json()) as { detail?: string }).detail || ""; }
+    catch { detail = res.statusText; }
+    throw new Error(`promoteLearning ${res.status}: ${detail || "failed"}`);
+  }
+  return (await res.json()) as LearningRow;
+}
+
+/** Admin-only: listings for a consultant with grade counts + public-ref
+ *  flag — the admin review overview. 403 if the caller isn't an admin. */
+export async function fetchAdminListings(
+  backendUrl: string,
+  consultantSlug: string,
+): Promise<ListingRow[]> {
+  const res = await fetch(
+    `${backendUrl.replace(/\/$/, "")}/api/listings/admin-overview?consultant_slug=${encodeURIComponent(consultantSlug)}`,
+    { cache: "no-store", headers: await authHeaders() },
+  );
+  if (!res.ok) {
+    let detail = "";
+    try { detail = ((await res.json()) as { detail?: string }).detail || ""; }
+    catch { detail = res.statusText; }
+    throw new Error(`fetchAdminListings ${res.status}: ${detail || "failed"}`);
+  }
+  return (await res.json()) as ListingRow[];
+}
+
 export interface UploadedFile {
   session_id: string;
   original_filename: string;
@@ -655,6 +800,267 @@ export interface UploadedFile {
   kind: "photo" | "floorplan" | "pdf" | "other";
   bytes: number;
   converted_from_heic: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Listings repo — CopyPro's persisted listings on Supabase.
+//
+// Owner-scoped reads + writes (admins see all). The backend handles RLS;
+// these helpers just shape the requests + thread the existing auth +
+// ngrok-skip headers through authHeaders().
+// ---------------------------------------------------------------------------
+
+export type Grade = "up" | "down";
+
+/** Thumbs up/down rollup for a listing. Returned by GET /api/listings/{id}
+ *  (as `grade_summary`) and by the PUT/DELETE grade endpoints. `my_grade`
+ *  is the current user's vote (null if they haven't graded). */
+export interface GradeSummary {
+  up: number;
+  down: number;
+  my_grade: Grade | null;
+}
+
+export interface ListingRow {
+  id: string;
+  user_email: string;
+  consultant_slug: string;
+  chat_session_id: string;
+  address: string;
+  address_slug: string;
+  headline: string | null;
+  body_md?: string;                    // only present on GET /api/listings/{id}
+  social_caption?: string | null;
+  signboard_blurb?: string | null;
+  status: "final" | "archived";
+  docx_filename: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+  revisions?: ListingRevisionRow[];   // populated when include_revisions=true
+  grade_summary?: GradeSummary;        // present on GET /api/listings/{id}
+  is_public_reference?: boolean;       // admin-promoted as a team-wide reference
+  viewer_is_admin?: boolean;           // present on GET /api/listings/{id}
+}
+
+export interface ListingRevisionRow {
+  id: string;
+  listing_id: string;
+  body_md: string;
+  headline: string | null;
+  social_caption: string | null;
+  signboard_blurb: string | null;
+  metadata: Record<string, unknown>;
+  edited_by: string;
+  edit_summary: string | null;
+  created_at: string;
+}
+
+export interface CreateListingArgs {
+  backendUrl: string;
+  chatSessionId: string;
+  consultantSlug: string;
+  address: string;
+  addressSlug: string;
+  headline?: string | null;
+  bodyMd: string;
+  socialCaption?: string | null;
+  signboardBlurb?: string | null;
+  docxFilename?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+/** Save a completed CopyPro listing to the Supabase repo. */
+export async function saveListing(args: CreateListingArgs): Promise<ListingRow> {
+  const body = {
+    chat_session_id: args.chatSessionId,
+    consultant_slug: args.consultantSlug,
+    address: args.address,
+    address_slug: args.addressSlug,
+    headline: args.headline ?? null,
+    body_md: args.bodyMd,
+    social_caption: args.socialCaption ?? null,
+    signboard_blurb: args.signboardBlurb ?? null,
+    docx_filename: args.docxFilename ?? null,
+    metadata: args.metadata ?? {},
+  };
+  const res = await fetch(
+    `${args.backendUrl.replace(/\/$/, "")}/api/listings`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify(body),
+    },
+  );
+  if (!res.ok) {
+    let detail = "";
+    try { detail = ((await res.json()) as { detail?: string }).detail || ""; }
+    catch { detail = res.statusText; }
+    throw new Error(`saveListing ${res.status}: ${detail || "failed"}`);
+  }
+  return (await res.json()) as ListingRow;
+}
+
+/** List listings visible to the caller (own + admin-all). */
+export async function fetchListings(
+  backendUrl: string,
+  opts: { consultantSlug?: string; q?: string; limit?: number } = {},
+): Promise<ListingRow[]> {
+  const params = new URLSearchParams();
+  if (opts.consultantSlug) params.set("consultant_slug", opts.consultantSlug);
+  if (opts.q) params.set("q", opts.q);
+  if (opts.limit) params.set("limit", String(opts.limit));
+  const qs = params.toString();
+  const url = `${backendUrl.replace(/\/$/, "")}/api/listings${qs ? `?${qs}` : ""}`;
+  const res = await fetch(url, {
+    cache: "no-store",
+    headers: await authHeaders(),
+  });
+  if (!res.ok) throw new Error(`fetchListings ${res.status}: ${res.statusText}`);
+  return (await res.json()) as ListingRow[];
+}
+
+/** Fetch one listing in full (body + optional revision history). */
+export async function fetchListing(
+  backendUrl: string,
+  listingId: string,
+  opts: { includeRevisions?: boolean } = {},
+): Promise<ListingRow> {
+  const params = new URLSearchParams();
+  if (opts.includeRevisions) params.set("include_revisions", "true");
+  const qs = params.toString();
+  const url =
+    `${backendUrl.replace(/\/$/, "")}/api/listings/${encodeURIComponent(listingId)}` +
+    (qs ? `?${qs}` : "");
+  const res = await fetch(url, {
+    cache: "no-store",
+    headers: await authHeaders(),
+  });
+  if (!res.ok) {
+    let detail = "";
+    try { detail = ((await res.json()) as { detail?: string }).detail || ""; }
+    catch { detail = res.statusText; }
+    throw new Error(`fetchListing ${res.status}: ${detail || "failed"}`);
+  }
+  return (await res.json()) as ListingRow;
+}
+
+/** Patch a listing. The backend trigger auto-snapshots prior state into
+ *  copypro_listing_revisions when any text field changes. */
+export async function updateListing(
+  backendUrl: string,
+  listingId: string,
+  patch: Partial<{
+    headline: string;
+    body_md: string;
+    social_caption: string;
+    signboard_blurb: string;
+    status: "final" | "archived";
+    docx_filename: string;
+    metadata: Record<string, unknown>;
+    edit_summary: string;
+  }>,
+): Promise<ListingRow> {
+  const res = await fetch(
+    `${backendUrl.replace(/\/$/, "")}/api/listings/${encodeURIComponent(listingId)}`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify(patch),
+    },
+  );
+  if (!res.ok) {
+    let detail = "";
+    try { detail = ((await res.json()) as { detail?: string }).detail || ""; }
+    catch { detail = res.statusText; }
+    throw new Error(`updateListing ${res.status}: ${detail || "failed"}`);
+  }
+  return (await res.json()) as ListingRow;
+}
+
+/** Set (or change) the current user's thumbs up/down on a listing.
+ *  Returns the fresh grade summary so the caller can update in place. */
+export async function gradeListing(
+  backendUrl: string,
+  listingId: string,
+  grade: Grade,
+  comment?: string | null,
+): Promise<GradeSummary> {
+  const res = await fetch(
+    `${backendUrl.replace(/\/$/, "")}/api/listings/${encodeURIComponent(listingId)}/grade`,
+    {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ grade, comment: comment ?? null }),
+    },
+  );
+  if (!res.ok) {
+    let detail = "";
+    try { detail = ((await res.json()) as { detail?: string }).detail || ""; }
+    catch { detail = res.statusText; }
+    throw new Error(`gradeListing ${res.status}: ${detail || "failed"}`);
+  }
+  return (await res.json()) as GradeSummary;
+}
+
+/** Permanently delete a saved listing (owner or admin). Cascades its
+ *  grades + revisions server-side. */
+export async function deleteListing(
+  backendUrl: string,
+  listingId: string,
+): Promise<void> {
+  const res = await fetch(
+    `${backendUrl.replace(/\/$/, "")}/api/listings/${encodeURIComponent(listingId)}`,
+    { method: "DELETE", headers: await authHeaders() },
+  );
+  if (!res.ok) {
+    let detail = "";
+    try { detail = ((await res.json()) as { detail?: string }).detail || ""; }
+    catch { detail = res.statusText; }
+    throw new Error(`deleteListing ${res.status}: ${detail || "failed"}`);
+  }
+}
+
+/** Admin-only: promote/demote a listing as a public (team-wide) writing
+ *  reference. Returns the updated listing row. */
+export async function setPublicReference(
+  backendUrl: string,
+  listingId: string,
+  isPublic: boolean,
+): Promise<ListingRow> {
+  const res = await fetch(
+    `${backendUrl.replace(/\/$/, "")}/api/listings/${encodeURIComponent(listingId)}/public-reference`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify({ public: isPublic }),
+    },
+  );
+  if (!res.ok) {
+    let detail = "";
+    try { detail = ((await res.json()) as { detail?: string }).detail || ""; }
+    catch { detail = res.statusText; }
+    throw new Error(`setPublicReference ${res.status}: ${detail || "failed"}`);
+  }
+  return (await res.json()) as ListingRow;
+}
+
+/** Clear the current user's grade on a listing (un-vote). Idempotent. */
+export async function clearGrade(
+  backendUrl: string,
+  listingId: string,
+): Promise<GradeSummary> {
+  const res = await fetch(
+    `${backendUrl.replace(/\/$/, "")}/api/listings/${encodeURIComponent(listingId)}/grade`,
+    { method: "DELETE", headers: await authHeaders() },
+  );
+  if (!res.ok) {
+    let detail = "";
+    try { detail = ((await res.json()) as { detail?: string }).detail || ""; }
+    catch { detail = res.statusText; }
+    throw new Error(`clearGrade ${res.status}: ${detail || "failed"}`);
+  }
+  return (await res.json()) as GradeSummary;
 }
 
 export async function uploadFiles(
@@ -679,6 +1085,101 @@ export async function uploadFiles(
     throw new Error(`upload ${res.status}: ${body || res.statusText}`);
   }
   return (await res.json()) as UploadedFile[];
+}
+
+/** Per-byte progress event surfaced to the caller during a batch upload. */
+export interface UploadProgress {
+  bytesLoaded: number;
+  bytesTotal: number;
+}
+
+/**
+ * Variant of uploadFiles that surfaces real upload-progress events to a
+ * callback. Used by the chat UI so a teammate uploading a 50 MB phone
+ * photo sees a progress bar fill instead of staring at a frozen
+ * paperclip for 30 seconds.
+ *
+ * Implemented on XMLHttpRequest because the browser fetch() API still
+ * does not expose request-body progress (only response progress).
+ * Streams API write-side is shipping in some browsers but not all yet.
+ * XHR is the boring, portable, ten-year-supported way to do this.
+ *
+ * onProgress is called many times during the upload (browser-controlled
+ * cadence, typically every 50-100ms or every few hundred KB). Caller
+ * should patch component state from inside it.
+ */
+export function uploadFilesWithProgress(
+  backendUrl: string,
+  sessionId: string,
+  files: File[],
+  onProgress: (p: UploadProgress) => void,
+): Promise<UploadedFile[]> {
+  return new Promise<UploadedFile[]>((resolve, reject) => {
+    // Build the multipart body the same way fetch() would.
+    const fd = new FormData();
+    for (const f of files) fd.append("files", f, f.name);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open(
+      "POST",
+      `${backendUrl.replace(/\/$/, "")}/api/sessions/${encodeURIComponent(sessionId)}/upload`,
+    );
+
+    // Resolve auth + ngrok headers BEFORE send (xhr.send is sync from
+    // here on so we can't await mid-stream). We attach them to the
+    // request via setRequestHeader once authHeaders() resolves.
+    authHeaders()
+      .then((hdrs) => {
+        const entries =
+          hdrs instanceof Headers
+            ? Array.from(hdrs.entries())
+            : Object.entries(hdrs as Record<string, string>);
+        for (const [k, v] of entries) {
+          if (v != null) xhr.setRequestHeader(k, v);
+        }
+
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) {
+            onProgress({ bytesLoaded: ev.loaded, bytesTotal: ev.total });
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              resolve(JSON.parse(xhr.responseText) as UploadedFile[]);
+            } catch (e) {
+              reject(
+                new Error(
+                  `upload parse error: ${
+                    e instanceof Error ? e.message : String(e)
+                  }`,
+                ),
+              );
+            }
+            return;
+          }
+          // Try to surface the backend's detail message.
+          let detail = "";
+          try {
+            const body = JSON.parse(xhr.responseText) as { detail?: string };
+            detail = body.detail || "";
+          } catch {
+            detail = xhr.responseText.slice(0, 200);
+          }
+          reject(
+            new Error(
+              `upload ${xhr.status}: ${detail || xhr.statusText || "failed"}`,
+            ),
+          );
+        };
+        xhr.onerror = () =>
+          reject(new Error("upload network error"));
+        xhr.ontimeout = () => reject(new Error("upload timed out"));
+
+        xhr.send(fd);
+      })
+      .catch(reject);
+  });
 }
 
 /**

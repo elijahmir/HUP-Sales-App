@@ -18,9 +18,11 @@ import { UploadButton } from "./upload-button";
 import {
   downloadOutput,
   fetchConsultants,
+  fetchSessionInfo,
   fetchSessionMessages,
   saveLearning,
-  uploadFiles,
+  saveListing,
+  uploadFilesWithProgress,
   useChat,
   type ChatMessage,
   type ConnectionStatus,
@@ -152,17 +154,66 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
     useState<string | null>(null);
   const [uploads, setUploads] = useState<UploadedFile[]>([]);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // Pending uploads: rendered as progress chips next to the input the
+  // instant a teammate picks files, so they get immediate feedback that
+  // the upload is happening (instead of staring at a frozen paperclip
+  // for 30+ seconds on a big photo). Each entry covers one batch; on
+  // success the entry is removed and its files appear in `uploads`.
+  // On failure the entry stays around (status:'error') with the
+  // backend's message so the user knows what went wrong + can dismiss.
+  interface PendingUpload {
+    id: string;
+    filenames: string[];
+    bytesLoaded: number;
+    bytesTotal: number;
+    status: "uploading" | "error";
+    error?: string;
+  }
+  const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const [savedLearningMessageIds, setSavedLearningMessageIds] = useState<
     Set<string>
   >(new Set());
   const [editingLearningForId, setEditingLearningForId] = useState<string | null>(
     null,
   );
+  // Per-message state for the "Save as listing" button.
+  // Three terminal states encoded as a single map:
+  //   missing key  → idle, button shows "Save as listing"
+  //   value "saving"   → in-flight, button disabled + spinner
+  //   value "<listing-id>" → success, button shows "Saved" + link
+  //   value starting with "error:" → failure with reason
+  const [listingSaveState, setListingSaveState] = useState<
+    Record<string, string>
+  >({});
+  // When an admin (or the dev-user stub) opens a session that someone
+  // else owns, we surface a yellow banner above the chat warning that
+  // any new message will be added to THEIR session, not yours. Without
+  // it, the chat looks "fresh" but Wendy carries the prior context via
+  // --resume and silently appends to history — confusing as hell.
+  // Null = current session is yours or there's no session yet.
+  const [otherUserOwning, setOtherUserOwning] = useState<string | null>(null);
   // Tracks the SQLite session id for THIS consultant. Comes from localStorage
   // on consultant change, gets overwritten when the backend confirms one via
   // the `done` event. We hold it in state (not useMemo) so the UploadButton
   // re-renders the instant the first turn finishes.
   const [sessionId, setSessionIdState] = useState<string | null>(null);
+
+  // Persisted "this session already saved a listing" marker. listingSaveState
+  // above is per-render and resets on reload / navigation, which flipped the
+  // button back to "Save as listing" and risked a duplicate save. We mirror
+  // the saved listing-id into localStorage keyed by session and rehydrate it
+  // here, so the button stays "View listing" across navigation. (The backend
+  // also dedups on session+address, so even a stale click can't duplicate.)
+  const [savedListingId, setSavedListingId] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined" || !sessionId) {
+      queueMicrotask(() => setSavedListingId(null));
+      return;
+    }
+    queueMicrotask(() => setSavedListingId(
+      window.localStorage.getItem(`harcourts-listing-saved:${sessionId}`),
+    ));
+  }, [sessionId]);
 
   // Load consultant list + restore last selection on first mount.
   // Session-id precedence (highest first):
@@ -243,6 +294,41 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
       clearSessionIdFromUrl();
     }
   }, [sessionId]);
+
+  // When sessionId changes, check if it's owned by someone other than
+  // the current user. If so (admin viewing a teammate's session, or
+  // dev-user looking at a real user's session), surface a banner so
+  // they don't accidentally write into someone else's history. 404
+  // from the endpoint means "you don't own it AND aren't admin" — in
+  // that case there's nothing to warn about because the user simply
+  // can't see the session anyway.
+  useEffect(() => {
+    if (!sessionId || !backendUrl || !userName) {
+      queueMicrotask(() => setOtherUserOwning(null));
+      return;
+    }
+    let cancelled = false;
+    fetchSessionInfo(backendUrl, sessionId)
+      .then((info) => {
+        if (cancelled || !info) return;
+        // Only flag a mismatch when both emails look real. The dev-user
+        // stub (empty / "dev-…") shouldn't pop a banner during local
+        // testing — that just adds noise.
+        const looksReal =
+          userName.includes("@") && (info.user_name || "").includes("@");
+        if (looksReal && info.user_name !== userName) {
+          setOtherUserOwning(info.user_name);
+        } else {
+          setOtherUserOwning(null);
+        }
+      })
+      .catch(() => {
+        // Quiet failure — if the lookup fails we just don't show the
+        // banner. The chat still works.
+        if (!cancelled) setOtherUserOwning(null);
+      });
+    return () => { cancelled = true; };
+  }, [sessionId, backendUrl, userName]);
 
   const messagesRef = useRef<HTMLOListElement | null>(null);
   const bottomRef = useRef<HTMLDivElement | null>(null);
@@ -352,6 +438,7 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
     setSessionIdState(sid);
     setInitialClaudeSessionId(getClaudeSessionId(next));
     setUploads([]);
+    setPendingUploads([]);
     setSavedLearningMessageIds(new Set());
     setEditingLearningForId(null);
     replayedForRef.current = null; // allow history replay for the new consultant
@@ -366,6 +453,7 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
     setSessionIdState(null);
     setInitialClaudeSessionId(null);
     setUploads([]);
+    setPendingUploads([]);
     setSavedLearningMessageIds(new Set());
     setEditingLearningForId(null);
     replayedForRef.current = null;
@@ -380,11 +468,19 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
     setInitialSessionId(s.id);
     setInitialClaudeSessionId(s.claude_session_id);
     setUploads([]);
+    setPendingUploads([]);
     setSavedLearningMessageIds(new Set());
     setEditingLearningForId(null);
     replayedForRef.current = null; // force history replay
     reset();
   }
+
+  // True while any batch is still uploading (errored chips don't count —
+  // user already knows about those and chose not to dismiss yet, so we
+  // shouldn't keep blocking their send).
+  const uploadInProgress = pendingUploads.some(
+    (p) => p.status === "uploading",
+  );
 
   function submitDraft(textOverride?: string) {
     // Allow the caller (e.g. a starter-chip click) to send a specific
@@ -393,6 +489,10 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
     // the same tick, so this function would otherwise read the old draft.
     const text = (textOverride ?? draft).trim();
     if (!text || !slug || isStreaming || status !== "ready") return;
+    // Block send while an upload is in flight: otherwise the message
+    // goes out before the files land in `uploads`, leading to "here
+    // are the photos" sent without photos attached.
+    if (uploadInProgress) return;
 
     // If files were uploaded since the last send, bundle them into the
     // message text. That way (a) the user's bubble shows what was attached,
@@ -413,6 +513,7 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
     send({ content: composed });
     setDraft("");
     setUploads([]); // consumed — next message starts a fresh attachment list
+    setPendingUploads([]);
   }
 
   async function handleFiles(files: File[]) {
@@ -423,12 +524,55 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
       return;
     }
     setUploadError(null);
+
+    // Stamp this batch with an id so we can patch its progress entry
+    // without confusing it with sibling batches if the user picks files
+    // twice in quick succession.
+    const id =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `pend-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const bytesTotal = files.reduce((sum, f) => sum + f.size, 0);
+    const filenames = files.map((f) => f.name);
+    setPendingUploads((prev) => [
+      ...prev,
+      { id, filenames, bytesLoaded: 0, bytesTotal, status: "uploading" },
+    ]);
+
     try {
-      const uploaded = await uploadFiles(backendUrl, sessionId, files);
+      const uploaded = await uploadFilesWithProgress(
+        backendUrl,
+        sessionId,
+        files,
+        ({ bytesLoaded, bytesTotal: total }) => {
+          setPendingUploads((prev) =>
+            prev.map((p) =>
+              p.id === id
+                ? { ...p, bytesLoaded, bytesTotal: total || p.bytesTotal }
+                : p,
+            ),
+          );
+        },
+      );
+      // Success: remove the pending entry, promote its files into the
+      // canonical `uploads` list that the send-handler will read.
+      setPendingUploads((prev) => prev.filter((p) => p.id !== id));
       setUploads((prev) => [...prev, ...uploaded]);
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : String(err));
+      const message = err instanceof Error ? err.message : String(err);
+      // Leave the chip on screen so the user can read the error +
+      // dismiss it when they're ready. Don't move into the global
+      // uploadError banner because per-batch messaging is clearer.
+      setPendingUploads((prev) =>
+        prev.map((p) =>
+          p.id === id ? { ...p, status: "error", error: message } : p,
+        ),
+      );
     }
+  }
+
+  function dismissPendingUpload(id: string) {
+    setPendingUploads((prev) => prev.filter((p) => p.id !== id));
   }
 
   function removeUpload(stored: string) {
@@ -466,6 +610,45 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
     setEditingLearningForId(null);
   }
 
+  // Save a "Listing-shaped" assistant message to the Supabase listings
+  // repo. The button triggering this is rendered inside MessageBubble
+  // and only shown when extractListingFromMessage(message.text) returns
+  // a value (i.e. the message has the **Address:** frontmatter).
+  async function handleSaveListing(
+    messageId: string,
+    extracted: ExtractedListing,
+  ) {
+    if (!slug || !sessionId) return;
+    setListingSaveState((prev) => ({ ...prev, [messageId]: "saving" }));
+    try {
+      const row = await saveListing({
+        backendUrl,
+        chatSessionId: sessionId,
+        consultantSlug: slug,
+        address: extracted.address,
+        addressSlug: extracted.addressSlug,
+        headline: extracted.headline,
+        bodyMd: extracted.bodyMd,
+        socialCaption: extracted.socialCaption,
+        signboardBlurb: extracted.signboardBlurb,
+      });
+      setListingSaveState((prev) => ({ ...prev, [messageId]: row.id }));
+      // Persist so the saved state survives reload / navigation. Keyed by
+      // session because one chat produces one listing for one property.
+      if (typeof window !== "undefined" && sessionId) {
+        window.localStorage.setItem(
+          `harcourts-listing-saved:${sessionId}`, row.id,
+        );
+      }
+      setSavedListingId(row.id);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setListingSaveState((prev) => ({
+        ...prev, [messageId]: `error:${msg}`,
+      }));
+    }
+  }
+
   return (
     // Flex column anchored to the parent's height. In the standalone repo
     // the parent is <body className="h-full">, so this fills the viewport.
@@ -476,6 +659,7 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
     // off-screen below the dashboard chrome.
     <div className="flex h-full min-h-0 flex-col bg-background">
       <Header
+        userName={userName}
         consultants={consultants}
         slug={slug}
         onPickConsultant={pickConsultant}
@@ -510,28 +694,71 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
           (Slack, Notion, Linear all use it).
           `min-h-0` lets the flex child shrink below its content size
           so overflow actually scrolls instead of pushing the column. */}
+      {/* Other-user-session banner. Shown when an admin (or dev-user)
+          opens a session not owned by the current user. Without this
+          the chat would look like a fresh thread but Wendy carries
+          the prior owner's context via --resume and silently appends
+          to their history — confusing for both parties. The "Start a
+          new chat" link is the safe action: clicking it nulls the
+          session so the next message creates a fresh one. */}
+      {otherUserOwning && (
+        <div className="shrink-0 border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
+          <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-2">
+            <span>
+              ⚠ Viewing <b>{otherUserOwning}</b>&apos;s session. Any
+              message you send here will be added to their chat history,
+              not yours.
+            </span>
+            <button
+              type="button"
+              onClick={startNewConversation}
+              className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-white px-2.5 py-1 font-medium text-amber-900 hover:bg-amber-100"
+            >
+              Start a new chat →
+            </button>
+          </div>
+        </div>
+      )}
+
       <main className="chat-scroll flex w-full min-h-0 flex-1 flex-col overflow-y-auto">
         <div className="mx-auto w-full max-w-5xl flex-1 px-4">
           {messages.length === 0 ? (
             <EmptyState slug={slug} onPickStarter={handlePickStarter} />
           ) : (
-            <ol ref={messagesRef} className="flex-1 space-y-6 py-6">
-              {messages.map((m) => (
-                <MessageBubble
-                  key={m.id}
-                  message={m}
-                  backendUrl={backendUrl}
-                  consultantSlug={slug}
-                  userName={userName}
-                  activity={m.streaming ? activity : null}
-                  editing={editingLearningForId === m.id}
-                  saved={savedLearningMessageIds.has(m.id)}
-                  onStartSave={() => setEditingLearningForId(m.id)}
-                  onCancelSave={() => setEditingLearningForId(null)}
-                  onSubmitSave={(args) => handleSaveLearning(m.id, args)}
-                  defaultTrigger={triggerForMessage.get(m.id) ?? ""}
-                />
-              ))}
+            <ol ref={messagesRef} className="flex-1 py-6">
+              {messages.map((m, i) => {
+                // Avatar grouping + tighter spacing: show the
+                // consultant photo (or user initials chip) only on
+                // the LAST bubble of a consecutive run, and pack
+                // bubbles within a group close together (4px gap)
+                // while keeping the big 24px gap between groups.
+                // Matches iMessage / Slack / WhatsApp grouping.
+                const prev = messages[i - 1];
+                const next = messages[i + 1];
+                const isFirstInGroup = !prev || prev.role !== m.role;
+                const isLastInGroup = !next || next.role !== m.role;
+                return (
+                  <MessageBubble
+                    key={m.id}
+                    message={m}
+                    backendUrl={backendUrl}
+                    consultantSlug={slug}
+                    userName={userName}
+                    activity={m.streaming ? activity : null}
+                    editing={editingLearningForId === m.id}
+                    saved={savedLearningMessageIds.has(m.id)}
+                    onStartSave={() => setEditingLearningForId(m.id)}
+                    onCancelSave={() => setEditingLearningForId(null)}
+                    onSubmitSave={(args) => handleSaveLearning(m.id, args)}
+                    defaultTrigger={triggerForMessage.get(m.id) ?? ""}
+                    listingSaveState={listingSaveState[m.id]}
+                    savedListingId={savedListingId}
+                    onSaveListing={(extracted) => handleSaveListing(m.id, extracted)}
+                    isLastInGroup={isLastInGroup}
+                    isFirstInGroup={isFirstInGroup}
+                  />
+                );
+              })}
               <div ref={bottomRef} />
             </ol>
           )}
@@ -543,9 +770,88 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
           tricks needed. */}
       <footer className="shrink-0 border-t bg-background/95 backdrop-blur">
         <div className="mx-auto w-full max-w-5xl space-y-2 p-4">
-          {(uploads.length > 0 || uploadError) && (
+          {(uploads.length > 0 ||
+            uploadError ||
+            pendingUploads.length > 0) && (
             <div className="space-y-1.5">
               <div className="flex flex-wrap items-center gap-2">
+                {/* In-flight progress chips. One per batch the user
+                    picked. Bar fills as bytes leave the browser. */}
+                {pendingUploads.map((p) => {
+                  const pct =
+                    p.bytesTotal > 0
+                      ? Math.min(
+                          100,
+                          Math.round((p.bytesLoaded / p.bytesTotal) * 100),
+                        )
+                      : 0;
+                  const isError = p.status === "error";
+                  const label =
+                    p.filenames.length === 1
+                      ? p.filenames[0]
+                      : `${p.filenames.length} files`;
+                  return (
+                    <span
+                      key={p.id}
+                      className={cn(
+                        "inline-flex max-w-[260px] flex-col gap-1 rounded-md border px-2.5 py-1.5 text-xs",
+                        isError
+                          ? "border-destructive/40 bg-destructive/5 text-destructive"
+                          : "bg-muted",
+                      )}
+                      role="status"
+                      aria-live="polite"
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="max-w-[180px] truncate">{label}</span>
+                        <span
+                          className={cn(
+                            "shrink-0 font-mono text-[10px]",
+                            isError
+                              ? "text-destructive/80"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {isError ? "failed" : `${pct}%`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => dismissPendingUpload(p.id)}
+                          className={cn(
+                            "ml-auto",
+                            isError
+                              ? "text-destructive/70 hover:text-destructive"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                          aria-label={
+                            isError
+                              ? `Dismiss failed upload`
+                              : `Cancel upload of ${label}`
+                          }
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                      {/* Thin progress bar. Hidden on error. */}
+                      {!isError && (
+                        <span className="block h-1 w-full overflow-hidden rounded-full bg-foreground/10">
+                          <span
+                            className="block h-full rounded-full bg-primary transition-all duration-200 ease-out"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </span>
+                      )}
+                      {isError && p.error && (
+                        <span className="block text-[10px] leading-snug">
+                          {p.error}
+                        </span>
+                      )}
+                    </span>
+                  );
+                })}
+
+                {/* Successfully uploaded chips (what the next send-message
+                    will attach to the chat). */}
                 {uploads.map((u) => (
                   <span
                     key={u.stored_filename}
@@ -613,7 +919,16 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
               // (correctly) flags the type mismatch.
               onClick={() => submitDraft()}
               disabled={
-                !draft.trim() || !slug || isStreaming || status !== "ready"
+                !draft.trim() ||
+                !slug ||
+                isStreaming ||
+                status !== "ready" ||
+                uploadInProgress
+              }
+              title={
+                uploadInProgress
+                  ? "Waiting for upload to finish before sending"
+                  : undefined
               }
               size="icon"
               aria-label="Send"
@@ -628,6 +943,7 @@ export function Chat({ userName, backendUrl, headerSlot }: ChatProps) {
 }
 
 interface HeaderProps {
+  userName: string;
   consultants: string[] | null;
   slug: string | null;
   onPickConsultant: (slug: string) => void;
@@ -944,6 +1260,25 @@ interface MessageBubbleProps {
   onStartSave: () => void;
   onCancelSave: () => void;
   onSubmitSave: (args: { title: string; trigger: string; rule: string }) => Promise<void>;
+  /** Save-as-listing state for THIS message — see listingSaveState in
+   *  the parent. undefined = idle, "saving" = in-flight, "<uuid>" =
+   *  saved, "error:..." = failed. */
+  listingSaveState?: string;
+  /** Listing-id saved for the CURRENT session, rehydrated from
+   *  localStorage. Lets a listing-shaped message show "View listing"
+   *  after navigation even though per-render listingSaveState was lost. */
+  savedListingId?: string | null;
+  onSaveListing: (extracted: ExtractedListing) => Promise<void>;
+  /** True when this message is the last in a consecutive run from the
+   *  same role. Drives avatar visibility — only the trailing bubble
+   *  of a group shows the avatar (Slack / iMessage pattern). The
+   *  space stays reserved so non-trailing bubbles still align. */
+  isLastInGroup: boolean;
+  /** True when this message is the first in a consecutive run.
+   *  Drives spacing — first-in-group gets the big 24px top gap
+   *  separating it from the previous group; non-first-in-group gets
+   *  a tight 4px gap so the run reads as one thought. */
+  isFirstInGroup: boolean;
 }
 
 // Pull every downloadable-file mention out of an assistant message so
@@ -959,8 +1294,16 @@ interface MessageBubbleProps {
 //   "saved as foo.jpg"     — friendlier prompt-engineered style
 // Extensions match the backend allow-list. Keep these in sync; mismatch
 // means a chip renders but the click 400s.
+// Image extensions (jpg/jpeg/png/webp) are deliberately EXCLUDED. In the
+// CopyPro workflow images are session INPUTS — VaultRE photos and floor
+// plans the agent downloads and narrates inline ("(allfloors…withdim.png)",
+// "it's vaultre-203524095.jpg"). Those live in the session folder, not
+// outputs/, so an auto-chip would 404 the moment it's tapped. The only
+// files the agent actually delivers are documents (.docx export, the odd
+// pdf/csv/txt/md), so only those get a chip. The backend still serves
+// images on request if a future flow ever needs one.
 const DOWNLOADABLE_EXT_RE =
-  /(?:outputs\/)?([A-Za-z0-9][A-Za-z0-9._\-]*\.(?:docx|pdf|csv|txt|md|jpe?g|png|webp))\b/gi;
+  /(?:outputs\/)?([A-Za-z0-9][A-Za-z0-9._\-]*\.(?:docx|pdf|csv|txt|md))\b/gi;
 
 function extractOutputFilenames(text: string): string[] {
   const seen = new Set<string>();
@@ -968,6 +1311,96 @@ function extractOutputFilenames(text: string): string[] {
     seen.add(m[1]);
   }
   return [...seen];
+}
+
+// ---------------------------------------------------------------------------
+// Listing-shaped message detection
+//
+// The system prompt's Phase 5 rule asks the assistant to wrap the final
+// listing in a known frontmatter:
+//
+//     **Address:** 158 Preservation Drive, Preservation Bay TAS 7316
+//     **Headline:** A breathtaking three-level beach-frontage retreat
+//
+//     ## Listing
+//     <body, CTA, disclaimer>
+//
+//     ## Brochure Text / Window Card / RealEstateVIEW Guide / Social Media Caption
+//
+// We detect that shape here so a "Save as listing" button can render
+// alongside the message. Returns null when the frontmatter is absent
+// (i.e. a regular chat reply); button stays hidden.
+// ---------------------------------------------------------------------------
+
+interface ExtractedListing {
+  address: string;
+  addressSlug: string;
+  headline: string | null;
+  bodyMd: string;             // the full structured body, frontmatter stripped
+  socialCaption: string | null;
+  signboardBlurb: string | null;
+}
+
+function slugifyAddress(address: string): string {
+  return address
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 200);
+}
+
+function extractSection(text: string, heading: string): string | null {
+  // Anchor on `## <heading>` (possibly trailing whitespace). Pull lines
+  // until the next `## ` heading or end of message.
+  const re = new RegExp(`(^|\\n)##\\s+${heading}\\s*\\n`, "i");
+  const match = re.exec(text);
+  if (!match) return null;
+  const start = match.index + match[0].length;
+  const after = text.slice(start);
+  const nextHeading = /\n##\s+/m.exec(after);
+  const body = (nextHeading ? after.slice(0, nextHeading.index) : after).trim();
+  return body || null;
+}
+
+// Matches the trailing UI-cue line the Phase-5 prompt used to ask the
+// agent to emit ("Tap "Save as listing" below to add this…"). We strip
+// it from the saved body so it never lands in the listings repo. Tolerant
+// of curly/straight quotes and minor wording drift.
+const SAVE_AS_LISTING_CUE_RE = /^.*tap\s+["“]?save as listing["”]?.*$/gim;
+
+function extractListingFromMessage(text: string): ExtractedListing | null {
+  const addressMatch = text.match(/^\*\*Address:\*\*\s*(.+)$/m);
+  if (!addressMatch) return null;
+  const address = addressMatch[1].trim();
+  if (!address) return null;
+  // Require the FULL Phase-5 shape, not just an Address line. A Phase-2
+  // Sales Agent Briefing bolds an Address in its Property Snapshot, which
+  // previously made "Save as listing" wrongly appear on the briefing. The
+  // real consolidated listing always carries a **Headline:** frontmatter
+  // line AND a "## Listing" section — gate on all three.
+  const headlineMatch = text.match(/^\*\*Headline:\*\*\s*(.+)$/m);
+  const listingSection = extractSection(text, "Listing");
+  if (!headlineMatch || !listingSection) return null;
+  const headline = headlineMatch[1].trim();
+  // bodyMd = the structured content from the first "## " heading onward,
+  // stripped of the trailing UI cue. Starting at the first heading drops
+  // the conversational preamble ("Approved. Here's the consolidated
+  // listing.") and the frontmatter, so the listings repo stores clean
+  // markdown that still round-trips to a Word doc (headings intact).
+  let bodyMd = text;
+  const firstHeading = /^##\s+/m.exec(bodyMd);
+  if (firstHeading) bodyMd = bodyMd.slice(firstHeading.index);
+  bodyMd = bodyMd.replace(SAVE_AS_LISTING_CUE_RE, "").trim();
+  if (bodyMd.length < 10) return null; // sanity guard
+  return {
+    address,
+    addressSlug: slugifyAddress(address),
+    headline,
+    bodyMd,
+    socialCaption: extractSection(text, "Social Media Caption"),
+    signboardBlurb: extractSection(text, "Window Card"),
+  };
 }
 
 function MessageBubble({
@@ -982,6 +1415,11 @@ function MessageBubble({
   onStartSave,
   onCancelSave,
   onSubmitSave,
+  listingSaveState,
+  savedListingId,
+  onSaveListing,
+  isLastInGroup,
+  isFirstInGroup,
 }: MessageBubbleProps) {
   const isUser = message.role === "user";
   const canSave =
@@ -993,26 +1431,52 @@ function MessageBubble({
         : [],
     [isUser, message.streaming, message.text],
   );
+  // Detect a "Listing-shaped" assistant message — non-null if the body
+  // has the **Address:** frontmatter the Phase 5 system-prompt rule
+  // asks the assistant to emit. Used to gate the "Save as listing"
+  // button so it only appears when there's something to save.
+  const extractedListing = useMemo(
+    () =>
+      !isUser && !message.streaming
+        ? extractListingFromMessage(message.text)
+        : null,
+    [isUser, message.streaming, message.text],
+  );
+  // Effective save state: the live per-render state wins; otherwise, if
+  // this message is listing-shaped and the session already saved a
+  // listing, fall back to that id so the button stays "View listing"
+  // after a reload / navigation instead of inviting a duplicate save.
+  const effectiveListingSaveState =
+    listingSaveState ??
+    (extractedListing && savedListingId ? savedListingId : undefined);
 
   return (
     <li
       className={cn(
         "group flex w-full items-end gap-2",
         isUser ? "justify-end" : "justify-start",
+        // Per-bubble vertical spacing: 24px between groups, 4px
+        // within a group. First message in the list has no top
+        // margin so the chat doesn't start with whitespace.
+        isFirstInGroup ? "mt-6 first:mt-0" : "mt-1",
       )}
     >
-      {/* Assistant avatar — left of the bubble. Uses the consultant's
-          actual photo (lib/avatars.ts maps slug→PNG) with the initials
-          fallback baked into AvatarCircle. items-end aligns it with
-          the bottom of the bubble so a tall message doesn't look top-
-          heavy. shrink-0 stops it being squashed on narrow viewports. */}
+      {/* Assistant avatar — left of the bubble, ONLY on the last
+          bubble of a consecutive run from the same role. Non-
+          trailing bubbles get a same-size spacer so alignment stays
+          stable. items-end aligns with the bottom of the bubble so a
+          tall message doesn't look top-heavy. */}
       {!isUser && (
-        <AvatarCircle
-          slug={consultantSlug}
-          size={32}
-          animate={false}
-          className="shrink-0"
-        />
+        isLastInGroup ? (
+          <AvatarCircle
+            slug={consultantSlug}
+            size={32}
+            animate={false}
+            className="shrink-0"
+          />
+        ) : (
+          <div className="h-8 w-8 shrink-0" aria-hidden />
+        )
       )}
 
       <div className={cn("flex max-w-[80%] flex-col", isUser && "items-end")}>
@@ -1113,7 +1577,21 @@ function MessageBubble({
             clean during quick reads while still letting the user copy
             without a long-press. */}
         {!isUser && !message.streaming && message.text.length > 0 && (
-          <div className="mt-1 flex items-center gap-1 self-start">
+          <div
+            className={cn(
+              "mt-1 flex flex-wrap items-center gap-1 self-start transition-all",
+              // Last bubble of a run: actions always visible. Consecutive
+              // (non-last) bubbles collapse to nothing and reveal on hover,
+              // so a long agent run reads clean instead of stacking a
+              // "Save as voice rule / Copy / timestamp" row under every
+              // line. Collapsing height (not just opacity) is what removes
+              // the gaps. Touch devices (no hover) keep them visible so the
+              // actions stay reachable.
+              isLastInGroup
+                ? "opacity-100"
+                : "max-h-0 overflow-hidden opacity-0 group-hover:max-h-12 group-hover:opacity-100 [@media(hover:none)]:max-h-12 [@media(hover:none)]:opacity-100",
+            )}
+          >
             {canSave && !editing && !saved && (
               <button
                 type="button"
@@ -1128,6 +1606,48 @@ function MessageBubble({
               <span className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-emerald-600 dark:text-emerald-500">
                 <BookmarkPlus className="h-3.5 w-3.5" />
                 Saved to learnings
+              </span>
+            )}
+            {/* Save-as-listing button — only renders for a listing-shaped
+                message that hasn't been saved yet (live OR persisted). Once
+                saved it swaps to the "View listing" link below, so a
+                re-click can't fire a duplicate save. */}
+            {extractedListing && !effectiveListingSaveState && (
+              <button
+                type="button"
+                onClick={() => onSaveListing(extractedListing)}
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:opacity-90"
+                title={`Save listing for ${extractedListing.address}`}
+              >
+                <BookmarkPlus className="h-3.5 w-3.5" />
+                Save as listing
+              </button>
+            )}
+            {listingSaveState === "saving" && (
+              <span className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground">
+                <BookmarkPlus className="h-3.5 w-3.5 animate-pulse" />
+                Saving listing…
+              </span>
+            )}
+            {effectiveListingSaveState &&
+              effectiveListingSaveState !== "saving" &&
+              !effectiveListingSaveState.startsWith("error:") && (
+                <a
+                  href={`/dashboard/listings/${effectiveListingSaveState}`}
+                  className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-emerald-600 hover:underline dark:text-emerald-500"
+                  title="Open in the listings repo"
+                >
+                  <BookmarkPlus className="h-3.5 w-3.5" />
+                  View listing →
+                </a>
+              )}
+            {listingSaveState?.startsWith("error:") && (
+              <span
+                className="inline-flex items-center gap-1.5 px-2 py-1 text-xs text-destructive"
+                title={listingSaveState.slice("error:".length)}
+              >
+                <BookmarkPlus className="h-3.5 w-3.5" />
+                Listing save failed
               </span>
             )}
             <span className="opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100">
@@ -1162,12 +1682,22 @@ function MessageBubble({
                   try {
                     await downloadOutput(backendUrl, filename);
                   } catch (err) {
-                    // Inline the error in the chat-relative space so the
-                    // user sees what went wrong (file gone, auth lapsed,
-                    // network). alert() is intentionally chosen for
-                    // simplicity — this is a rare path.
+                    // alert() is intentional here — a rare path. A bare
+                    // "Failed to fetch" means the fetch rejected before any
+                    // response: the connection dropped mid-transfer, which
+                    // big files over the tunnel are prone to. Say that in
+                    // plain English and point at the fix (lighter file)
+                    // rather than dumping the raw error.
+                    const raw =
+                      err instanceof Error ? err.message : String(err);
+                    const isNetwork =
+                      /failed to fetch|load failed|networkerror|network request failed/i.test(
+                        raw,
+                      );
                     alert(
-                      err instanceof Error ? err.message : String(err),
+                      isNetwork
+                        ? "That download didn't complete — the file may be too large for the current connection. Try again, or ask me for a lighter version."
+                        : `Couldn't download ${filename}: ${raw}`,
                     );
                   }
                 }}
@@ -1191,13 +1721,16 @@ function MessageBubble({
       </div>
 
       {/* User avatar — right of the bubble. Cyan-filled circle with
-          two-letter initials in white, derived from the signed-in
-          email or freeform name (Elijah Mirandilla → "EM"). No PNG
-          lookup — the user's photo isn't part of Harcourts' avatar
-          library; initials are intentionally generic so any future
-          consultant or teammate "just works" without a portrait. */}
+          two-letter initials (Elijah Mirandilla → "EM"). Shown only on
+          the LAST bubble of a consecutive run from the user; non-
+          trailing user bubbles get a same-size spacer so right-edge
+          alignment stays consistent. */}
       {isUser && (
-        <UserInitialsAvatar name={userName} size={32} className="shrink-0" />
+        isLastInGroup ? (
+          <UserInitialsAvatar name={userName} size={32} className="shrink-0" />
+        ) : (
+          <div className="h-8 w-8 shrink-0" aria-hidden />
+        )
       )}
     </li>
   );
