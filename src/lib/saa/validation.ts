@@ -1,5 +1,6 @@
 import type { FormData } from "./types";
-import { isValidSuburb } from "./suburbs";
+import { isValidSuburb, isValidSuburbInState } from "./suburbs";
+import { AU_STATES } from "@/lib/constants/australian-states";
 
 // Email validation regex (Strict)
 export function isValidEmail(email: string): boolean {
@@ -129,11 +130,13 @@ export function isValidProperty(formData: FormData): ValidationResult {
   if (!isRequired(formData.propertySuburb)) {
     errors.propertySuburb = "Suburb is required";
   } else {
-    if (
-      formData.propertyState === "TAS" &&
-      !isValidSuburb(formData.propertySuburb)
-    ) {
-      errors.propertySuburb = "Please select a valid Tasmanian suburb";
+    // Use state-aware suburb validation
+    const propertyState = formData.propertyState || "TAS";
+    if (!isValidSuburbInState(formData.propertySuburb, propertyState)) {
+      // Only warn if it's not found at all — it could still be manually entered
+      if (!isValidSuburb(formData.propertySuburb)) {
+        errors.propertySuburb = "Please select a valid suburb";
+      }
     }
   }
 
@@ -289,6 +292,12 @@ export function isValidVendor(formData: FormData): ValidationResult {
         errors[`${prefix}.suburb`] = "Suburb is required";
       if (!isRequired(vendor.postcode))
         errors[`${prefix}.postcode`] = "Postcode is required";
+
+      // Validate state is a valid Australian state
+      const validStateValues: string[] = AU_STATES.map((s) => s.value);
+      if (vendor.state && !validStateValues.includes(vendor.state)) {
+        errors[`${prefix}.state`] = "Please select a valid Australian state";
+      }
     }
   }
 

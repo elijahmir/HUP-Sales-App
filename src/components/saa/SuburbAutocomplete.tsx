@@ -24,11 +24,11 @@ export function SuburbAutocomplete({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize Fuse.js
+  // Initialize Fuse.js — handles 18K+ entries efficiently via internal indexing
   const fuse = useRef(
     new Fuse(allSuburbs, {
       keys: ["suburb", "postcode"],
-      threshold: 0.3,
+      threshold: 0.25,
       distance: 100,
       minMatchCharLength: 2,
     }),
@@ -40,7 +40,7 @@ export function SuburbAutocomplete({
     // but simply checking if the dropdown is open/should be open is often enough).
     // Here we search whenever value changes, provided it's long enough.
     if (value.length >= 2) {
-      const searchResults = fuse.current.search(value, { limit: 8 });
+      const searchResults = fuse.current.search(value, { limit: 10 });
       setResults(searchResults.map((r) => r.item));
     } else {
       setResults([]);

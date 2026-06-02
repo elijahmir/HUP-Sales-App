@@ -147,18 +147,9 @@ export const initialExpenseApprovalFormData: ExpenseApprovalFormData = {
 };
 
 // ============================================
-// Australian States
+// Australian States — re-exported from shared constants
 // ============================================
-export const AU_STATES = [
-    { value: "TAS", label: "Tasmania" },
-    { value: "NSW", label: "New South Wales" },
-    { value: "VIC", label: "Victoria" },
-    { value: "QLD", label: "Queensland" },
-    { value: "SA", label: "South Australia" },
-    { value: "WA", label: "Western Australia" },
-    { value: "NT", label: "Northern Territory" },
-    { value: "ACT", label: "Australian Capital Territory" },
-];
+export { AU_STATES } from "@/lib/constants/australian-states";
 
 // ============================================
 // TasWater Authority Levels

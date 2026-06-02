@@ -158,7 +158,7 @@ export function PropertyServiceSection({
                         {formData.propertySuburb &&
                             !isValidSuburb(formData.propertySuburb) && (
                                 <p className="text-xs text-amber-600 mt-1">
-                                    Warning: Suburb not found in Tasmania database
+                                    Warning: Suburb not found in database
                                 </p>
                             )}
                     </div>

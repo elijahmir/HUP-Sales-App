@@ -9,6 +9,7 @@ import { useState } from "react";
 import type { FormData } from "@/lib/saa/types";
 import { SuburbAutocomplete } from "./SuburbAutocomplete";
 import { isValidSuburb } from "@/lib/saa/suburbs";
+import { AU_STATES } from "@/lib/constants/australian-states";
 
 interface PropertySectionProps {
   formData: FormData;
@@ -104,7 +105,7 @@ export function PropertySection({
             )}
           </div>
 
-          <div className="md:col-span-12">
+          <div className="md:col-span-8">
             <label htmlFor="property-suburb" className="field-label">
               Suburb
             </label>
@@ -130,9 +131,24 @@ export function PropertySection({
             {formData.propertySuburb &&
               !isValidSuburb(formData.propertySuburb) && (
                 <p className="text-xs text-amber-600 mt-1">
-                  Warning: Suburb not found in Tasmania database
+                  Warning: Suburb not found in database
                 </p>
               )}
+          </div>
+
+          <div className="md:col-span-4">
+            <label className="field-label">State</label>
+            <select
+              value={formData.propertyState || "TAS"}
+              onChange={(e) => handleChange("propertyState", e.target.value)}
+              className="select-field"
+            >
+              {AU_STATES.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="md:col-span-12">

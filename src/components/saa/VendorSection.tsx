@@ -11,6 +11,7 @@ import {
 import type { FormData } from "@/lib/saa/types";
 import { createEmptyVendor } from "@/lib/saa/types";
 import { SuburbAutocomplete } from "./SuburbAutocomplete";
+import { AU_STATES } from "@/lib/constants/australian-states";
 
 interface VendorSectionProps {
   formData: FormData;
@@ -701,7 +702,7 @@ export function VendorSection({
                           </p>
                         )}
                     </div>
-                    <div className="md:col-span-8">
+                    <div className="md:col-span-5">
                       <label className="field-label text-xs">Suburb</label>
                       {formData.vendors[index].sameAsProperty ? (
                         <input
@@ -722,9 +723,6 @@ export function VendorSection({
                               updateVendor(index, "postcode", suburb.postcode);
                               updateVendor(index, "state", suburb.state);
                             }}
-                          // We might need to pass error style to SuburbAutocomplete or wrap it?
-                          // SuburbAutocomplete usually exposes an input internally.
-                          // If we can't easily style it, we at least show the error message below.
                           />
                           {errors[`vendors[${index}].suburb`] && (
                             <p className="error-text mt-1">
@@ -734,7 +732,7 @@ export function VendorSection({
                         </div>
                       )}
                     </div>
-                    <div className="md:col-span-4">
+                    <div className="md:col-span-3">
                       <label className="field-label text-xs">Postcode</label>
                       <input
                         type="text"
@@ -760,6 +758,23 @@ export function VendorSection({
                             {errors[`vendors[${index}].postcode`]}
                           </p>
                         )}
+                    </div>
+                    <div className="md:col-span-4">
+                      <label className="field-label text-xs">State</label>
+                      <select
+                        value={formData.vendors[index].state || "TAS"}
+                        onChange={(e) =>
+                          updateVendor(index, "state", e.target.value)
+                        }
+                        className={`select-field ${formData.vendors[index].sameAsProperty ? "bg-gray-50 cursor-not-allowed text-gray-500" : ""}`}
+                        disabled={formData.vendors[index].sameAsProperty}
+                      >
+                        {AU_STATES.map((s) => (
+                          <option key={s.value} value={s.value}>
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                 </div>
