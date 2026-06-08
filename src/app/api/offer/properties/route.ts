@@ -32,31 +32,58 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const stateFilter = searchParams.get("state") || "";
 
-        // Fetch properties with status: listing, conditional only
-        const url = new URL(`${baseUrl}/properties/sale`);
-        url.searchParams.set("status", "listing,conditional");
-        url.searchParams.set("pagesize", "100");
-        url.searchParams.set("page", "1");
-        url.searchParams.set("sort", "modified");
-        url.searchParams.set("sortOrder", "desc");
+        // VaultRE caps pagesize at 100, so a single page silently drops any
+        // listing beyond the first 100 (see Steph's "Property missing" report —
+        // 73b Jones Road, Miena was at position ~112). Page through ALL results
+        // so every active listing/conditional property reaches the offer form.
+        const PAGE_SIZE = 100;
+        const MAX_PAGES = 20; // safety cap (2000 properties) to prevent runaway loops
 
-        const response = await fetch(url.toString(), {
-            method: "GET",
-            headers: getHeaders(),
-            cache: "no-store",
-        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const allItems: any[] = [];
+        let page = 1;
+        let totalPages = 1;
 
-        if (!response.ok) {
-            const text = await response.text();
-            console.error(`VaultRE properties fetch failed: ${response.status} - ${text}`);
-            return NextResponse.json(
-                { error: `VaultRE API error: ${response.status}` },
-                { status: 502 }
-            );
+        do {
+            const url = new URL(`${baseUrl}/properties/sale`);
+            url.searchParams.set("status", "listing,conditional");
+            url.searchParams.set("pagesize", String(PAGE_SIZE));
+            url.searchParams.set("page", String(page));
+            url.searchParams.set("sort", "modified");
+            url.searchParams.set("sortOrder", "desc");
+
+            const response = await fetch(url.toString(), {
+                method: "GET",
+                headers: getHeaders(),
+                cache: "no-store",
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.error(`VaultRE properties fetch failed (page ${page}): ${response.status} - ${text}`);
+                // Fail loudly rather than returning a partial list that hides properties
+                return NextResponse.json(
+                    { error: `VaultRE API error: ${response.status}` },
+                    { status: 502 }
+                );
+            }
+
+            const data = await response.json();
+            const pageItems = data.items || [];
+            allItems.push(...pageItems);
+
+            // Determine how many pages exist (VaultRE returns totalPages/totalItems)
+            totalPages = data.totalPages || Math.ceil((data.totalItems || allItems.length) / PAGE_SIZE) || 1;
+
+            // Stop early if a page comes back empty (defensive against bad totals)
+            if (pageItems.length === 0) break;
+
+            page += 1;
+        } while (page <= totalPages && page <= MAX_PAGES);
+
+        if (totalPages > MAX_PAGES) {
+            console.warn(`VaultRE returned ${totalPages} pages; capped at ${MAX_PAGES}. Some properties may be omitted.`);
         }
-
-        const data = await response.json();
-        const allItems = data.items || [];
 
         // Filter to exclude lease-only properties
         // Properties from /properties/sale that have a leaseLife but NO saleLife are lease-only → exclude them
