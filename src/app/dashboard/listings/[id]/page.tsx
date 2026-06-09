@@ -323,6 +323,11 @@ export default function ListingDetailPage() {
   const supabase = useMemo(() => createClient(), []);
   const backendUrl = process.env.NEXT_PUBLIC_HARCOURTS_BACKEND_URL ?? "";
   const [authReady, setAuthReady] = useState(false);
+  // Used to decide which primary action to show (Open in CopyPro for the
+  // owner, View Conversation for admins viewing someone else's listing).
+  // Backend admin gate on /api/sessions/:id/messages remains the real
+  // security boundary; this is UI only.
+  const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [listing, setListing] = useState<ListingRow | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<"md" | "rich" | false>(false);
@@ -349,11 +354,18 @@ export default function ListingDetailPage() {
   const richTextRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    let cancelled = false;
     configureAuth(async () => {
       const { data } = await supabase.auth.getSession();
       return data.session?.access_token ?? null;
     });
-    queueMicrotask(() => setAuthReady(true));
+    // Capture viewer email for the role-aware action button below.
+    supabase.auth.getUser().then(({ data }) => {
+      if (cancelled) return;
+      setViewerEmail(data.user?.email ?? null);
+      setAuthReady(true);
+    });
+    return () => { cancelled = true; };
   }, [supabase]);
 
   useEffect(() => {
@@ -691,12 +703,39 @@ export default function ListingDetailPage() {
                   </svg>
                   Edit
                 </button>
-                <Link
-                  href={`/dashboard/copypro?edit=${encodeURIComponent(listing.id)}`}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
-                >
-                  Open in CopyPro
-                </Link>
+                {/* Role-aware primary action:
+                 *   Owner          → Open in CopyPro (resumes editing)
+                 *   Admin viewing other → View Conversation (read-only transcript)
+                 * Backend admin gate on /api/sessions/:id/messages is the real
+                 * security boundary; this swap is UI only. */}
+                {viewerEmail && listing.user_email === viewerEmail ? (
+                  <Link
+                    href={`/dashboard/copypro?edit=${encodeURIComponent(listing.id)}`}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                  >
+                    Open in CopyPro
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/dashboard/listings/${encodeURIComponent(listing.id)}/conversation`}
+                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="13"
+                      height="13"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    View Conversation
+                  </Link>
+                )}
 
                 {/* Ellipsis dropdown — Copy MD, Copy Rich Text, Make Ref, Delete */}
                 <ActionsDropdown items={dropdownItems} />
