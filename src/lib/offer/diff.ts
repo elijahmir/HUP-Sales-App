@@ -27,6 +27,8 @@ export const FIELD_LABELS: Record<string, string> = {
     companyName: "Company Name",
     companyACN: "Company ACN",
     trustName: "Trust Name",
+    propertyIntention: "Property Intention",
+    offerComments: "Comments",
 };
 
 export function getChanges(original: OfferFormData, current: OfferFormData): FieldChange[] {

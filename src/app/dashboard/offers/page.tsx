@@ -489,6 +489,22 @@ function OfferDetailsModal({ offer, onClose }: { offer: OfferRow | null; onClose
                                         </div>
                                     )}
 
+                                    {/* Use of Property */}
+                                    <div className="bg-teal-50/50 p-3 rounded-lg border border-teal-100">
+                                        <p className="text-xs text-teal-600 mb-1">Property Intention</p>
+                                        <p className="font-medium text-gray-900 flex items-center gap-1.5">{fd.propertyIntention || "—"} <CopyButton value={fd.propertyIntention || ""} /></p>
+                                    </div>
+
+                                    {fd.offerComments && (
+                                        <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <p className="text-xs text-gray-500">Comments</p>
+                                                <CopyButton value={fd.offerComments} label="Copy comments" />
+                                            </div>
+                                            <p className="text-sm text-gray-900 whitespace-pre-wrap">{fd.offerComments}</p>
+                                        </div>
+                                    )}
+
                                     {fd.appendixFileName && (
                                         <div className="bg-orange-50 p-3 rounded-lg border border-orange-100 flex items-center justify-between gap-3 overflow-hidden">
                                             <div className="min-w-0 flex-1">

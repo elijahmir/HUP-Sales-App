@@ -85,15 +85,15 @@ export async function GET(request: NextRequest) {
             console.warn(`VaultRE returned ${totalPages} pages; capped at ${MAX_PAGES}. Some properties may be omitted.`);
         }
 
-        // Filter to exclude lease-only properties
-        // Properties from /properties/sale that have a leaseLife but NO saleLife are lease-only → exclude them
-        // Everything else (has saleLife, or has neither) is a valid sale/both listing → include
+        // Filter to SALE listings only — exclude commercial lease-only properties.
+        // VaultRE's Property schema includes a `commercialListingType` field
+        // (enum: "sale" | "lease" | "both") on commercial properties.
+        // Residential/land properties don't set this field, so they always pass.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const items = allItems.filter((item: any) => {
-            const hasLease = !!item.leaseLife;
-            const hasSale = !!item.saleLife;
-            // Exclude lease-only (has lease but no sale lifecycle)
-            if (hasLease && !hasSale) return false;
+            const listingType = (item.commercialListingType || "").toLowerCase();
+            // Exclude lease-only commercial listings
+            if (listingType === "lease") return false;
             return true;
         });
 

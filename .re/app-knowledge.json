@@ -1,0 +1,20 @@
+{
+  "metadata": { "framework": "Next.js (App Router)", "last_updated": "2026-06-08", "scan_completeness": "partial-deep", "focus": "offer form property selection" },
+  "data_flows": {
+    "offer_property_list": {
+      "ui": "src/components/offer/PropertySelector.tsx — fetches /api/offer/properties, client filters by search/suburb/class only",
+      "api": "src/app/api/offer/properties/route.ts — GET fetches VaultRE /properties/sale?status=listing,conditional&pagesize=100&page=1&sort=modified&sortOrder=desc",
+      "integration": "VaultRE CRM (live) base ap-southeast-2.api.vaultre.com.au/api/v1.3"
+    }
+  },
+  "bugs": [
+    {
+      "title": "Offer form property list capped at 100 (page 1 only)",
+      "reported_by": "Steph",
+      "symptom": "73b Jones Road, Miena (VaultRE id 34749441) not in offer property list though still in agency date",
+      "root_cause": "route.ts fetches only page=1 pagesize=100 sorted by modified desc. VaultRE has 213 listing/conditional properties (3 pages). 73b Jones Rd sits at position ~112 (page 2) so it is dropped. 113 valid listings are silently excluded.",
+      "file": "src/app/api/offer/properties/route.ts:36-47",
+      "not_the_cause": "agency date / status filter — server status=listing,conditional filter works correctly"
+    }
+  ]
+}

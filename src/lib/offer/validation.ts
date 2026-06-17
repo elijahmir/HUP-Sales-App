@@ -202,6 +202,11 @@ export function validateOfferStep(formData: OfferFormData): ValidationErrors {
         }
     }
 
+    // Use of Property
+    if (!formData.propertyIntention || !formData.propertyIntention.trim()) {
+        errors.propertyIntention = "Please select your intention for the property";
+    }
+
     return errors;
 }
 

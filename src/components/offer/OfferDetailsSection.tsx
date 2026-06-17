@@ -9,7 +9,8 @@ import {
     ClipboardCheck,
     Calendar,
     FileText,
-    Check
+    Check,
+    Home
 } from "lucide-react";
 
 interface OfferDetailsSectionProps {
@@ -474,6 +475,62 @@ export function OfferDetailsSection({
                         className="input-field-normal min-h-[120px] resize-y"
                         placeholder="Enter any additional terms and conditions..."
                         rows={4}
+                    />
+                </div>
+            </div>
+
+            {/* ===== Use of Property ===== */}
+            <div className="space-y-4">
+                <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
+                    <div className="w-10 h-10 rounded-xl bg-teal-50 flex items-center justify-center">
+                        <Home className="w-5 h-5 text-teal-600" />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-bold text-harcourts-navy">
+                            Use of Property
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                            Let us know your intended use for this property
+                        </p>
+                    </div>
+                </div>
+
+                {/* Property Intention Dropdown (Mandatory) */}
+                <div>
+                    <label className="field-label">
+                        What is your intention for the property? <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                        value={formData.propertyIntention}
+                        onChange={(e) =>
+                            handleChange("propertyIntention", e.target.value)
+                        }
+                        className={`input-field ${errors.propertyIntention ? "border-red-500" : ""} ${!formData.propertyIntention ? "text-gray-400" : "text-gray-900"}`}
+                    >
+                        <option value="" disabled>Select an option...</option>
+                        <option value="Owner occupier">Owner occupier</option>
+                        <option value="Investment property">Investment property</option>
+                    </select>
+                    {errors.propertyIntention && (
+                        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-3 h-3" /> {errors.propertyIntention}
+                        </p>
+                    )}
+                </div>
+
+                {/* Comments (Optional) */}
+                <div>
+                    <label className="field-label">
+                        Comments
+                    </label>
+                    <textarea
+                        value={formData.offerComments}
+                        onChange={(e) =>
+                            handleChange("offerComments", e.target.value)
+                        }
+                        className="input-field-normal min-h-[100px] resize-y"
+                        placeholder="Any additional notes or comments..."
+                        rows={3}
                     />
                 </div>
             </div>

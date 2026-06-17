@@ -92,6 +92,10 @@ export interface OfferSubmissionPayload {
     subject_to_sale_under_contract_text: string;
     subject_to_sale_completion_date: string;
 
+    // Use of Property
+    property_intention: string;
+    offer_comments: string;
+
     // Appendices
     appendix_file_name: string;
     appendix_file_base64: string;
@@ -373,6 +377,8 @@ export function buildOfferPayload(formData: OfferFormData): OfferSubmissionPaylo
         subject_to_sale_under_contract: formData.subjectToSaleUnderContract,
         subject_to_sale_under_contract_text: formData.subjectToSaleUnderContract ? "Yes" : "No",
         subject_to_sale_completion_date: toUpper(formData.subjectToSaleCompletionDate.trim()),
+        property_intention: formData.propertyIntention.trim(),
+        offer_comments: formData.offerComments.trim(),
         appendix_file_name: formData.appendixFileName,
         appendix_file_base64: formData.appendixFileBase64,
     };

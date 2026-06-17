@@ -180,6 +180,10 @@ export interface OfferFormData {
     subjectToSaleUnderContract: boolean;
     subjectToSaleCompletionDate: string;
 
+    // Use of Property
+    propertyIntention: string;
+    offerComments: string;
+
     // Appendices
     appendixFileName: string;
     appendixFileBase64: string;
@@ -255,6 +259,10 @@ export const initialOfferFormData: OfferFormData = {
     subjectToSalePrice: "",
     subjectToSaleUnderContract: false,
     subjectToSaleCompletionDate: "",
+
+    // Use of Property
+    propertyIntention: "",
+    offerComments: "",
 
     // Appendices
     appendixFileName: "",

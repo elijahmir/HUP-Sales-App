@@ -230,6 +230,17 @@ export function ReviewSection({ formData, onJumpToStep }: ReviewSectionProps) {
                             </p>
                         </div>
                     )}
+                    <div className="mt-2 pt-2 border-t border-gray-100">
+                        <Row label="Property Intention" value={formData.propertyIntention} raw />
+                        {formData.offerComments && (
+                            <div className="mt-1">
+                                <span className="text-gray-500 text-xs block mb-1">Comments</span>
+                                <p className="text-gray-900 text-sm whitespace-pre-wrap">
+                                    {formData.offerComments}
+                                </p>
+                            </div>
+                        )}
+                    </div>
                     {formData.appendixFileName && (
                         <Row label="Appendices" value={formData.appendixFileName} />
                     )}
